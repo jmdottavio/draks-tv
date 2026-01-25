@@ -36,6 +36,7 @@ db.run(`
   CREATE TABLE IF NOT EXISTS auth (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     access_token TEXT,
+    refresh_token TEXT,
     user_id TEXT,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
   )
@@ -43,6 +44,15 @@ db.run(`
 
 // Ensure auth row exists
 db.run(`INSERT OR IGNORE INTO auth (id) VALUES (1)`);
+
+// Migration: Add refresh_token column if it doesn't exist
+const hasRefreshTokenColumn = db.query<{ count: number }, []>(
+  `SELECT COUNT(*) as count FROM pragma_table_info('auth') WHERE name = 'refresh_token'`
+).get();
+
+if (hasRefreshTokenColumn !== null && hasRefreshTokenColumn.count === 0) {
+  db.run('ALTER TABLE auth ADD COLUMN refresh_token TEXT');
+}
 
 // Table for caching "last seen" times for followed channels
 // This reduces API calls by storing last VOD dates locally

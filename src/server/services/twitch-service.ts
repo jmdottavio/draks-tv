@@ -1,6 +1,7 @@
-import { getAuth } from '../database/auth';
+import { getAuth, setAuth, clearAuth } from '../database/auth';
 
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID ?? '';
+const TWITCH_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET ?? '';
 
 interface TwitchUser {
   id: string;
@@ -44,7 +45,46 @@ interface TwitchResponse<T> {
   };
 }
 
-async function twitchFetch<T>(endpoint: string): Promise<TwitchResponse<T> | Error> {
+interface TwitchTokenResponse {
+  access_token?: string;
+  refresh_token?: string;
+}
+
+async function refreshAccessToken(): Promise<boolean> {
+  const auth = getAuth();
+
+  if (auth.refreshToken === null || auth.userId === null) {
+    return false;
+  }
+
+  const response = await fetch('https://id.twitch.tv/oauth2/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: TWITCH_CLIENT_ID,
+      client_secret: TWITCH_CLIENT_SECRET,
+      grant_type: 'refresh_token',
+      refresh_token: auth.refreshToken,
+    }),
+  });
+
+  if (!response.ok) {
+    clearAuth();
+    return false;
+  }
+
+  const tokenData = await response.json() as TwitchTokenResponse;
+
+  if (tokenData.access_token === undefined || tokenData.refresh_token === undefined) {
+    clearAuth();
+    return false;
+  }
+
+  setAuth(tokenData.access_token, tokenData.refresh_token, auth.userId);
+  return true;
+}
+
+async function twitchFetch<T>(endpoint: string, isRetry: boolean = false): Promise<TwitchResponse<T> | Error> {
   const auth = getAuth();
 
   if (auth.accessToken === null) {
@@ -57,6 +97,14 @@ async function twitchFetch<T>(endpoint: string): Promise<TwitchResponse<T> | Err
       'Authorization': `Bearer ${auth.accessToken}`,
     },
   });
+
+  if (response.status === 401 && !isRetry) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      return twitchFetch<T>(endpoint, true);
+    }
+    return new Error('Not authenticated');
+  }
 
   if (!response.ok) {
     return new Error(`Twitch API error: ${response.status}`);

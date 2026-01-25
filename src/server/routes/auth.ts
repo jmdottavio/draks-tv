@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { getAuth, setAuth } from '../database/auth';
+import { getAuth, setAuth, clearAuth } from '../database/auth';
 
 const router = Router();
 
@@ -44,14 +44,15 @@ router.get('/callback', async (request, response) => {
     }),
   });
 
-  const tokenData = await tokenResponse.json() as { access_token?: string };
+  const tokenData = await tokenResponse.json() as { access_token?: string; refresh_token?: string };
 
-  if (tokenData.access_token === undefined) {
+  if (tokenData.access_token === undefined || tokenData.refresh_token === undefined) {
     response.status(400).send('Failed to get token');
     return;
   }
 
   const accessToken = tokenData.access_token;
+  const refreshToken = tokenData.refresh_token;
 
   // Get user info
   const userResponse = await fetch('https://api.twitch.tv/helix/users', {
@@ -69,9 +70,14 @@ router.get('/callback', async (request, response) => {
   }
 
   const userId = userData.data[0].id;
-  setAuth(accessToken, userId);
+  setAuth(accessToken, refreshToken, userId);
 
   response.redirect('/');
+});
+
+router.post('/logout', (_request, response) => {
+  clearAuth();
+  response.json({ success: true });
 });
 
 export { router as authRouter };
