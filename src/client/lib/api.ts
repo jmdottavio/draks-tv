@@ -51,6 +51,17 @@ interface TwitchVideo {
   thumbnail_url: string;
 }
 
+interface SidebarChannel {
+  id: string;
+  login: string;
+  displayName: string;
+  profileImage: string;
+  isLive: boolean;
+  viewerCount: number | null;
+  lastVodDate: string | null;
+  gameName: string | null;
+}
+
 async function fetchAuthStatus(): Promise<AuthStatus> {
   const response = await fetch('/api/auth/status');
   return response.json();
@@ -125,10 +136,21 @@ async function watchVod(id: string): Promise<void> {
   }
 }
 
+async function fetchFollowedChannels(): Promise<Array<SidebarChannel>> {
+  const response = await fetch('/api/channels/followed');
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch followed channels');
+  }
+
+  return response.json();
+}
+
 export {
   fetchAuthStatus,
   fetchAuthUrl,
   fetchChannels,
+  fetchFollowedChannels,
   toggleFavorite,
   addFavorite,
   fetchUserByLogin,
@@ -137,4 +159,4 @@ export {
   watchVod,
 };
 
-export type { AuthStatus, Channel, Stream, Vod, TwitchUser, TwitchVideo };
+export type { AuthStatus, Channel, Stream, Vod, TwitchUser, TwitchVideo, SidebarChannel };

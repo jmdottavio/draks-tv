@@ -1,25 +1,38 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { Header } from './components/header';
 import { ChannelGrid } from './components/channel-grid';
 import { AddChannelModal } from './components/add-channel-modal';
 import { VodsSection } from './components/vods-section';
 import { AuthSection } from './components/auth-section';
+import { Sidebar } from './components/sidebar';
 import { useAuth } from './hooks/use-auth';
 import { useChannels, useToggleFavorite, useAddFavorite } from './hooks/use-channels';
 
 type View = 'channels' | 'vods';
 
+function getSavedSidebarState(): boolean {
+  const saved = localStorage.getItem('sidebar-open');
+  return saved === 'true';
+}
+
 function App() {
   const [currentView, setCurrentView] = useState<View>('channels');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(getSavedSidebarState);
 
   const { data: authData, isLoading: isAuthLoading } = useAuth();
-  const { data: channels, isLoading: isChannelsLoading, refetch } = useChannels();
+  const { data: channels, isLoading: isChannelsLoading, isFetching, refetch } = useChannels();
   const toggleFavoriteMutation = useToggleFavorite();
   const addFavoriteMutation = useAddFavorite();
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  useEffect(() => {
+    localStorage.setItem('sidebar-open', String(isSidebarOpen));
+  }, [isSidebarOpen]);
+
+  function handleToggleSidebar() {
+    setIsSidebarOpen((prev) => !prev);
+  }
 
   if (isAuthLoading) {
     return (
@@ -45,10 +58,8 @@ function App() {
     );
   }
 
-  async function handleRefresh() {
-    setIsRefreshing(true);
-    await refetch();
-    setIsRefreshing(false);
+  function handleRefresh() {
+    refetch();
   }
 
   function handleToggleFavorite(id: string) {
@@ -61,33 +72,38 @@ function App() {
 
   return (
     <div className="min-h-screen">
-      <Header
-        onAddChannel={() => setIsModalOpen(true)}
-        onShowVods={() => setCurrentView('vods')}
-        onRefresh={handleRefresh}
-        isRefreshing={isRefreshing}
-      />
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-      <main className="p-6 max-w-[1600px] mx-auto">
-        {currentView === 'channels' && (
-          <section className="animate-[fadeIn_0.2s_ease]">
-            {isChannelsLoading && (
-              <div className="flex items-center justify-center py-16 text-[#7a7a85]">
-                <span>Loading channels</span>
-                <span className="ml-3 w-6 h-6 border-2 border-[#2f2f35] border-t-twitch-purple rounded-full animate-spin" />
-              </div>
-            )}
+      <div className={`transition-[margin] duration-300 ${isSidebarOpen ? 'lg:ml-64' : ''}`}>
+        <Header
+          onAddChannel={() => setIsModalOpen(true)}
+          onShowVods={() => setCurrentView('vods')}
+          onRefresh={handleRefresh}
+          onToggleSidebar={handleToggleSidebar}
+          isRefreshing={isFetching}
+        />
 
-            {!isChannelsLoading && channels !== undefined && (
-              <ChannelGrid channels={channels} onToggleFavorite={handleToggleFavorite} />
-            )}
-          </section>
-        )}
+        <main className="p-6 max-w-[1600px] mx-auto">
+          {currentView === 'channels' && (
+            <section className="animate-[fadeIn_0.2s_ease]">
+              {isChannelsLoading && (
+                <div className="flex items-center justify-center py-16 text-[#7a7a85]">
+                  <span>Loading channels</span>
+                  <span className="ml-3 w-6 h-6 border-2 border-[#2f2f35] border-t-twitch-purple rounded-full animate-spin" />
+                </div>
+              )}
 
-        {currentView === 'vods' && (
-          <VodsSection onBack={() => setCurrentView('channels')} />
-        )}
-      </main>
+              {!isChannelsLoading && channels !== undefined && (
+                <ChannelGrid channels={channels} onToggleFavorite={handleToggleFavorite} />
+              )}
+            </section>
+          )}
+
+          {currentView === 'vods' && (
+            <VodsSection onBack={() => setCurrentView('channels')} />
+          )}
+        </main>
+      </div>
 
       <AddChannelModal
         isOpen={isModalOpen}

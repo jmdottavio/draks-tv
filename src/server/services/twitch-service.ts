@@ -30,8 +30,18 @@ interface TwitchVideo {
   thumbnail_url: string;
 }
 
+interface TwitchFollowedChannel {
+  broadcaster_id: string;
+  broadcaster_login: string;
+  broadcaster_name: string;
+  followed_at: string;
+}
+
 interface TwitchResponse<T> {
   data: Array<T>;
+  pagination?: {
+    cursor?: string;
+  };
 }
 
 async function twitchFetch<T>(endpoint: string): Promise<TwitchResponse<T> | Error> {
@@ -116,12 +126,35 @@ async function getVideos(userId: string, limit: number = 1): Promise<Array<Twitc
   return result.data;
 }
 
+async function getFollowedChannels(userId: string): Promise<Array<TwitchFollowedChannel> | Error> {
+  const allChannels: Array<TwitchFollowedChannel> = [];
+  let cursor: string | undefined;
+
+  do {
+    const endpoint = cursor
+      ? `/channels/followed?user_id=${userId}&first=100&after=${cursor}`
+      : `/channels/followed?user_id=${userId}&first=100`;
+
+    const result = await twitchFetch<TwitchFollowedChannel>(endpoint);
+
+    if (result instanceof Error) {
+      return result;
+    }
+
+    allChannels.push(...result.data);
+    cursor = result.pagination?.cursor;
+  } while (cursor !== undefined);
+
+  return allChannels;
+}
+
 export {
   twitchFetch,
   getUsers,
   getFollowedStreams,
   getStreamsByUserIds,
   getVideos,
+  getFollowedChannels,
 };
 
-export type { TwitchUser, TwitchStream, TwitchVideo };
+export type { TwitchUser, TwitchStream, TwitchVideo, TwitchFollowedChannel };

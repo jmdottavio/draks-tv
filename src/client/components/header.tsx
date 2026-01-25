@@ -1,16 +1,26 @@
-import { PlusIcon, FilmIcon, ArrowPathIcon } from './icons';
+import { PlusIcon, FilmIcon, ArrowPathIcon, MenuIcon } from './icons';
 
 interface HeaderProps {
   onAddChannel: () => void;
   onShowVods: () => void;
   onRefresh: () => void;
+  onToggleSidebar: () => void;
   isRefreshing: boolean;
 }
 
-function Header({ onAddChannel, onShowVods, onRefresh, isRefreshing }: HeaderProps) {
+function Header({ onAddChannel, onShowVods, onRefresh, onToggleSidebar, isRefreshing }: HeaderProps) {
   return (
     <header className="flex justify-between items-center px-6 py-4 bg-[#18181b] border-b border-[#2f2f35] sticky top-0 z-50">
-      <h1 className="text-xl font-bold text-twitch-purple tracking-tight">draks-tv</h1>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onToggleSidebar}
+          className="p-2.5 rounded-md text-[#adadb8] hover:bg-[#26262c] hover:text-[#efeff1] transition-all"
+          title="Toggle followed channels"
+        >
+          <MenuIcon className="w-5 h-5" />
+        </button>
+        <h1 className="text-xl font-bold text-twitch-purple tracking-tight">draks-tv</h1>
+      </div>
 
       <div className="flex items-center gap-3">
         <button

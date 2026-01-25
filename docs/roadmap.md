@@ -13,15 +13,20 @@
 - [x] Switch to Bun package manager
 - [x] SQLite database for favorites and auth tokens
 - [x] Set up coding standards (CLAUDE.md + knowledge/)
+- [x] Remove legacy pre-migration files (public/app.js, server.js, etc.)
+- [x] Sidebar for all followed channels with live/offline status
+  - Collapsible sidebar with toggle in header
+  - Shows all followed channels (not just live)
+  - Live channels show viewer count and game
+  - Offline channels show "Last seen X ago" via VOD date
+  - State persisted to localStorage
 
 ## Next Steps
 
-### Sidebar for All Followed Channels
-- Add collapsible sidebar showing all followed channels (not just live)
+### Sidebar Enhancements
 - User can organize/reorder channels in sidebar
-- Shows online/offline status indicator
-- "Last online" approximated via latest VOD date (no direct Twitch API for this)
-- Note: Requires additional API calls to fetch all followed users, not just live streams
+- Search/filter channels in sidebar
+- Right-click context menu for quick actions
 
 ### UI/UX Improvements
 - Loading states and error handling polish

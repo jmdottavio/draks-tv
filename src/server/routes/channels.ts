@@ -2,10 +2,10 @@ import { Router } from 'express';
 
 import { getAuth } from '../database/auth';
 import { getAllFavorites, addFavorite, removeFavorite, isFavorite } from '../database/favorites';
-import { getUsers, getFollowedStreams, getStreamsByUserIds, getVideos } from '../services/twitch-service';
+import { getUsers, getFollowedStreams, getStreamsByUserIds, getVideos, getFollowedChannels } from '../services/twitch-service';
 
 import type { Favorite } from '../database/favorites';
-import type { TwitchStream, TwitchVideo } from '../services/twitch-service';
+import type { TwitchStream, TwitchVideo, TwitchFollowedChannel } from '../services/twitch-service';
 
 const router = Router();
 
@@ -52,6 +52,131 @@ function vodToChannelVod(vod: TwitchVideo) {
   };
 }
 
+interface SidebarChannel {
+  id: string;
+  login: string;
+  displayName: string;
+  profileImage: string;
+  isLive: boolean;
+  viewerCount: number | null;
+  lastVodDate: string | null;
+  gameName: string | null;
+}
+
+// Get all followed channels for sidebar
+router.get('/channels/followed', async (_request, response) => {
+  const auth = getAuth();
+
+  if (auth.userId === null) {
+    response.status(401).json({ error: 'Not authenticated' });
+    return;
+  }
+
+  // Fetch all followed channels
+  const followedResult = await getFollowedChannels(auth.userId);
+
+  if (followedResult instanceof Error) {
+    response.status(500).json({ error: followedResult.message });
+    return;
+  }
+
+  if (followedResult.length === 0) {
+    response.json([]);
+    return;
+  }
+
+  // Get user profile images (batch in groups of 100)
+  const userIds = followedResult.map((channel) => channel.broadcaster_id);
+  const userMap = new Map<string, { profileImage: string }>();
+
+  for (let i = 0; i < userIds.length; i += 100) {
+    const batch = userIds.slice(i, i + 100);
+    const usersResult = await getUsers({ ids: batch });
+
+    if (!(usersResult instanceof Error)) {
+      for (const user of usersResult) {
+        userMap.set(user.id, { profileImage: user.profile_image_url });
+      }
+    }
+  }
+
+  // Check live status (batch in groups of 100)
+  const liveStreamMap = new Map<string, TwitchStream>();
+
+  for (let i = 0; i < userIds.length; i += 100) {
+    const batch = userIds.slice(i, i + 100);
+    const streamsResult = await getStreamsByUserIds(batch);
+
+    if (!(streamsResult instanceof Error)) {
+      for (const stream of streamsResult) {
+        liveStreamMap.set(stream.user_id, stream);
+      }
+    }
+  }
+
+  // Build sidebar channels with VOD dates for offline channels
+  const sidebarChannels: Array<SidebarChannel> = [];
+
+  for (const followed of followedResult) {
+    const liveStream = liveStreamMap.get(followed.broadcaster_id);
+    const userInfo = userMap.get(followed.broadcaster_id);
+
+    if (liveStream !== undefined) {
+      sidebarChannels.push({
+        id: followed.broadcaster_id,
+        login: followed.broadcaster_login,
+        displayName: followed.broadcaster_name,
+        profileImage: userInfo?.profileImage ?? '',
+        isLive: true,
+        viewerCount: liveStream.viewer_count,
+        lastVodDate: null,
+        gameName: liveStream.game_name,
+      });
+    } else {
+      // Fetch latest VOD for offline channel
+      const vodsResult = await getVideos(followed.broadcaster_id, 1);
+      let lastVodDate: string | null = null;
+
+      if (!(vodsResult instanceof Error) && vodsResult.length > 0) {
+        lastVodDate = vodsResult[0].created_at;
+      }
+
+      sidebarChannels.push({
+        id: followed.broadcaster_id,
+        login: followed.broadcaster_login,
+        displayName: followed.broadcaster_name,
+        profileImage: userInfo?.profileImage ?? '',
+        isLive: false,
+        viewerCount: null,
+        lastVodDate,
+        gameName: null,
+      });
+    }
+  }
+
+  // Sort: live channels first (by viewer count), then offline (by last VOD date)
+  sidebarChannels.sort((a, b) => {
+    if (a.isLive && !b.isLive) return -1;
+    if (!a.isLive && b.isLive) return 1;
+
+    if (a.isLive && b.isLive) {
+      return (b.viewerCount ?? 0) - (a.viewerCount ?? 0);
+    }
+
+    // Both offline - sort by last VOD date (most recent first)
+    if (a.lastVodDate !== null && b.lastVodDate !== null) {
+      return new Date(b.lastVodDate).getTime() - new Date(a.lastVodDate).getTime();
+    }
+
+    if (a.lastVodDate !== null) return -1;
+    if (b.lastVodDate !== null) return 1;
+
+    return a.displayName.localeCompare(b.displayName);
+  });
+
+  response.json(sidebarChannels);
+});
+
 // Get all channels (favorites + followed live)
 router.get('/channels', async (_request, response) => {
   const auth = getAuth();
@@ -62,7 +187,7 @@ router.get('/channels', async (_request, response) => {
   }
 
   const favorites = getAllFavorites();
-  const favoriteIds = new Set(favorites.map((f) => f.id));
+  const favoriteIds = new Set(favorites.map((favorite) => favorite.id));
 
   // Get followed live streams
   const liveStreamsResult = await getFollowedStreams(auth.userId);
@@ -78,9 +203,8 @@ router.get('/channels', async (_request, response) => {
   }
 
   // Get user info for non-favorite live streams
-  const liveNonFavoriteIds = liveStreamsResult
-    .filter((stream) => !favoriteIds.has(stream.user_id))
-    .map((stream) => stream.user_id);
+  const liveNonFavoriteStreams = liveStreamsResult.filter((stream) => !favoriteIds.has(stream.user_id));
+  const liveNonFavoriteIds = liveNonFavoriteStreams.map((stream) => stream.user_id);
 
   let liveUsersMap = new Map<string, { id: string; login: string; display_name: string; profile_image_url: string }>();
 
@@ -98,15 +222,15 @@ router.get('/channels', async (_request, response) => {
   const channels: Array<Channel> = [];
 
   // Process favorites
-  for (const fav of favorites) {
-    const liveStream = liveStreamMap.get(fav.id);
+  for (const favorite of favorites) {
+    const liveStream = liveStreamMap.get(favorite.id);
 
     if (liveStream !== undefined) {
       channels.push({
-        id: fav.id,
-        login: fav.login,
-        displayName: fav.displayName,
-        profileImage: fav.profileImage,
+        id: favorite.id,
+        login: favorite.login,
+        displayName: favorite.displayName,
+        profileImage: favorite.profileImage,
         isFavorite: true,
         isLive: true,
         stream: streamToChannelStream(liveStream),
@@ -114,7 +238,7 @@ router.get('/channels', async (_request, response) => {
       });
     } else {
       // Get latest VOD for offline favorite
-      const vodsResult = await getVideos(fav.id, 1);
+      const vodsResult = await getVideos(favorite.id, 1);
       let latestVod = null;
 
       if (!(vodsResult instanceof Error) && vodsResult.length > 0) {
@@ -122,10 +246,10 @@ router.get('/channels', async (_request, response) => {
       }
 
       channels.push({
-        id: fav.id,
-        login: fav.login,
-        displayName: fav.displayName,
-        profileImage: fav.profileImage,
+        id: favorite.id,
+        login: favorite.login,
+        displayName: favorite.displayName,
+        profileImage: favorite.profileImage,
         isFavorite: true,
         isLive: false,
         stream: null,

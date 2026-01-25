@@ -75,4 +75,28 @@ function XMarkIcon({ className }: IconProps) {
   );
 }
 
-export { PlusIcon, FilmIcon, ArrowPathIcon, ArrowLeftIcon, SearchIcon, StarIcon, TwitchIcon, XMarkIcon };
+function ChevronLeftIcon({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M15 18l-6-6 6-6" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M9 18l6-6-6-6" />
+    </svg>
+  );
+}
+
+function MenuIcon({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M3 12h18M3 6h18M3 18h18" />
+    </svg>
+  );
+}
+
+export { PlusIcon, FilmIcon, ArrowPathIcon, ArrowLeftIcon, SearchIcon, StarIcon, TwitchIcon, XMarkIcon, ChevronLeftIcon, ChevronRightIcon, MenuIcon };

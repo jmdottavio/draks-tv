@@ -25,7 +25,8 @@ draks-tv/
 │       ├── services/    # Business logic (Twitch API, Streamlink)
 │       └── database/    # SQLite schema and queries
 ├── knowledge/           # Coding standards and patterns
-├── public/              # Static assets
+├── public/              # Static assets (if any)
+├── docs/                # Project documentation and roadmap
 └── data/                # SQLite database file
 ```
 
