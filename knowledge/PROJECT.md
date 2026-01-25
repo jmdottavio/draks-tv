@@ -68,11 +68,32 @@ db.run(`
     twitch_id TEXT UNIQUE NOT NULL,
     login TEXT NOT NULL,
     display_name TEXT NOT NULL,
+    profile_image TEXT NOT NULL,
+    sort_order INTEGER DEFAULT 0,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   )
 `);
 
 export { db };
+```
+
+Database queries in `src/server/database/favorites.ts`:
+
+```typescript
+import { db } from './schema';
+
+function getAllFavorites() {
+  return db.query('SELECT ... FROM favorites ORDER BY sort_order ASC').all();
+}
+
+function reorderFavorites(orderedIds: Array<string>) {
+  const transaction = db.transaction(() => {
+    for (let index = 0; index < orderedIds.length; index++) {
+      db.run('UPDATE favorites SET sort_order = ? WHERE twitch_id = ?', [index, orderedIds[index]]);
+    }
+  });
+  transaction();
+}
 ```
 
 ## Environment Variables

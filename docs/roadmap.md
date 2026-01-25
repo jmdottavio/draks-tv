@@ -26,11 +26,15 @@
   - Larger fonts, brighter live color (#ff4444) for better readability
   - Custom ghost scrollbar that appears on hover
   - Parallelized VOD fetches for faster loading
+- [x] Drag-and-drop reordering for favorites
+  - Drag favorites in main grid to reorder
+  - Order persisted in SQLite via sort_order column
+  - Optimistic UI updates with rollback on error
 
 ## Next Steps
 
 ### Sidebar Enhancements
-- User can organize/reorder channels in sidebar
+- Drag-and-drop reordering in sidebar (currently only in main grid)
 - Search/filter channels in sidebar
 - Right-click context menu for quick actions
 - Tooltip on collapsed icons showing channel name and status
