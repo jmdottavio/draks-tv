@@ -57,12 +57,12 @@ function AddChannelModal({ isOpen, onClose, onAdd }: AddChannelModalProps) {
       onClick={handleBackdropClick}
       onKeyDown={handleKeyDown}
     >
-      <div className="bg-[#18181b] border border-[#2f2f35] rounded-xl w-full max-w-[400px] mx-5 animate-[modalIn_0.2s_ease]">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#2f2f35]">
+      <div className="bg-surface-card border border-surface-border rounded-xl w-full max-w-[400px] mx-5 animate-[modalIn_0.2s_ease]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-surface-border">
           <h3 className="text-base font-semibold">Add Channel to Favorites</h3>
           <button
             onClick={onClose}
-            className="text-[#7a7a85] hover:text-[#efeff1] text-2xl leading-none"
+            className="text-text-dim hover:text-text-primary transition-colors"
           >
             <XMarkIcon className="w-5 h-5" />
           </button>
@@ -74,7 +74,7 @@ function AddChannelModal({ isOpen, onClose, onAdd }: AddChannelModalProps) {
             value={login}
             onChange={(e) => setLogin(e.target.value)}
             placeholder="Enter channel name..."
-            className="w-full px-3.5 py-2.5 border border-[#2f2f35] rounded-md bg-[#1f1f23] text-[#efeff1] text-sm focus:outline-none focus:border-twitch-purple focus:ring-[3px] focus:ring-twitch-purple/15 placeholder:text-[#7a7a85]"
+            className="w-full px-3.5 py-2.5 border border-surface-border-muted rounded-md bg-surface-elevated text-text-primary text-sm focus:outline-none focus:border-twitch-purple focus:ring-[3px] focus:ring-twitch-purple/15 placeholder:text-text-dim"
             autoFocus
           />
 
@@ -88,7 +88,7 @@ function AddChannelModal({ isOpen, onClose, onAdd }: AddChannelModalProps) {
         </form>
 
         {error !== null && (
-          <p className="text-live text-[13px] px-5 pb-4 -mt-1">{error}</p>
+          <p className="text-live text-sm px-5 pb-4 -mt-1">{error}</p>
         )}
       </div>
     </div>

@@ -54,9 +54,9 @@ function App() {
   if (isAuthLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center text-[#7a7a85]">
+        <div className="flex items-center text-text-dim">
           <span>Loading</span>
-          <span className="ml-3 w-6 h-6 border-2 border-[#2f2f35] border-t-twitch-purple rounded-full animate-spin" />
+          <span className="ml-3 w-6 h-6 border-2 border-surface-border-muted border-t-twitch-purple rounded-full animate-spin" />
         </div>
       </div>
     );
@@ -65,7 +65,7 @@ function App() {
   if (authData === undefined || !authData.authenticated) {
     return (
       <div className="min-h-screen">
-        <header className="flex justify-between items-center px-6 py-4 bg-[#18181b] border-b border-[#2f2f35]">
+        <header className="flex justify-between items-center px-6 py-4 bg-surface-card border-b border-surface-border">
           <h1 className="text-xl font-bold text-twitch-purple tracking-tight">draks-tv</h1>
         </header>
         <main className="p-6 max-w-[1600px] mx-auto">
@@ -92,9 +92,9 @@ function App() {
           {currentView === 'channels' && (
             <section className="animate-[fadeIn_0.2s_ease]">
               {isChannelsLoading && (
-                <div className="flex items-center justify-center py-16 text-[#7a7a85]">
+                <div className="flex items-center justify-center py-16 text-text-dim">
                   <span>Loading channels</span>
-                  <span className="ml-3 w-6 h-6 border-2 border-[#2f2f35] border-t-twitch-purple rounded-full animate-spin" />
+                  <span className="ml-3 w-6 h-6 border-2 border-surface-border-muted border-t-twitch-purple rounded-full animate-spin" />
                 </div>
               )}
 

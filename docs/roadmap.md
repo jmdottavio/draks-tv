@@ -30,22 +30,19 @@
   - Drag favorites in main grid to reorder
   - Order persisted in SQLite via sort_order column
   - Optimistic UI updates with rollback on error
-
-## Next Steps
-
-### High Priority
 - [x] Cache followed channels "last seen" time locally
   - Don't re-fetch latest VOD for every channel on every reload
   - Update last seen time only when we see someone new go live
   - Significantly reduces API calls and load time
   - Implemented with SQLite `channel_last_seen` table
+- [x] Total UI redesign
+  - Larger fonts for better readability (text-base throughout)
+  - Improved color contrast with semantic Tailwind tokens
+  - Lighter background (#18181b instead of #0e0e10)
+  - Compact horizontal layout for offline favorite cards
+  - Section headers for Live Favorites, Offline Favorites, Following
 
-### Medium-High Priority
-- Total UI redesign
-  - Larger fonts for better readability
-  - Improved color contrast
-  - Lighter background
-  - Smaller/compact offline favorite cards (currently waste too much space)
+## Next Steps
 
 ### Medium Priority
 - Channel detail page when clicking a channel

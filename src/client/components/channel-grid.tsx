@@ -15,16 +15,25 @@ function ChannelGrid({ channels, onToggleFavorite, onReorderFavorites }: Channel
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const dragCounter = useRef(0);
 
-  const favoriteChannels: Array<Channel> = [];
+  // Separate channels into categories
+  const liveFavorites: Array<Channel> = [];
+  const offlineFavorites: Array<Channel> = [];
   const nonFavoriteChannels: Array<Channel> = [];
 
   for (const channel of channels) {
     if (channel.isFavorite) {
-      favoriteChannels.push(channel);
+      if (channel.isLive) {
+        liveFavorites.push(channel);
+      } else {
+        offlineFavorites.push(channel);
+      }
     } else {
       nonFavoriteChannels.push(channel);
     }
   }
+
+  // Combined favorites for drag-and-drop ordering
+  const allFavorites = [...liveFavorites, ...offlineFavorites];
 
   function handleDragStart(event: React.DragEvent, channelId: string) {
     setDraggedId(channelId);
@@ -70,7 +79,7 @@ function ChannelGrid({ channels, onToggleFavorite, onReorderFavorites }: Channel
       return;
     }
 
-    const currentOrder = favoriteChannels.map((channel) => channel.id);
+    const currentOrder = allFavorites.map((channel) => channel.id);
     const draggedIndex = currentOrder.indexOf(draggedId);
     const targetIndex = currentOrder.indexOf(targetId);
 
@@ -101,7 +110,7 @@ function ChannelGrid({ channels, onToggleFavorite, onReorderFavorites }: Channel
     }
 
     if (isDropTarget) {
-      className += ' ring-2 ring-twitch-purple ring-offset-2 ring-offset-[#0e0e10]';
+      className += ' ring-2 ring-twitch-purple ring-offset-2 ring-offset-surface-page';
     }
 
     return className;
@@ -109,43 +118,95 @@ function ChannelGrid({ channels, onToggleFavorite, onReorderFavorites }: Channel
 
   if (channels.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center text-center py-20 text-[#7a7a85]">
+      <div className="flex flex-col items-center justify-center text-center py-20 text-text-dim">
         <svg className="w-12 h-12 mb-4 opacity-30" viewBox="0 0 24 24" fill="currentColor">
           <circle cx="12" cy="12" r="10" />
         </svg>
-        <p className="text-base font-medium text-[#adadb8] mb-1">No channels to show</p>
+        <p className="text-base font-medium text-text-secondary mb-1">No channels to show</p>
         <span className="text-sm">Add some favorites or wait for followed channels to go live</span>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
-      {favoriteChannels.map((channel) => (
-        <div
-          key={channel.id}
-          draggable
-          onDragStart={(event) => handleDragStart(event, channel.id)}
-          onDragEnd={handleDragEnd}
-          onDragEnter={(event) => handleDragEnter(event, channel.id)}
-          onDragLeave={handleDragLeave}
-          onDragOver={handleDragOver}
-          onDrop={(event) => handleDrop(event, channel.id)}
-          className={getDragClassName(channel.id)}
-        >
-          <ChannelCard
-            channel={channel}
-            onToggleFavorite={onToggleFavorite}
-          />
+    <div className="space-y-6">
+      {/* Live Favorites - Full cards in grid */}
+      {liveFavorites.length > 0 && (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
+          {liveFavorites.map((channel) => (
+            <div
+              key={channel.id}
+              draggable
+              onDragStart={(event) => handleDragStart(event, channel.id)}
+              onDragEnd={handleDragEnd}
+              onDragEnter={(event) => handleDragEnter(event, channel.id)}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={(event) => handleDrop(event, channel.id)}
+              className={getDragClassName(channel.id)}
+            >
+              <ChannelCard
+                channel={channel}
+                onToggleFavorite={onToggleFavorite}
+                variant="full"
+              />
+            </div>
+          ))}
         </div>
-      ))}
-      {nonFavoriteChannels.map((channel) => (
-        <ChannelCard
-          key={channel.id}
-          channel={channel}
-          onToggleFavorite={onToggleFavorite}
-        />
-      ))}
+      )}
+
+      {/* Offline Favorites - Compact cards in list */}
+      {offlineFavorites.length > 0 && (
+        <div>
+          {liveFavorites.length > 0 && (
+            <h3 className="text-sm font-semibold text-text-dim uppercase tracking-wide mb-3">
+              Offline Favorites
+            </h3>
+          )}
+          <div className="space-y-2">
+            {offlineFavorites.map((channel) => (
+              <div
+                key={channel.id}
+                draggable
+                onDragStart={(event) => handleDragStart(event, channel.id)}
+                onDragEnd={handleDragEnd}
+                onDragEnter={(event) => handleDragEnter(event, channel.id)}
+                onDragLeave={handleDragLeave}
+                onDragOver={handleDragOver}
+                onDrop={(event) => handleDrop(event, channel.id)}
+                className={getDragClassName(channel.id)}
+              >
+                <ChannelCard
+                  channel={channel}
+                  onToggleFavorite={onToggleFavorite}
+                  variant="compact"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Non-favorites - Full cards in grid */}
+      {nonFavoriteChannels.length > 0 && (
+        <div>
+          {(liveFavorites.length > 0 || offlineFavorites.length > 0) && (
+            <h3 className="text-sm font-semibold text-text-dim uppercase tracking-wide mb-3">
+              Following
+            </h3>
+          )}
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
+            {nonFavoriteChannels.map((channel) => (
+              <ChannelCard
+                key={channel.id}
+                channel={channel}
+                onToggleFavorite={onToggleFavorite}
+                variant="full"
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

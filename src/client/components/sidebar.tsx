@@ -1,8 +1,8 @@
+import { useQueryClient } from '@tanstack/react-query';
+
 import { useFollowedChannels } from '../hooks/use-followed-channels';
 import { watchLive, toggleFavorite } from '../lib/api';
 import { formatViewers, formatDate } from '../lib/format';
-import { useQueryClient } from '@tanstack/react-query';
-
 import { ChevronLeftIcon, ChevronRightIcon, StarIcon } from './icons';
 
 import type { SidebarChannel } from '../lib/api';
@@ -97,7 +97,7 @@ function ChannelItem({ channel, isExpanded, onFavoriteToggle }: ChannelItemProps
       <button onClick={handleClick} className="flex flex-1 items-center gap-3 text-left min-w-0">
         <ChannelAvatar channel={channel} isExpanded={true} />
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[15px] font-semibold text-sidebar-text">
+          <div className="truncate text-base font-semibold text-sidebar-text">
             {channel.displayName}
           </div>
           <ChannelStatusInfo channel={channel} />

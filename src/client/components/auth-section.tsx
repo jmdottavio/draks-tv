@@ -14,7 +14,7 @@ function AuthSection() {
       </div>
 
       <h2 className="text-2xl font-semibold mb-3">Connect to Twitch</h2>
-      <p className="text-[#adadb8] mb-6">Login with your Twitch account to see your followed streams.</p>
+      <p className="text-text-muted mb-6">Login with your Twitch account to see your followed streams.</p>
 
       <button
         onClick={handleLogin}

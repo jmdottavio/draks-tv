@@ -10,11 +10,11 @@ interface HeaderProps {
 
 function Header({ onAddChannel, onShowVods, onRefresh, onToggleSidebar, isRefreshing }: HeaderProps) {
   return (
-    <header className="flex justify-between items-center px-6 py-4 bg-[#18181b] border-b border-[#2f2f35] sticky top-0 z-50">
+    <header className="flex justify-between items-center px-6 py-4 bg-surface-card border-b border-surface-border sticky top-0 z-50">
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleSidebar}
-          className="p-2.5 rounded-md text-[#adadb8] hover:bg-[#26262c] hover:text-[#efeff1] transition-all"
+          className="p-2.5 rounded-md text-text-muted hover:bg-surface-elevated hover:text-text-primary transition-all"
           title="Toggle followed channels"
         >
           <MenuIcon className="w-5 h-5" />
@@ -25,7 +25,7 @@ function Header({ onAddChannel, onShowVods, onRefresh, onToggleSidebar, isRefres
       <div className="flex items-center gap-3">
         <button
           onClick={onAddChannel}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-md bg-[#1f1f23] border border-[#2f2f35] text-[#efeff1] text-sm font-semibold hover:bg-[#26262c] hover:border-[#7a7a85] transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-md bg-surface-elevated border border-surface-border-muted text-text-primary text-sm font-semibold hover:bg-twitch-purple hover:border-twitch-purple transition-all"
         >
           <PlusIcon className="w-4 h-4" />
           Add Channel
@@ -33,7 +33,7 @@ function Header({ onAddChannel, onShowVods, onRefresh, onToggleSidebar, isRefres
 
         <button
           onClick={onShowVods}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-md text-[#adadb8] text-sm font-semibold hover:bg-[#26262c] hover:text-[#efeff1] transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-md text-text-muted text-sm font-semibold hover:bg-surface-elevated hover:text-text-primary transition-all"
         >
           <FilmIcon className="w-4 h-4" />
           VODs
@@ -42,10 +42,10 @@ function Header({ onAddChannel, onShowVods, onRefresh, onToggleSidebar, isRefres
         <button
           onClick={onRefresh}
           disabled={isRefreshing}
-          className="p-2.5 rounded-md text-[#adadb8] hover:bg-[#26262c] hover:text-[#efeff1] transition-all disabled:opacity-50"
+          className="p-2.5 rounded-md text-text-muted hover:bg-surface-elevated hover:text-text-primary transition-all disabled:opacity-50"
           title="Refresh"
         >
-          <ArrowPathIcon className={`w-[18px] h-[18px] ${isRefreshing ? 'animate-spin' : ''}`} />
+          <ArrowPathIcon className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
       </div>
     </header>

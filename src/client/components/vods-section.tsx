@@ -35,7 +35,7 @@ function VodsSection({ onBack }: VodsSectionProps) {
       <div className="flex items-center gap-4 mb-5">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-md text-[#adadb8] text-sm font-semibold hover:bg-[#26262c] hover:text-[#efeff1] transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-md text-text-muted text-sm font-semibold hover:bg-surface-elevated hover:text-text-primary transition-all"
         >
           <ArrowLeftIcon className="w-4 h-4" />
           Back
@@ -43,14 +43,14 @@ function VodsSection({ onBack }: VodsSectionProps) {
         <h2 className="text-xl font-semibold">Search VODs</h2>
       </div>
 
-      <form onSubmit={handleSearch} className="flex items-center gap-3 mb-6 px-4 py-1 bg-[#18181b] border border-[#2f2f35] rounded-lg max-w-[600px]">
-        <SearchIcon className="w-5 h-5 text-[#7a7a85] flex-shrink-0" />
+      <form onSubmit={handleSearch} className="flex items-center gap-3 mb-6 px-4 py-1 bg-surface-card border border-surface-border-muted rounded-lg max-w-[600px]">
+        <SearchIcon className="w-5 h-5 text-text-dim flex-shrink-0" />
         <input
           type="text"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           placeholder="Enter channel name..."
-          className="flex-1 py-2.5 bg-transparent border-none text-[#efeff1] text-sm focus:outline-none placeholder:text-[#7a7a85]"
+          className="flex-1 py-2.5 bg-transparent border-none text-text-primary text-sm focus:outline-none placeholder:text-text-dim"
           autoFocus
         />
         <button
@@ -62,14 +62,14 @@ function VodsSection({ onBack }: VodsSectionProps) {
       </form>
 
       {isLoading && (
-        <div className="flex items-center justify-center py-16 text-[#7a7a85]">
+        <div className="flex items-center justify-center py-16 text-text-dim">
           <span>Searching</span>
-          <span className="ml-3 w-6 h-6 border-2 border-[#2f2f35] border-t-twitch-purple rounded-full animate-spin" />
+          <span className="ml-3 w-6 h-6 border-2 border-surface-border-muted border-t-twitch-purple rounded-full animate-spin" />
         </div>
       )}
 
       {error !== null && (
-        <p className="text-live text-[13px]">{error.message}</p>
+        <p className="text-live text-sm">{error.message}</p>
       )}
 
       {data !== null && data !== undefined && (
@@ -81,7 +81,7 @@ function VodsSection({ onBack }: VodsSectionProps) {
       )}
 
       {data !== null && data !== undefined && data.videos.length === 0 && (
-        <p className="text-[#7a7a85] text-sm">No VODs found for {searchQuery}</p>
+        <p className="text-text-dim text-sm">No VODs found for {searchQuery}</p>
       )}
     </section>
   );
@@ -96,29 +96,29 @@ function VodCard({ vod, onWatch }: VodCardProps) {
   const thumbnailUrl = formatThumbnail(vod.thumbnail_url, 440, 248);
 
   return (
-    <div className="bg-[#18181b] border border-[#2f2f35] rounded-lg overflow-hidden transition-all hover:-translate-y-0.5 hover:border-[#7a7a85]">
-      <div className="relative aspect-video bg-[#1f1f23]">
+    <div className="bg-surface-card border border-surface-border-muted rounded-lg overflow-hidden transition-all hover:-translate-y-0.5 hover:border-surface-border">
+      <div className="relative aspect-video bg-surface-elevated">
         <img
           src={thumbnailUrl}
           alt={vod.title}
           className="w-full h-full object-cover"
         />
-        <span className="absolute bottom-2 right-2 bg-black/80 text-white text-xs font-medium px-1.5 py-0.5 rounded">
+        <span className="absolute bottom-2 right-2 bg-black/80 text-white text-sm font-medium px-2 py-1 rounded">
           {formatDuration(vod.duration)}
         </span>
       </div>
 
-      <div className="p-3.5">
-        <div className="text-[13px] text-[#efeff1] mb-1.5 line-clamp-2" title={vod.title}>
+      <div className="p-4">
+        <div className="text-sm text-text-primary mb-2 line-clamp-2" title={vod.title}>
           {vod.title}
         </div>
-        <div className="flex items-center gap-3 text-xs text-[#adadb8] mb-3">
+        <div className="flex items-center gap-3 text-sm text-text-muted mb-4">
           <span className="text-twitch-purple-light font-semibold">{vod.user_name}</span>
           <span>{formatDate(vod.created_at)}</span>
         </div>
         <button
           onClick={() => onWatch(vod.id)}
-          className="w-full py-2 px-3 rounded-md bg-[#1f1f23] border border-[#2f2f35] text-[#efeff1] text-[13px] font-semibold hover:bg-twitch-purple hover:border-twitch-purple transition-all"
+          className="w-full py-2.5 px-4 rounded-md bg-surface-elevated border border-surface-border-muted text-text-primary text-sm font-semibold hover:bg-twitch-purple hover:border-twitch-purple transition-all"
         >
           Watch in VLC
         </button>
