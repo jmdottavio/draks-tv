@@ -33,22 +33,41 @@
 
 ## Next Steps
 
-### Sidebar Enhancements
-- Drag-and-drop reordering in sidebar (currently only in main grid)
-- Search/filter channels in sidebar
-- Right-click context menu for quick actions
-- Tooltip on collapsed icons showing channel name and status
+### High Priority
+- Cache followed channels "last seen" time locally
+  - Don't re-fetch latest VOD for every channel on every reload
+  - Update last seen time only when we see someone new go live
+  - Significantly reduces API calls and load time
 
-### UI/UX Improvements
+### Medium-High Priority
+- Total UI redesign
+  - Larger fonts for better readability
+  - Improved color contrast
+  - Lighter background
+  - Smaller/compact offline favorite cards (currently waste too much space)
+
+### Medium Priority
+- Channel detail page when clicking a channel
+  - Show latest 5 VODs or navigate to VODs page with channel name pre-searched
+- Search/filter channels in sidebar
+- Tooltip on collapsed icons showing channel name and status
+- Notifications when favorites go live
+  - Ideally with category/game filtering (only notify for certain games)
+
+### Low-Medium Priority
+- Drag-and-drop reordering in sidebar (currently only in main grid)
+- Local watch history
+
+### Low Priority
+- "Add channel" option to follow OR just add to favorites (currently only favorites)
 - Loading states and error handling polish
-- Keyboard shortcuts (refresh, navigate)
+- Right-click context menu for quick actions in sidebar
 - Remember scroll position when returning from VODs view
+- Stream quality selector before launching (always want highest anyway)
 
 ### Future Considerations
 - YouTube integration (similar favorites + VOD browsing)
-- Local watch history
-- Stream quality selector before launching
-- Notifications when favorites go live (optional)
+- Keyboard shortcuts (refresh, navigate)
 
 ## Technical Notes
 
