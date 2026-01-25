@@ -34,10 +34,11 @@ draks-tv/
 
 - OAuth with Twitch for followed channels
 - Combined view: favorites + followed channels
-- Live status indicators
+- Collapsible sidebar with all followed channels (icons-only when collapsed)
+- Live status indicators with red ring/glow effects
 - Latest VOD for offline channels
 - One-click launch to VLC via Streamlink
-- Favorites stored in SQLite
+- Favorites stored in SQLite (toggle from sidebar or main grid)
 
 ## Tech Stack
 

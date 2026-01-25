@@ -5,3 +5,4 @@ data/
 favorites.json
 *.db
 bun.lock
+.claude/

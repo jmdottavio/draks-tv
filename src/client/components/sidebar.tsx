@@ -274,7 +274,7 @@ function Sidebar({ isExpanded, onToggle }: SidebarProps) {
         </div>
 
         {/* Channel list */}
-        <div className={`flex-1 overflow-y-auto ${isExpanded ? 'p-2' : 'p-1'}`}>
+        <div className={`sidebar-scroll flex-1 overflow-y-auto ${isExpanded ? 'p-2' : 'p-1'}`}>
           {isLoading ? (
             <SidebarLoading isExpanded={isExpanded} />
           ) : (

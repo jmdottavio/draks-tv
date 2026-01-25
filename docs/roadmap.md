@@ -20,6 +20,12 @@
   - Live channels show viewer count and game
   - Offline channels show "Last seen X ago" via VOD date
   - State persisted to localStorage
+- [x] Sidebar improvements
+  - Collapsed mode shows icons with red/gray ring indicators for live/offline
+  - Expanded mode has favorite toggle star button
+  - Larger fonts, brighter live color (#ff4444) for better readability
+  - Custom ghost scrollbar that appears on hover
+  - Parallelized VOD fetches for faster loading
 
 ## Next Steps
 
@@ -27,6 +33,7 @@
 - User can organize/reorder channels in sidebar
 - Search/filter channels in sidebar
 - Right-click context menu for quick actions
+- Tooltip on collapsed icons showing channel name and status
 
 ### UI/UX Improvements
 - Loading states and error handling polish
