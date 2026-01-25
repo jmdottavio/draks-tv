@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 import { getAuth } from '../database/auth';
-import { getAllFavorites, addFavorite, removeFavorite, isFavorite } from '../database/favorites';
+import { getAllFavorites, addFavorite, removeFavorite, isFavorite, reorderFavorites } from '../database/favorites';
 import { getUsers, getFollowedStreams, getStreamsByUserIds, getVideos, getFollowedChannels } from '../services/twitch-service';
 
 import type { Favorite } from '../database/favorites';
@@ -220,10 +220,15 @@ router.get('/channels', async (_request, response) => {
   }
 
   // Get user info for non-favorite live streams
-  const liveNonFavoriteStreams = liveStreamsResult.filter((stream) => !favoriteIds.has(stream.user_id));
-  const liveNonFavoriteIds = liveNonFavoriteStreams.map((stream) => stream.user_id);
+  const liveNonFavoriteIds: Array<string> = [];
 
-  let liveUsersMap = new Map<string, { id: string; login: string; display_name: string; profile_image_url: string }>();
+  for (const stream of liveStreamsResult) {
+    if (!favoriteIds.has(stream.user_id)) {
+      liveNonFavoriteIds.push(stream.user_id);
+    }
+  }
+
+  const liveUsersMap = new Map<string, { id: string; login: string; display_name: string; profile_image_url: string }>();
 
   if (liveNonFavoriteIds.length > 0) {
     const usersResult = await getUsers({ ids: liveNonFavoriteIds });
@@ -299,21 +304,27 @@ router.get('/channels', async (_request, response) => {
     });
   }
 
-  // Sort: favorites live first, then favorites offline, then followed live by viewer count
-  channels.sort((a, b) => {
-    if (a.isFavorite && !b.isFavorite) return -1;
-    if (!a.isFavorite && b.isFavorite) return 1;
-    if (a.isLive && !b.isLive) return -1;
-    if (!a.isLive && b.isLive) return 1;
+  // Favorites are already in user-defined order from database
+  // Only sort non-favorites by viewer count
+  const favoriteChannels: Array<Channel> = [];
+  const nonFavoriteChannels: Array<Channel> = [];
 
-    if (a.isLive && b.isLive && a.stream !== null && b.stream !== null) {
+  for (const channel of channels) {
+    if (channel.isFavorite) {
+      favoriteChannels.push(channel);
+    } else {
+      nonFavoriteChannels.push(channel);
+    }
+  }
+
+  nonFavoriteChannels.sort((a, b) => {
+    if (a.stream !== null && b.stream !== null) {
       return b.stream.viewerCount - a.stream.viewerCount;
     }
-
     return a.displayName.localeCompare(b.displayName);
   });
 
-  response.json(channels);
+  response.json([...favoriteChannels, ...nonFavoriteChannels]);
 });
 
 // Toggle favorite
@@ -388,6 +399,19 @@ router.post('/favorites', async (request, response) => {
 
   addFavorite(favorite);
   response.json(favorite);
+});
+
+// Reorder favorites
+router.put('/favorites/reorder', (request, response) => {
+  const { orderedIds } = request.body as { orderedIds?: Array<string> };
+
+  if (orderedIds === undefined || !Array.isArray(orderedIds)) {
+    response.status(400).json({ error: 'orderedIds array required' });
+    return;
+  }
+
+  reorderFavorites(orderedIds);
+  response.json({ success: true });
 });
 
 // Get users by login

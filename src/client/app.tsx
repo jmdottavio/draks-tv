@@ -7,7 +7,7 @@ import { VodsSection } from './components/vods-section';
 import { AuthSection } from './components/auth-section';
 import { Sidebar } from './components/sidebar';
 import { useAuth } from './hooks/use-auth';
-import { useChannels, useToggleFavorite, useAddFavorite } from './hooks/use-channels';
+import { useChannels, useToggleFavorite, useAddFavorite, useReorderFavorites } from './hooks/use-channels';
 
 type View = 'channels' | 'vods';
 
@@ -25,6 +25,7 @@ function App() {
   const { data: channels, isLoading: isChannelsLoading, isFetching, refetch } = useChannels();
   const toggleFavoriteMutation = useToggleFavorite();
   const addFavoriteMutation = useAddFavorite();
+  const reorderFavoritesMutation = useReorderFavorites();
 
   useEffect(() => {
     localStorage.setItem('sidebar-open', String(isSidebarOpen));
@@ -32,6 +33,22 @@ function App() {
 
   function handleToggleSidebar() {
     setIsSidebarOpen((prev) => !prev);
+  }
+
+  function handleRefresh() {
+    refetch();
+  }
+
+  function handleToggleFavorite(id: string) {
+    toggleFavoriteMutation.mutate(id);
+  }
+
+  async function handleAddFavorite(login: string) {
+    await addFavoriteMutation.mutateAsync(login);
+  }
+
+  function handleReorderFavorites(orderedIds: Array<string>) {
+    reorderFavoritesMutation.mutate(orderedIds);
   }
 
   if (isAuthLoading) {
@@ -58,18 +75,6 @@ function App() {
     );
   }
 
-  function handleRefresh() {
-    refetch();
-  }
-
-  function handleToggleFavorite(id: string) {
-    toggleFavoriteMutation.mutate(id);
-  }
-
-  async function handleAddFavorite(login: string) {
-    await addFavoriteMutation.mutateAsync(login);
-  }
-
   return (
     <div className="min-h-screen">
       <Sidebar isExpanded={isSidebarOpen} onToggle={handleToggleSidebar} />
@@ -94,7 +99,11 @@ function App() {
               )}
 
               {!isChannelsLoading && channels !== undefined && (
-                <ChannelGrid channels={channels} onToggleFavorite={handleToggleFavorite} />
+                <ChannelGrid
+                  channels={channels}
+                  onToggleFavorite={handleToggleFavorite}
+                  onReorderFavorites={handleReorderFavorites}
+                />
               )}
             </section>
           )}

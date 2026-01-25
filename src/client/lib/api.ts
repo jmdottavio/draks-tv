@@ -147,6 +147,18 @@ async function fetchFollowedChannels(): Promise<Array<SidebarChannel>> {
   return response.json();
 }
 
+async function reorderFavorites(orderedIds: Array<string>): Promise<void> {
+  const response = await fetch('/api/favorites/reorder', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderedIds }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to reorder favorites');
+  }
+}
+
 export {
   fetchAuthStatus,
   fetchAuthUrl,
@@ -154,6 +166,7 @@ export {
   fetchFollowedChannels,
   toggleFavorite,
   addFavorite,
+  reorderFavorites,
   fetchUserByLogin,
   fetchVideos,
   watchLive,

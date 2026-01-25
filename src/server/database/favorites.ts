@@ -12,11 +12,12 @@ interface FavoriteRow {
   login: string;
   display_name: string;
   profile_image: string;
+  sort_order: number;
 }
 
 function getAllFavorites(): Array<Favorite> {
   const rows = db.query<FavoriteRow, []>(
-    'SELECT twitch_id, login, display_name, profile_image FROM favorites ORDER BY created_at'
+    'SELECT twitch_id, login, display_name, profile_image, sort_order FROM favorites ORDER BY sort_order ASC'
   ).all();
 
   return rows.map((row) => ({
@@ -27,10 +28,23 @@ function getAllFavorites(): Array<Favorite> {
   }));
 }
 
+function getNextSortOrder(): number {
+  const result = db.query<{ max_order: number | null }, []>(
+    'SELECT MAX(sort_order) as max_order FROM favorites'
+  ).get();
+
+  if (result === null || result.max_order === null) {
+    return 0;
+  }
+
+  return result.max_order + 1;
+}
+
 function addFavorite(favorite: Favorite): void {
+  const sortOrder = getNextSortOrder();
   db.run(
-    'INSERT INTO favorites (twitch_id, login, display_name, profile_image) VALUES (?, ?, ?, ?)',
-    [favorite.id, favorite.login, favorite.displayName, favorite.profileImage]
+    'INSERT INTO favorites (twitch_id, login, display_name, profile_image, sort_order) VALUES (?, ?, ?, ?, ?)',
+    [favorite.id, favorite.login, favorite.displayName, favorite.profileImage, sortOrder]
   );
 }
 
@@ -47,5 +61,18 @@ function isFavorite(twitchId: string): boolean {
   return row !== null && row.count > 0;
 }
 
-export { getAllFavorites, addFavorite, removeFavorite, isFavorite };
+function reorderFavorites(orderedIds: Array<string>): void {
+  const transaction = db.transaction(() => {
+    for (let index = 0; index < orderedIds.length; index++) {
+      db.run(
+        'UPDATE favorites SET sort_order = ? WHERE twitch_id = ?',
+        [index, orderedIds[index]]
+      );
+    }
+  });
+
+  transaction();
+}
+
+export { getAllFavorites, addFavorite, removeFavorite, isFavorite, reorderFavorites };
 export type { Favorite };
