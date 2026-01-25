@@ -58,6 +58,7 @@ interface SidebarChannel {
   displayName: string;
   profileImage: string;
   isLive: boolean;
+  isFavorite: boolean;
   viewerCount: number | null;
   lastVodDate: string | null;
   gameName: string | null;
@@ -84,6 +85,10 @@ router.get('/channels/followed', async (_request, response) => {
     response.json([]);
     return;
   }
+
+  // Get favorite IDs for quick lookup
+  const favorites = getAllFavorites();
+  const favoriteIds = new Set(favorites.map((favorite) => favorite.id));
 
   // Get user profile images (batch in groups of 100)
   const userIds = followedResult.map((channel) => channel.broadcaster_id);
@@ -114,8 +119,9 @@ router.get('/channels/followed', async (_request, response) => {
     }
   }
 
-  // Build sidebar channels with VOD dates for offline channels
+  // Build sidebar channels - separate live from offline
   const sidebarChannels: Array<SidebarChannel> = [];
+  const offlineChannels: Array<TwitchFollowedChannel> = [];
 
   for (const followed of followedResult) {
     const liveStream = liveStreamMap.get(followed.broadcaster_id);
@@ -128,31 +134,42 @@ router.get('/channels/followed', async (_request, response) => {
         displayName: followed.broadcaster_name,
         profileImage: userInfo?.profileImage ?? '',
         isLive: true,
+        isFavorite: favoriteIds.has(followed.broadcaster_id),
         viewerCount: liveStream.viewer_count,
         lastVodDate: null,
         gameName: liveStream.game_name,
       });
     } else {
-      // Fetch latest VOD for offline channel
-      const vodsResult = await getVideos(followed.broadcaster_id, 1);
-      let lastVodDate: string | null = null;
-
-      if (!(vodsResult instanceof Error) && vodsResult.length > 0) {
-        lastVodDate = vodsResult[0].created_at;
-      }
-
-      sidebarChannels.push({
-        id: followed.broadcaster_id,
-        login: followed.broadcaster_login,
-        displayName: followed.broadcaster_name,
-        profileImage: userInfo?.profileImage ?? '',
-        isLive: false,
-        viewerCount: null,
-        lastVodDate,
-        gameName: null,
-      });
+      offlineChannels.push(followed);
     }
   }
+
+  // Fetch VODs for offline channels in parallel
+  const vodPromises = offlineChannels.map(async (followed) => {
+    const vodsResult = await getVideos(followed.broadcaster_id, 1);
+    let lastVodDate: string | null = null;
+
+    if (!(vodsResult instanceof Error) && vodsResult.length > 0) {
+      lastVodDate = vodsResult[0].created_at;
+    }
+
+    const userInfo = userMap.get(followed.broadcaster_id);
+
+    return {
+      id: followed.broadcaster_id,
+      login: followed.broadcaster_login,
+      displayName: followed.broadcaster_name,
+      profileImage: userInfo?.profileImage ?? '',
+      isLive: false,
+      isFavorite: favoriteIds.has(followed.broadcaster_id),
+      viewerCount: null,
+      lastVodDate,
+      gameName: null,
+    } as SidebarChannel;
+  });
+
+  const offlineSidebarChannels = await Promise.all(vodPromises);
+  sidebarChannels.push(...offlineSidebarChannels);
 
   // Sort: live channels first (by viewer count), then offline (by last VOD date)
   sidebarChannels.sort((a, b) => {

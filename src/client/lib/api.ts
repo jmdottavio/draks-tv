@@ -57,6 +57,7 @@ interface SidebarChannel {
   displayName: string;
   profileImage: string;
   isLive: boolean;
+  isFavorite: boolean;
   viewerCount: number | null;
   lastVodDate: string | null;
   gameName: string | null;

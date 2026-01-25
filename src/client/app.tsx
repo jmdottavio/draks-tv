@@ -72,9 +72,9 @@ function App() {
 
   return (
     <div className="min-h-screen">
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <Sidebar isExpanded={isSidebarOpen} onToggle={handleToggleSidebar} />
 
-      <div className={`transition-[margin] duration-300 ${isSidebarOpen ? 'lg:ml-64' : ''}`}>
+      <div className={`transition-[margin] duration-300 ${isSidebarOpen ? 'lg:ml-72' : 'lg:ml-16'}`}>
         <Header
           onAddChannel={() => setIsModalOpen(true)}
           onShowVods={() => setCurrentView('vods')}
