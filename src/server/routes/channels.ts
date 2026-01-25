@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import { getAuth } from '../database/auth';
 import { getAllFavorites, addFavorite, removeFavorite, isFavorite, reorderFavorites } from '../database/favorites';
+import { getAllLastSeenDates, batchUpdateLastSeenToNow, batchSetLastSeenFromVod } from '../database/channel-last-seen';
 import { getUsers, getFollowedStreams, getStreamsByUserIds, getVideos, getFollowedChannels } from '../services/twitch-service';
 
 import type { Favorite } from '../database/favorites';
@@ -90,6 +91,9 @@ router.get('/channels/followed', async (_request, response) => {
   const favorites = getAllFavorites();
   const favoriteIds = new Set(favorites.map((favorite) => favorite.id));
 
+  // Get cached "last seen" dates from local database
+  const cachedLastSeenDates = getAllLastSeenDates();
+
   // Get user profile images (batch in groups of 100)
   const userIds = followedResult.map((channel) => channel.broadcaster_id);
   const userMap = new Map<string, { profileImage: string }>();
@@ -121,13 +125,21 @@ router.get('/channels/followed', async (_request, response) => {
 
   // Build sidebar channels - separate live from offline
   const sidebarChannels: Array<SidebarChannel> = [];
-  const offlineChannels: Array<TwitchFollowedChannel> = [];
+  const liveChannelsToCache: Array<{ id: string; login: string; displayName: string }> = [];
+  const offlineChannelsWithoutCache: Array<TwitchFollowedChannel> = [];
 
   for (const followed of followedResult) {
     const liveStream = liveStreamMap.get(followed.broadcaster_id);
     const userInfo = userMap.get(followed.broadcaster_id);
 
     if (liveStream !== undefined) {
+      // Channel is LIVE - update their "last seen" to NOW
+      liveChannelsToCache.push({
+        id: followed.broadcaster_id,
+        login: followed.broadcaster_login,
+        displayName: followed.broadcaster_name,
+      });
+
       sidebarChannels.push({
         id: followed.broadcaster_id,
         login: followed.broadcaster_login,
@@ -140,22 +152,55 @@ router.get('/channels/followed', async (_request, response) => {
         gameName: liveStream.game_name,
       });
     } else {
-      offlineChannels.push(followed);
+      // Channel is OFFLINE - check if we have a cached "last seen" date
+      const cachedDate = cachedLastSeenDates.get(followed.broadcaster_id);
+
+      if (cachedDate !== undefined) {
+        // Use cached date - no API call needed
+        sidebarChannels.push({
+          id: followed.broadcaster_id,
+          login: followed.broadcaster_login,
+          displayName: followed.broadcaster_name,
+          profileImage: userInfo?.profileImage ?? '',
+          isLive: false,
+          isFavorite: favoriteIds.has(followed.broadcaster_id),
+          viewerCount: null,
+          lastVodDate: cachedDate,
+          gameName: null,
+        });
+      } else {
+        // No cached date - need to fetch VOD
+        offlineChannelsWithoutCache.push(followed);
+      }
     }
   }
 
-  // Fetch VODs for offline channels in parallel
-  const vodPromises = offlineChannels.map(async (followed) => {
+  // Update "last seen" to NOW for all live channels (batch operation)
+  if (liveChannelsToCache.length > 0) {
+    batchUpdateLastSeenToNow(liveChannelsToCache);
+  }
+
+  // Only fetch VODs for offline channels WITHOUT a cached date
+  const vodDataToCache: Array<{ id: string; login: string; displayName: string; vodDate: string }> = [];
+
+  const vodPromises = offlineChannelsWithoutCache.map(async (followed) => {
     const vodsResult = await getVideos(followed.broadcaster_id, 1);
     let lastVodDate: string | null = null;
 
     if (!(vodsResult instanceof Error) && vodsResult.length > 0) {
       lastVodDate = vodsResult[0].created_at;
+      // Queue this for caching
+      vodDataToCache.push({
+        id: followed.broadcaster_id,
+        login: followed.broadcaster_login,
+        displayName: followed.broadcaster_name,
+        vodDate: lastVodDate,
+      });
     }
 
     const userInfo = userMap.get(followed.broadcaster_id);
 
-    return {
+    const sidebarChannel: SidebarChannel = {
       id: followed.broadcaster_id,
       login: followed.broadcaster_login,
       displayName: followed.broadcaster_name,
@@ -165,11 +210,18 @@ router.get('/channels/followed', async (_request, response) => {
       viewerCount: null,
       lastVodDate,
       gameName: null,
-    } as SidebarChannel;
+    };
+
+    return sidebarChannel;
   });
 
   const offlineSidebarChannels = await Promise.all(vodPromises);
   sidebarChannels.push(...offlineSidebarChannels);
+
+  // Cache the VOD dates we fetched (batch operation)
+  if (vodDataToCache.length > 0) {
+    batchSetLastSeenFromVod(vodDataToCache);
+  }
 
   // Sort: live channels first (by viewer count), then offline (by last VOD date)
   sidebarChannels.sort((a, b) => {

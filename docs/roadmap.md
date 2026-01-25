@@ -34,10 +34,11 @@
 ## Next Steps
 
 ### High Priority
-- Cache followed channels "last seen" time locally
+- [x] Cache followed channels "last seen" time locally
   - Don't re-fetch latest VOD for every channel on every reload
   - Update last seen time only when we see someone new go live
   - Significantly reduces API calls and load time
+  - Implemented with SQLite `channel_last_seen` table
 
 ### Medium-High Priority
 - Total UI redesign

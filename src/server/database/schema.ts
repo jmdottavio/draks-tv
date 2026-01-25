@@ -44,4 +44,16 @@ db.run(`
 // Ensure auth row exists
 db.run(`INSERT OR IGNORE INTO auth (id) VALUES (1)`);
 
+// Table for caching "last seen" times for followed channels
+// This reduces API calls by storing last VOD dates locally
+db.run(`
+  CREATE TABLE IF NOT EXISTS channel_last_seen (
+    twitch_id TEXT PRIMARY KEY,
+    login TEXT NOT NULL,
+    display_name TEXT NOT NULL,
+    last_seen_at TEXT NOT NULL,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
 export { db };
