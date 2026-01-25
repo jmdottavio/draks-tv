@@ -1,0 +1,175 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0e0e10;
+  color: #efeff1;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #2f2f35;
+}
+
+h1 {
+  font-size: 24px;
+  color: #9147ff;
+}
+
+h2 {
+  font-size: 18px;
+  margin-bottom: 16px;
+  color: #adadb8;
+}
+
+button {
+  background: #9147ff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+button:hover {
+  background: #772ce8;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Auth Section */
+#auth-section {
+  text-align: center;
+  padding: 40px;
+}
+
+#auth-section p {
+  margin-bottom: 16px;
+  color: #adadb8;
+}
+
+#login-btn {
+  font-size: 16px;
+  padding: 12px 24px;
+}
+
+/* Stream Grid */
+.stream-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.stream-card {
+  background: #18181b;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.1s;
+}
+
+.stream-card:hover {
+  transform: translateY(-2px);
+}
+
+.stream-thumbnail {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  background: #2f2f35;
+}
+
+.stream-info {
+  padding: 12px;
+}
+
+.stream-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stream-channel {
+  color: #9147ff;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.stream-game {
+  color: #adadb8;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.stream-viewers {
+  color: #eb0400;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.stream-duration {
+  color: #adadb8;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.watch-btn {
+  width: 100%;
+  background: #3a3a3d;
+}
+
+.watch-btn:hover {
+  background: #9147ff;
+}
+
+/* VOD Search */
+.vod-search {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+#channel-input {
+  flex: 1;
+  max-width: 300px;
+  padding: 8px 12px;
+  border: 1px solid #2f2f35;
+  border-radius: 4px;
+  background: #18181b;
+  color: #efeff1;
+  font-size: 14px;
+}
+
+#channel-input:focus {
+  outline: none;
+  border-color: #9147ff;
+}
+
+#vods-error {
+  color: #eb0400;
+}
+
+/* Sections */
+section {
+  margin-bottom: 32px;
+}
+
+#no-live {
+  color: #adadb8;
+  text-align: center;
+  padding: 20px;
+}
