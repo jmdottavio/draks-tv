@@ -2,19 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 
 import { fetchUsers, fetchVideos } from "../api/vods-queries";
 
-import type { TwitchVideo } from "../vods.types";
+import type { TwitchUser, TwitchVideo } from "../vods.types";
 
 function getVodsQueryKey(channelLogin: string) {
 	return ["vods", channelLogin] as const;
 }
 
 interface VodSearchData {
-	user: {
-		id: string;
-		login: string;
-		display_name: string;
-		profile_image_url: string;
-	};
+	user: TwitchUser;
 	videos: Array<TwitchVideo>;
 }
 
