@@ -8,7 +8,11 @@
     "dev:server": "bun --watch src/server/index.ts",
     "dev:client": "vite",
     "build": "vite build",
-    "start": "bun src/server/index.ts"
+    "start": "bun src/server/index.ts",
+    "lint": "oxlint ./src",
+    "lint:fix": "oxlint ./src --fix",
+    "format": "oxfmt ./src",
+    "format:check": "oxfmt ./src --check"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.0",
@@ -24,6 +28,8 @@
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "concurrently": "^9.1.0",
+    "oxfmt": "^0.26.0",
+    "oxlint": "^1.41.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2",

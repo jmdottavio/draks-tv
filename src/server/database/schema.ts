@@ -1,7 +1,7 @@
-import { Database } from 'bun:sqlite';
-import { resolve } from 'path';
+import { Database } from "bun:sqlite";
+import { resolve } from "path";
 
-const dbPath = resolve(import.meta.dir, '../../../data/draks-tv.db');
+const dbPath = resolve(import.meta.dir, "../../../data/draks-tv.db");
 const db = new Database(dbPath);
 
 // Initialize schema
@@ -18,14 +18,16 @@ db.run(`
 `);
 
 // Migration: Add sort_order column if it doesn't exist
-const hasColumn = db.query<{ count: number }, []>(
-  `SELECT COUNT(*) as count FROM pragma_table_info('favorites') WHERE name = 'sort_order'`
-).get();
+const hasColumn = db
+	.query<{ count: number }, []>(
+		`SELECT COUNT(*) as count FROM pragma_table_info('favorites') WHERE name = 'sort_order'`,
+	)
+	.get();
 
 if (hasColumn !== null && hasColumn.count === 0) {
-  db.run('ALTER TABLE favorites ADD COLUMN sort_order INTEGER DEFAULT 0');
-  // Initialize sort_order based on existing order
-  db.run(`
+	db.run("ALTER TABLE favorites ADD COLUMN sort_order INTEGER DEFAULT 0");
+	// Initialize sort_order based on existing order
+	db.run(`
     UPDATE favorites SET sort_order = (
       SELECT COUNT(*) FROM favorites f2 WHERE f2.created_at <= favorites.created_at
     )
@@ -46,12 +48,14 @@ db.run(`
 db.run(`INSERT OR IGNORE INTO auth (id) VALUES (1)`);
 
 // Migration: Add refresh_token column if it doesn't exist
-const hasRefreshTokenColumn = db.query<{ count: number }, []>(
-  `SELECT COUNT(*) as count FROM pragma_table_info('auth') WHERE name = 'refresh_token'`
-).get();
+const hasRefreshTokenColumn = db
+	.query<{ count: number }, []>(
+		`SELECT COUNT(*) as count FROM pragma_table_info('auth') WHERE name = 'refresh_token'`,
+	)
+	.get();
 
 if (hasRefreshTokenColumn !== null && hasRefreshTokenColumn.count === 0) {
-  db.run('ALTER TABLE auth ADD COLUMN refresh_token TEXT');
+	db.run("ALTER TABLE auth ADD COLUMN refresh_token TEXT");
 }
 
 // Table for caching "last seen" times for followed channels
