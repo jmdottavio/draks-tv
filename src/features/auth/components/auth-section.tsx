@@ -7,8 +7,8 @@ function AuthSection() {
 		try {
 			const { url } = await fetchAuthUrl();
 			window.location.href = url;
-		} catch (error: unknown) {
-			console.error("Failed to fetch auth URL:", error);
+		} catch {
+			// Auth URL fetch failed - user can retry by clicking login again
 		}
 	}
 

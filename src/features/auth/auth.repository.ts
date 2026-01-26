@@ -2,6 +2,7 @@ import { eq, sql } from "drizzle-orm";
 
 import { database } from "@/src/db";
 import { auth } from "@/src/db/schema";
+import { decryptToken, encryptToken } from "@/src/shared/utils/token-encryption";
 
 function ensureAuthRowExists() {
 	database.insert(auth).values({ id: 1 }).onConflictDoNothing().run();
@@ -14,30 +15,53 @@ function getAuth() {
 		const row = database.select().from(auth).where(eq(auth.id, 1)).get();
 
 		if (row === undefined) {
-			return { accessToken: null, refreshToken: null, userId: null };
+			return { accessToken: null, refreshToken: null, userId: null, expiresAt: null };
+		}
+
+		let accessToken: string | null = null;
+		let refreshToken: string | null = null;
+
+		if (row.accessToken !== null) {
+			const decrypted = decryptToken(row.accessToken);
+			accessToken = decrypted instanceof Error ? null : decrypted;
+		}
+
+		if (row.refreshToken !== null) {
+			const decrypted = decryptToken(row.refreshToken);
+			refreshToken = decrypted instanceof Error ? null : decrypted;
 		}
 
 		return {
-			accessToken: row.accessToken,
-			refreshToken: row.refreshToken,
+			accessToken,
+			refreshToken,
 			userId: row.userId,
+			expiresAt: row.expiresAt,
 		};
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unknown database error";
-		return new Error(`Failed to get auth: ${message}`);
+		console.error("[auth.repository] getAuth failed:", error);
+		return new Error("Failed to get authentication data");
 	}
 }
 
-function setAuth(accessToken: string, refreshToken: string, userId: string) {
+function setAuth(accessToken: string, refreshToken: string, userId: string, expiresIn?: number) {
 	try {
 		ensureAuthRowExists();
+
+		const encryptedAccessToken = encryptToken(accessToken);
+		const encryptedRefreshToken = encryptToken(refreshToken);
+
+		// Calculate expiry timestamp from expires_in (seconds until expiry)
+		const expiresAt = expiresIn !== undefined
+			? Math.floor(Date.now() / 1000) + expiresIn
+			: null;
 
 		database
 			.update(auth)
 			.set({
-				accessToken,
-				refreshToken,
+				accessToken: encryptedAccessToken,
+				refreshToken: encryptedRefreshToken,
 				userId,
+				expiresAt,
 				updatedAt: sql`CURRENT_TIMESTAMP`,
 			})
 			.where(eq(auth.id, 1))
@@ -45,8 +69,8 @@ function setAuth(accessToken: string, refreshToken: string, userId: string) {
 
 		return null;
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unknown database error";
-		return new Error(`Failed to set auth: ${message}`);
+		console.error("[auth.repository] setAuth failed:", error);
+		return new Error("Failed to save authentication data");
 	}
 }
 
@@ -60,6 +84,7 @@ function clearAuth() {
 				accessToken: null,
 				refreshToken: null,
 				userId: null,
+				expiresAt: null,
 				updatedAt: sql`CURRENT_TIMESTAMP`,
 			})
 			.where(eq(auth.id, 1))
@@ -67,8 +92,8 @@ function clearAuth() {
 
 		return null;
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unknown database error";
-		return new Error(`Failed to clear auth: ${message}`);
+		console.error("[auth.repository] clearAuth failed:", error);
+		return new Error("Failed to clear authentication data");
 	}
 }
 

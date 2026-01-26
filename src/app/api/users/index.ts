@@ -2,11 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { getUsers } from "@/src/services/twitch-service";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
+import { requireAuth } from "@/src/shared/utils/require-auth";
 
 export const Route = createFileRoute("/api/users/")({
 	server: {
 		handlers: {
 			GET: async ({ request }) => {
+				const auth = requireAuth();
+				if (!auth.authenticated) {
+					return auth.response;
+				}
+
 				const url = new URL(request.url);
 				const loginsParam = url.searchParams.get("logins");
 

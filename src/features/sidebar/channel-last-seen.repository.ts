@@ -21,8 +21,8 @@ function getAllLastSeenDates() {
 
 		return dateMap;
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unknown database error";
-		return new Error(`Failed to get all last seen dates: ${message}`);
+		console.error("[channel-last-seen.repository] getAllLastSeenDates failed:", error);
+		return new Error("Failed to get last seen dates");
 	}
 }
 
@@ -56,8 +56,8 @@ function setLastSeenDate(channel: ChannelLastSeenInput) {
 
 		return null;
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unknown database error";
-		return new Error(`Failed to set last seen date: ${message}`);
+		console.error("[channel-last-seen.repository] setLastSeenDate failed:", error);
+		return new Error("Failed to update last seen date");
 	}
 }
 

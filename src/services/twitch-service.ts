@@ -1,6 +1,6 @@
 import { getAuth, setAuth, clearAuth } from "@/src/features/auth/auth.repository";
 import { FORM_HEADERS } from "@/src/shared/utils/http";
-import { TWITCH_HELIX_BASE_URL, TWITCH_OAUTH_TOKEN_URL } from "@/src/shared/utils/twitch-urls";
+import { TWITCH_HELIX_BASE_URL, TWITCH_OAUTH_REVOKE_URL, TWITCH_OAUTH_TOKEN_URL } from "@/src/shared/utils/twitch-urls";
 
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID ?? "";
 const TWITCH_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET ?? "";
@@ -50,7 +50,10 @@ interface TwitchResponse<T> {
 interface TwitchTokenResponse {
 	access_token?: string;
 	refresh_token?: string;
+	expires_in?: number;
 }
+
+const REFRESH_BUFFER_SECONDS = 5 * 60; // Refresh 5 minutes before expiry
 
 async function refreshAccessToken() {
 	const authResult = getAuth();
@@ -86,12 +89,12 @@ async function refreshAccessToken() {
 		return false;
 	}
 
-	setAuth(tokenData.access_token, tokenData.refresh_token, authResult.userId);
+	setAuth(tokenData.access_token, tokenData.refresh_token, authResult.userId, tokenData.expires_in);
 	return true;
 }
 
 async function twitchFetch<T>(endpoint: string, isRetry: boolean = false) {
-	const authResult = getAuth();
+	let authResult = getAuth();
 
 	if (authResult instanceof Error) {
 		return authResult;
@@ -99,6 +102,21 @@ async function twitchFetch<T>(endpoint: string, isRetry: boolean = false) {
 
 	if (authResult.accessToken === null) {
 		return new Error("Not authenticated");
+	}
+
+	// Proactive refresh if token expires soon
+	if (authResult.expiresAt !== null && !isRetry) {
+		const now = Math.floor(Date.now() / 1000);
+		if (authResult.expiresAt - now < REFRESH_BUFFER_SECONDS) {
+			const wasRefreshed = await refreshAccessToken();
+			if (wasRefreshed) {
+				// Get fresh auth after refresh
+				const freshAuth = getAuth();
+				if (!(freshAuth instanceof Error) && freshAuth.accessToken !== null) {
+					authResult = freshAuth;
+				}
+			}
+		}
 	}
 
 	const response = await fetch(`${TWITCH_HELIX_BASE_URL}${endpoint}`, {
@@ -195,6 +213,26 @@ async function getFollowedChannels(userId: string) {
 	return allChannels;
 }
 
-export { getUsers, getFollowedStreams, getVideos, getFollowedChannels };
+async function revokeToken(token: string): Promise<void | Error> {
+	try {
+		const response = await fetch(TWITCH_OAUTH_REVOKE_URL, {
+			method: "POST",
+			headers: FORM_HEADERS,
+			body: new URLSearchParams({
+				client_id: TWITCH_CLIENT_ID,
+				token,
+			}),
+		});
+
+		// Twitch returns 200 on success, even if token was already invalid
+		if (!response.ok) {
+			return new Error(`Token revocation failed: ${response.status}`);
+		}
+	} catch (error) {
+		return new Error(`Token revocation request failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+	}
+}
+
+export { getUsers, getFollowedStreams, getVideos, getFollowedChannels, revokeToken };
 
 export type { TwitchUser, TwitchStream, TwitchVideo };

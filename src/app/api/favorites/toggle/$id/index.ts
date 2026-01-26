@@ -7,11 +7,17 @@ import {
 } from "@/src/features/channels/favorites.repository";
 import { getUsers } from "@/src/services/twitch-service";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
+import { requireAuth } from "@/src/shared/utils/require-auth";
 
 export const Route = createFileRoute("/api/favorites/toggle/$id/")({
 	server: {
 		handlers: {
 			POST: async ({ params }) => {
+				const auth = requireAuth();
+				if (!auth.authenticated) {
+					return auth.response;
+				}
+
 				const { id } = params;
 
 				const favoriteStatus = isFavorite(id);

@@ -1,10 +1,23 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import { setAuth } from "@/src/features/auth/auth.repository";
+import { validateStateToken } from "@/src/shared/utils/oauth-state";
 import { FORM_HEADERS } from "@/src/shared/utils/http";
+import { checkAuthRateLimit } from "@/src/shared/utils/rate-limiter";
 import { getAuthRedirectUri } from "@/src/shared/utils/server-config";
 import { TWITCH_HELIX_BASE_URL, TWITCH_OAUTH_TOKEN_URL } from "@/src/shared/utils/twitch-urls";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
+
+function getClientIp(request: Request): string {
+	const forwarded = request.headers.get("x-forwarded-for");
+	if (forwarded !== null) {
+		const firstIp = forwarded.split(",")[0];
+		if (firstIp !== undefined) {
+			return firstIp.trim();
+		}
+	}
+	return "unknown";
+}
 
 interface TwitchTokenResponse {
 	access_token: string;
@@ -27,7 +40,48 @@ export const Route = createFileRoute("/api/auth/callback/")({
 	server: {
 		handlers: {
 			GET: async function handler({ request }) {
+				const clientIp = getClientIp(request);
+				const rateLimit = checkAuthRateLimit(clientIp);
+				if (!rateLimit.allowed) {
+					return new Response(JSON.stringify({ error: "Too many requests" }), {
+						status: 429,
+						headers: {
+							"Content-Type": "application/json",
+							"Retry-After": String(Math.ceil((rateLimit.retryAfterMs ?? 60000) / 1000)),
+						},
+					});
+				}
+
 				const url = new URL(request.url);
+
+				// Check for OAuth error response
+				const error = url.searchParams.get("error");
+				if (error !== null) {
+					return createErrorResponse(
+						`OAuth error: ${error}`,
+						ErrorCode.INVALID_INPUT,
+						400,
+					);
+				}
+
+				// Validate state parameter
+				const state = url.searchParams.get("state");
+				if (state === null) {
+					return createErrorResponse(
+						"Missing state parameter",
+						ErrorCode.INVALID_INPUT,
+						400,
+					);
+				}
+
+				if (!validateStateToken(state)) {
+					return createErrorResponse(
+						"Invalid or expired state parameter",
+						ErrorCode.INVALID_INPUT,
+						400,
+					);
+				}
+
 				const code = url.searchParams.get("code");
 
 				if (code === null) {
@@ -101,6 +155,7 @@ export const Route = createFileRoute("/api/auth/callback/")({
 					tokenData.access_token,
 					tokenData.refresh_token,
 					user.id,
+					tokenData.expires_in,
 				);
 
 				if (setAuthResult instanceof Error) {

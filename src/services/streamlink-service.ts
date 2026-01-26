@@ -1,4 +1,4 @@
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import { resolve } from "path";
 
 const LOCALAPPDATA = process.env.LOCALAPPDATA ?? "";
@@ -6,7 +6,7 @@ const STREAMLINK_PATH = resolve(LOCALAPPDATA, "Programs", "Streamlink", "bin", "
 
 function launchStream(url: string) {
 	return new Promise<void | Error>((promiseResolve) => {
-		exec(`"${STREAMLINK_PATH}" ${url} best`, (error) => {
+		execFile(STREAMLINK_PATH, [url, "best"], (error) => {
 			if (error) {
 				promiseResolve(new Error(error.message));
 				return;

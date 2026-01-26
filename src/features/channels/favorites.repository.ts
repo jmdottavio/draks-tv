@@ -27,8 +27,8 @@ function getAllFavorites() {
 
 		return result;
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unknown database error";
-		return new Error(`Failed to get favorites: ${message}`);
+		console.error("[favorites.repository] getAllFavorites failed:", error);
+		return new Error("Failed to get favorites");
 	}
 }
 
@@ -66,8 +66,8 @@ function addFavorite(favorite: FavoriteInput) {
 
 		return null;
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unknown database error";
-		return new Error(`Failed to add favorite: ${message}`);
+		console.error("[favorites.repository] addFavorite failed:", error);
+		return new Error("Failed to add favorite");
 	}
 }
 
@@ -81,8 +81,8 @@ function removeFavorite(twitchId: string) {
 
 		return deleted.length > 0;
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unknown database error";
-		return new Error(`Failed to remove favorite: ${message}`);
+		console.error("[favorites.repository] removeFavorite failed:", error);
+		return new Error("Failed to remove favorite");
 	}
 }
 
@@ -96,8 +96,8 @@ function isFavorite(twitchId: string) {
 
 		return result !== undefined && result.count > 0;
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unknown database error";
-		return new Error(`Failed to check favorite: ${message}`);
+		console.error("[favorites.repository] isFavorite failed:", error);
+		return new Error("Failed to check favorite status");
 	}
 }
 
@@ -119,8 +119,8 @@ function reorderFavorites(orderedIds: Array<string>) {
 
 		return null;
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unknown database error";
-		return new Error(`Failed to reorder favorites: ${message}`);
+		console.error("[favorites.repository] reorderFavorites failed:", error);
+		return new Error("Failed to reorder favorites");
 	}
 }
 
