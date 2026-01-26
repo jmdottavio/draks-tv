@@ -1,8 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useFollowedChannels } from "../hooks/use-followed-channels";
-import { watchLive, toggleFavorite } from "../lib/api";
-import { formatViewers, formatDate } from "../lib/format";
+import { toggleFavorite, watchLive } from "../lib/api";
+import { formatDate, formatViewers } from "../lib/format";
 import { ChevronLeftIcon, ChevronRightIcon, StarIcon } from "./icons";
 
 import type { SidebarChannel } from "../lib/api";
@@ -268,7 +268,8 @@ function Sidebar({ isExpanded, onToggle }: SidebarProps) {
 		<>
 			{/* Mobile backdrop */}
 			{isExpanded && (
-				<div
+				<button
+					type="button"
 					className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
 					onClick={onToggle}
 				/>

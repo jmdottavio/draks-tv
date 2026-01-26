@@ -46,9 +46,9 @@ function getAllFavorites() {
 
 function addFavorite(favorite: FavoriteInput) {
 	try {
-		database.transaction((tx) => {
+		database.transaction((transaction) => {
 			// Get next sort order inside the transaction
-			const result = tx
+			const result = transaction
 				.select({ maxOrder: max(favorites.sortOrder) })
 				.from(favorites)
 				.get();
@@ -59,7 +59,7 @@ function addFavorite(favorite: FavoriteInput) {
 					: 0;
 
 			// Insert with the sort order - use returning to verify
-			const inserted = tx
+			const inserted = transaction
 				.insert(favorites)
 				.values({
 					twitchId: favorite.id,
