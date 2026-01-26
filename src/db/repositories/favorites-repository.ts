@@ -44,24 +44,6 @@ function getAllFavorites() {
 	}
 }
 
-function getNextSortOrder() {
-	try {
-		const result = database
-			.select({ maxOrder: max(favorites.sortOrder) })
-			.from(favorites)
-			.get();
-
-		if (result === undefined || result.maxOrder === null) {
-			return 0;
-		}
-
-		return result.maxOrder + 1;
-	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unknown database error";
-		return new Error(`Failed to get next sort order: ${message}`);
-	}
-}
-
 function addFavorite(favorite: FavoriteInput) {
 	try {
 		database.transaction((tx) => {
