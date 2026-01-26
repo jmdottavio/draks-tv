@@ -44,11 +44,41 @@
 
 ## Next Steps
 
+### High Priority
+- Migrate to TanStack Start (see `docs/tanstack-start-migration.md`)
+  - Replace Vite + Express with unified TanStack Start server
+  - File-based routing for pages and API endpoints
+  - Enables proper URL navigation and browser history
+  - Reference: homeschool project structure
+  - Note: NO SSR needed, client side only queries, etc.
+
+### Medium-High Priority
+- "Last Seen" time currently says -1 for offline channels that were just online earlier today, fix to say seen today
+- Sidebar for live and offline doesn't refresh very often / when I refocus the tab. It should refresh every 30 seconds or so. Check the react query implementation for this. Same for them section that shows live channels.
+
 ### Medium Priority
-- Channel detail page when clicking a channel
-  - Show latest 5 VODs or navigate to VODs page with channel name pre-searched
+- Channel detail page when clicking a channel (after TanStack Start migration)
+  - Proper `/channels/:id` route with URL
+  - Show latest 5 VODs with watch buttons
+  - "View All VODs" link to VODs search
+- Another overall UI refresh.
+  - The sidebar's header is not aligned with the page header (it's slightly smaller / higher up)
+  - The sidebar has a left/right chevron but the main section has a hamburger icon and they both do the same thing
+  - The favorite but offline channels is too wide, should be more of a 2 column layout at least.
+  - If it is possible to show the preview image for the VODs whenever showing them
+  - The live channel items (each individual channel in the live section) should be more compact. They are too tall and wide.
 - Search/filter channels in sidebar
 - Tooltip on collapsed icons showing channel name and status
+- A means of following or unfollowing channels from the sidebar or main section.
+- Browse mode - I still want a way to search/browse channels that I don't have favorited or followed.
+  - This should be both a separate page and small sections on the main page (that load more lazily down below).
+  - Sections on the main page should just show like 4-6 channels at a time, and a "View More" button that takes you to the separate page.
+  - Make a section for the Software and Game Development category.
+  - Make a section for the Everquest category.
+  - Make a section for the Dota 2 category.
+  - Make a combined section for the Pantheon, and Monsters and Memories categories.
+  - Include the ability to "hide" channels from the browse mode. This should be persisted in the database.
+  - Include the ability to "follow" and/or "favorite" channels from the browse mode. This should be persisted in the database.
 - Notifications when favorites go live
   - Ideally with category/game filtering (only notify for certain games)
 
@@ -69,12 +99,9 @@
 
 ## Technical Notes
 
-### Showing Offline Followed Channels
-The Twitch API doesn't directly provide "last online" time. Options:
-1. Use latest VOD creation date as proxy for last stream
-2. Store last-seen-live timestamps locally when refreshing
-3. Accept that offline channels just show "Offline" without time info
-
-### Port Configuration
+### Current Port Configuration
 - Frontend (Vite): 9442
 - Backend (Express/Bun): 9443
+
+### After TanStack Start Migration
+- Single unified server on port 9442
