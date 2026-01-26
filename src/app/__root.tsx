@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -10,14 +11,16 @@ import { useChannels } from "@/src/features/channels/hooks/use-channels";
 
 import appCss from "./globals.css?url";
 
-const queryClient = new QueryClient({
-	defaultOptions: {
-		queries: {
-			staleTime: 30_000,
-			refetchOnWindowFocus: false,
+function createQueryClient() {
+	return new QueryClient({
+		defaultOptions: {
+			queries: {
+				staleTime: 30_000,
+				refetchOnWindowFocus: false,
+			},
 		},
-	},
-});
+	});
+}
 
 export const Route = createRootRoute({
 	head: () => ({
@@ -32,6 +35,8 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
+	const [queryClient] = useState(createQueryClient);
+
 	return (
 		<html lang="en">
 			<head>
