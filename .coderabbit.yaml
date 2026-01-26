@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+language: "en-US"
+
+reviews:
+  # Controls the overall tone: 'chill' is less aggressive, 'assertive' is stricter
+  profile: "chill"
+
+  # Enable automatic reviews for PRs
+  auto_review:
+    enabled: true
+    # Set to true to review draft PRs, false to skip them
+    drafts: false
+
+  # Skip reviewing certain directories or files
+  path_filters:
+    - "!node_modules/**"
+    - "!dist/**"
+    - "!data/**"
+    - "!public/**"
+    - "!**/*.lock"
+    - "!.claude/**"
+
+  # Generate a summary of changes
+  high_level_summary: true
+
+  # Post the review status
+  review_status: true
+
+chat:
+  auto_reply: true
