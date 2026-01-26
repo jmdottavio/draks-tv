@@ -1,40 +1,41 @@
 {
-  "name": "draks-tv",
-  "version": "1.0.0",
-  "description": "Lightweight Twitch dashboard with Streamlink/VLC integration",
-  "type": "module",
-  "scripts": {
-    "dev": "bunx --bun vite dev",
-    "build": "vite build",
-    "start": "node .output/server/index.mjs",
-    "lint": "oxlint ./src",
-    "lint:fix": "oxlint ./src --fix",
-    "format": "oxfmt ./src",
-    "format:check": "oxfmt ./src --check",
-    "db:generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
-  },
-  "dependencies": {
-    "@tanstack/react-query": "^5.62.0",
-    "@tanstack/react-router": "^1.157.14",
-    "@tanstack/react-start": "^1.157.14",
-    "drizzle-orm": "^0.45.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
-  },
-  "devDependencies": {
-    "@tailwindcss/vite": "^4.1.18",
-    "@types/bun": "^1.1.14",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^4.3.4",
-    "drizzle-kit": "^0.31.8",
-    "oxfmt": "^0.26.0",
-    "oxlint": "^1.41.0",
-    "tailwindcss": "^4.1.18",
-    "typescript": "^5.7.2",
-    "vite": "^7.3.1",
-    "vite-tsconfig-paths": "^6.0.5"
-  }
+	"name": "draks-tv",
+	"version": "1.0.0",
+	"description": "Lightweight Twitch dashboard with Streamlink/VLC integration",
+	"author": "Justin D'Ottavio <jmdottavio@gmail.com>",
+	"type": "module",
+	"scripts": {
+		"dev": "bunx --bun vite dev",
+		"build": "vite build",
+		"start": "node .output/server/index.mjs",
+		"lint": "oxlint ./src",
+		"lint:fix": "oxlint ./src --fix",
+		"format": "oxfmt ./src",
+		"format:check": "oxfmt ./src --check",
+		"db:generate": "drizzle-kit generate",
+		"db:push": "drizzle-kit push",
+		"db:studio": "drizzle-kit studio"
+	},
+	"dependencies": {
+		"@tanstack/react-query": "^5.62.0",
+		"@tanstack/react-router": "^1.157.14",
+		"@tanstack/react-start": "^1.157.14",
+		"drizzle-orm": "^0.45.1",
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0"
+	},
+	"devDependencies": {
+		"@tailwindcss/vite": "^4.1.18",
+		"@types/bun": "^1.1.14",
+		"@types/react": "^19.0.0",
+		"@types/react-dom": "^19.0.0",
+		"@vitejs/plugin-react": "^4.3.4",
+		"drizzle-kit": "^0.31.8",
+		"oxfmt": "^0.26.0",
+		"oxlint": "^1.41.0",
+		"tailwindcss": "^4.1.18",
+		"typescript": "^5.7.2",
+		"vite": "^7.3.1",
+		"vite-tsconfig-paths": "^6.0.5"
+	}
 }
