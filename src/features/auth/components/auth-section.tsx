@@ -1,10 +1,15 @@
-import { TwitchIcon } from "./icons";
-import { fetchAuthUrl } from "../lib/api";
+import { TwitchIcon } from "@/src/shared/components/icons";
+
+import { fetchAuthUrl } from "../api/auth-queries";
 
 function AuthSection() {
 	async function handleLogin() {
-		const { url } = await fetchAuthUrl();
-		window.location.href = url;
+		try {
+			const { url } = await fetchAuthUrl();
+			window.location.href = url;
+		} catch (error: unknown) {
+			console.error("Failed to fetch auth URL:", error);
+		}
 	}
 
 	return (

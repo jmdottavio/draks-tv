@@ -9,7 +9,11 @@ export const Route = createFileRoute("/api/auth/url/")({
 				const clientId = process.env.TWITCH_CLIENT_ID;
 
 				if (clientId === undefined) {
-					return createErrorResponse("TWITCH_CLIENT_ID not configured", ErrorCode.CONFIG_ERROR, 500);
+					return createErrorResponse(
+						"TWITCH_CLIENT_ID not configured",
+						ErrorCode.CONFIG_ERROR,
+						500,
+					);
 				}
 
 				const redirectUri = "http://localhost:9442/api/auth/callback";

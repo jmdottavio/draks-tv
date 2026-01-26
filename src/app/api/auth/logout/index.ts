@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { clearAuth } from "@/src/db/repositories/auth-repository";
+import { clearAuth } from "@/src/features/auth/auth.repository";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 
 export const Route = createFileRoute("/api/auth/logout/")({

@@ -1,15 +1,13 @@
 import { useQueryClient } from "@tanstack/react-query";
 
-import {
-	useFollowedChannels,
-	FOLLOWED_CHANNELS_QUERY_KEY,
-} from "../hooks/use-followed-channels";
-import { CHANNELS_QUERY_KEY } from "../hooks/use-channels";
-import { toggleFavorite, watchLive } from "../lib/api";
-import { formatDate, formatViewers } from "../lib/format";
-import { ChevronLeftIcon, ChevronRightIcon, StarIcon } from "./icons";
+import { CHANNELS_QUERY_KEY } from "@/src/features/channels/hooks/use-channels";
+import { toggleFavorite, watchLive } from "@/src/features/channels/api/channels-mutations";
+import { ChevronLeftIcon, ChevronRightIcon, StarIcon } from "@/src/shared/components/icons";
+import { formatDate, formatViewers } from "@/src/shared/utils/format";
 
-import type { SidebarChannel } from "../lib/api";
+import { FOLLOWED_CHANNELS_QUERY_KEY, useFollowedChannels } from "../hooks/use-followed-channels";
+
+import type { SidebarChannel } from "../sidebar.types";
 
 interface SidebarProps {
 	isExpanded: boolean;
@@ -176,11 +174,7 @@ function SidebarError({ isExpanded, message }: SidebarErrorProps) {
 		);
 	}
 
-	return (
-		<div className="px-3 py-8 text-center text-sm text-live">
-			{message}
-		</div>
-	);
+	return <div className="px-3 py-8 text-center text-sm text-live">{message}</div>;
 }
 
 interface SectionHeaderProps {

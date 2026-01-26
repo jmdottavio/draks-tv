@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import { setAuth } from "@/src/db/repositories/auth-repository";
+import { setAuth } from "@/src/features/auth/auth.repository";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 
 interface TwitchTokenResponse {
@@ -28,14 +28,22 @@ export const Route = createFileRoute("/api/auth/callback/")({
 				const code = url.searchParams.get("code");
 
 				if (code === null) {
-					return createErrorResponse("Missing authorization code", ErrorCode.INVALID_INPUT, 400);
+					return createErrorResponse(
+						"Missing authorization code",
+						ErrorCode.INVALID_INPUT,
+						400,
+					);
 				}
 
 				const clientId = process.env.TWITCH_CLIENT_ID;
 				const clientSecret = process.env.TWITCH_CLIENT_SECRET;
 
 				if (clientId === undefined || clientSecret === undefined) {
-					return createErrorResponse("Twitch credentials not configured", ErrorCode.CONFIG_ERROR, 500);
+					return createErrorResponse(
+						"Twitch credentials not configured",
+						ErrorCode.CONFIG_ERROR,
+						500,
+					);
 				}
 
 				const tokenResponse = await fetch("https://id.twitch.tv/oauth2/token", {
@@ -53,7 +61,11 @@ export const Route = createFileRoute("/api/auth/callback/")({
 				});
 
 				if (!tokenResponse.ok) {
-					return createErrorResponse("Failed to exchange code for tokens", ErrorCode.TWITCH_API_ERROR, 500);
+					return createErrorResponse(
+						"Failed to exchange code for tokens",
+						ErrorCode.TWITCH_API_ERROR,
+						500,
+					);
 				}
 
 				const tokenData = (await tokenResponse.json()) as TwitchTokenResponse;
@@ -66,14 +78,22 @@ export const Route = createFileRoute("/api/auth/callback/")({
 				});
 
 				if (!userResponse.ok) {
-					return createErrorResponse("Failed to fetch user info", ErrorCode.TWITCH_API_ERROR, 500);
+					return createErrorResponse(
+						"Failed to fetch user info",
+						ErrorCode.TWITCH_API_ERROR,
+						500,
+					);
 				}
 
 				const userData = (await userResponse.json()) as TwitchUserResponse;
 				const user = userData.data[0];
 
 				if (user === undefined) {
-					return createErrorResponse("No user data returned", ErrorCode.TWITCH_API_ERROR, 500);
+					return createErrorResponse(
+						"No user data returned",
+						ErrorCode.TWITCH_API_ERROR,
+						500,
+					);
 				}
 
 				const setAuthResult = setAuth(
@@ -83,7 +103,11 @@ export const Route = createFileRoute("/api/auth/callback/")({
 				);
 
 				if (setAuthResult instanceof Error) {
-					return createErrorResponse(setAuthResult.message, ErrorCode.DATABASE_ERROR, 500);
+					return createErrorResponse(
+						setAuthResult.message,
+						ErrorCode.DATABASE_ERROR,
+						500,
+					);
 				}
 
 				throw redirect({ to: "/" });

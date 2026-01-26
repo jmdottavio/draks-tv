@@ -4,11 +4,7 @@ import { database } from "@/src/db";
 import { auth } from "@/src/db/schema";
 
 function ensureAuthRowExists() {
-	database
-		.insert(auth)
-		.values({ id: 1 })
-		.onConflictDoNothing()
-		.run();
+	database.insert(auth).values({ id: 1 }).onConflictDoNothing().run();
 }
 
 function getAuth() {

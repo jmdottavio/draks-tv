@@ -42,7 +42,10 @@ export function createErrorResponse(
  * Use this client-side when handling fetch errors.
  * Handles JSON parsing internally.
  */
-export async function extractApiErrorMessage(response: Response, fallback: string): Promise<string> {
+export async function extractApiErrorMessage(
+	response: Response,
+	fallback: string,
+): Promise<string> {
 	const data: unknown = await response.json().catch(() => null);
 	if (data !== null && typeof data === "object" && "error" in data) {
 		const errorObj = (data as { error?: { message?: string } }).error;

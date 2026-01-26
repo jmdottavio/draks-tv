@@ -1,4 +1,4 @@
-import { getAuth, setAuth, clearAuth } from "@/src/db/repositories/auth-repository";
+import { getAuth, setAuth, clearAuth } from "@/src/features/auth/auth.repository";
 
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID ?? "";
 const TWITCH_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET ?? "";

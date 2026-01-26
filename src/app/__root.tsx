@@ -2,11 +2,11 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-r
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { LayoutProvider, useLayout } from "@/src/shared/context/layout-context";
-import { Sidebar } from "@/src/shared/components/sidebar";
 import { Header } from "@/src/shared/components/header";
-import { AuthSection } from "@/src/shared/components/auth-section";
-import { useAuth } from "@/src/shared/hooks/use-auth";
-import { useChannels } from "@/src/shared/hooks/use-channels";
+import { Sidebar } from "@/src/features/sidebar/components/sidebar";
+import { AuthSection } from "@/src/features/auth/components/auth-section";
+import { useAuth } from "@/src/features/auth/hooks/use-auth";
+import { useChannels } from "@/src/features/channels/hooks/use-channels";
 
 import appCss from "./globals.css?url";
 

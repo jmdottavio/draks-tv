@@ -4,7 +4,7 @@ import {
 	isFavorite,
 	addFavorite,
 	removeFavorite,
-} from "@/src/db/repositories/favorites-repository";
+} from "@/src/features/channels/favorites.repository";
 import { getUsers } from "@/src/services/twitch-service";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 
@@ -17,14 +17,22 @@ export const Route = createFileRoute("/api/favorites/toggle/$id/")({
 				const favoriteStatus = isFavorite(id);
 
 				if (favoriteStatus instanceof Error) {
-					return createErrorResponse(favoriteStatus.message, ErrorCode.DATABASE_ERROR, 500);
+					return createErrorResponse(
+						favoriteStatus.message,
+						ErrorCode.DATABASE_ERROR,
+						500,
+					);
 				}
 
 				if (favoriteStatus) {
 					const removeResult = removeFavorite(id);
 
 					if (removeResult instanceof Error) {
-						return createErrorResponse(removeResult.message, ErrorCode.DATABASE_ERROR, 500);
+						return createErrorResponse(
+							removeResult.message,
+							ErrorCode.DATABASE_ERROR,
+							500,
+						);
 					}
 
 					return Response.json({ isFavorite: false });
@@ -33,7 +41,11 @@ export const Route = createFileRoute("/api/favorites/toggle/$id/")({
 				const usersResult = await getUsers({ ids: [id] });
 
 				if (usersResult instanceof Error) {
-					return createErrorResponse(usersResult.message, ErrorCode.TWITCH_API_ERROR, 500);
+					return createErrorResponse(
+						usersResult.message,
+						ErrorCode.TWITCH_API_ERROR,
+						500,
+					);
 				}
 
 				if (usersResult.length === 0) {

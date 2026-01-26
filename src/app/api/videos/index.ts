@@ -12,13 +12,21 @@ export const Route = createFileRoute("/api/videos/")({
 				const limitParam = url.searchParams.get("limit");
 
 				if (userId === null) {
-					return createErrorResponse("userId query param required", ErrorCode.INVALID_INPUT, 400);
+					return createErrorResponse(
+						"userId query param required",
+						ErrorCode.INVALID_INPUT,
+						400,
+					);
 				}
 
 				const limit = limitParam !== null ? parseInt(limitParam, 10) : 10;
 
 				if (isNaN(limit) || limit < 1) {
-					return createErrorResponse("limit must be a positive number", ErrorCode.INVALID_INPUT, 400);
+					return createErrorResponse(
+						"limit must be a positive number",
+						ErrorCode.INVALID_INPUT,
+						400,
+					);
 				}
 
 				const result = await getVideos(userId, limit);

@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { fetchUsers, fetchVideos } from "../lib/api";
+import { fetchUsers, fetchVideos } from "../api/vods-queries";
 
-import type { TwitchVideo } from "../lib/api";
+import type { TwitchVideo } from "../vods.types";
 
-export function getVodsQueryKey(channelLogin: string) {
+function getVodsQueryKey(channelLogin: string) {
 	return ["vods", channelLogin] as const;
 }
 
@@ -52,4 +52,4 @@ function useVodSearch(channelLogin: string | null): UseVodSearchResult {
 	};
 }
 
-export { useVodSearch };
+export { getVodsQueryKey, useVodSearch };

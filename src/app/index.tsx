@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { ChannelGrid } from "@/src/shared/components/channel-grid";
+import { ChannelGrid } from "@/src/features/channels/components/channel-grid";
 import {
 	useChannels,
 	useToggleFavorite,
 	useReorderFavorites,
-} from "@/src/shared/hooks/use-channels";
+} from "@/src/features/channels/hooks/use-channels";
 
 export const Route = createFileRoute("/")({
 	component: ChannelsPage,

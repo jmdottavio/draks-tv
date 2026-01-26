@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { fetchFollowedChannels } from "../lib/api";
+import { fetchFollowedChannels } from "../api/sidebar-queries";
 
-import type { SidebarChannel } from "../lib/api";
+import type { SidebarChannel } from "../sidebar.types";
 
 export const FOLLOWED_CHANNELS_QUERY_KEY = ["followed-channels"] as const;
 

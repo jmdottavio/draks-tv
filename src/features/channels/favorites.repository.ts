@@ -3,19 +3,7 @@ import { asc, count, eq, max } from "drizzle-orm";
 import { database } from "@/src/db";
 import { favorites } from "@/src/db/schema";
 
-interface FavoriteInput {
-	id: string;
-	login: string;
-	displayName: string;
-	profileImage: string;
-}
-
-interface FavoriteOutput {
-	id: string;
-	login: string;
-	displayName: string;
-	profileImage: string;
-}
+import type { FavoriteInput, FavoriteOutput } from "./channels.types";
 
 function getAllFavorites() {
 	try {
@@ -137,5 +125,3 @@ function reorderFavorites(orderedIds: Array<string>) {
 }
 
 export { addFavorite, getAllFavorites, isFavorite, removeFavorite, reorderFavorites };
-
-export type { FavoriteOutput };

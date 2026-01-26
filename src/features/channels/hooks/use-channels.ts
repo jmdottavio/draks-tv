@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { fetchChannels, toggleFavorite, reorderFavorites } from "../lib/api";
+import { fetchChannels } from "../api/channels-queries";
+import { toggleFavorite, reorderFavoritesApi } from "../api/channels-mutations";
 
-import type { Channel } from "../lib/api";
+import type { Channel } from "../channels.types";
 
 export const CHANNELS_QUERY_KEY = ["channels"] as const;
 
@@ -45,7 +46,7 @@ function useReorderFavorites() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: reorderFavorites,
+		mutationFn: reorderFavoritesApi,
 		onMutate: async (orderedIds: Array<string>) => {
 			await queryClient.cancelQueries({ queryKey: CHANNELS_QUERY_KEY });
 
@@ -66,17 +67,19 @@ function useReorderFavorites() {
 				const reorderedFavorites: Array<Channel> = [];
 
 				for (const id of orderedIds) {
-					const channel = favoriteChannels.find((favoriteChannel) => favoriteChannel.id === id);
+					const channel = favoriteChannels.find(
+						(favoriteChannel) => favoriteChannel.id === id,
+					);
 
 					if (channel !== undefined) {
 						reorderedFavorites.push(channel);
 					}
 				}
 
-				queryClient.setQueryData(
-					CHANNELS_QUERY_KEY,
-					[...reorderedFavorites, ...nonFavoriteChannels],
-				);
+				queryClient.setQueryData(CHANNELS_QUERY_KEY, [
+					...reorderedFavorites,
+					...nonFavoriteChannels,
+				]);
 			}
 
 			return { previousChannels };

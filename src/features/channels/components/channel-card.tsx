@@ -1,8 +1,15 @@
-import { StarIcon } from "./icons";
-import { formatViewers, formatDuration, formatDate, formatThumbnail } from "../lib/format";
-import { watchLive, watchVod } from "../lib/api";
+import { StarIcon } from "@/src/shared/components/icons";
+import {
+	formatViewers,
+	formatDuration,
+	formatDate,
+	formatThumbnail,
+} from "@/src/shared/utils/format";
 
-import type { Channel } from "../lib/api";
+import { watchLive } from "../api/channels-mutations";
+import { watchVod } from "@/src/features/vods/api/vods-mutations";
+
+import type { Channel } from "../channels.types";
 
 interface ChannelCardProps {
 	channel: Channel;
@@ -13,12 +20,16 @@ interface ChannelCardProps {
 function ChannelCard({ channel, onToggleFavorite, variant = "full" }: ChannelCardProps) {
 	function handleWatchClick() {
 		if (channel.isLive) {
-			watchLive(channel.login);
+			watchLive(channel.login).catch((error: unknown) => {
+				console.error("Failed to launch live stream:", error);
+			});
 			return;
 		}
 
 		if (channel.latestVod !== null) {
-			watchVod(channel.latestVod.id);
+			watchVod(channel.latestVod.id).catch((error: unknown) => {
+				console.error("Failed to launch VOD:", error);
+			});
 		}
 	}
 

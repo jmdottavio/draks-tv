@@ -2,11 +2,11 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { ArrowLeftIcon, SearchIcon } from "@/src/shared/components/icons";
-import { useVodSearch } from "@/src/shared/hooks/use-vods";
-import { formatDuration, formatDate, formatThumbnail } from "@/src/shared/lib/format";
-import { watchVod } from "@/src/shared/lib/api";
+import { formatDuration, formatDate, formatThumbnail } from "@/src/shared/utils/format";
+import { useVodSearch } from "@/src/features/vods/hooks/use-vods";
+import { watchVod } from "@/src/features/vods/api/vods-mutations";
 
-import type { TwitchVideo } from "@/src/shared/lib/api";
+import type { TwitchVideo } from "@/src/features/vods/vods.types";
 
 export const Route = createFileRoute("/vods")({
 	component: VodsPage,
@@ -28,7 +28,9 @@ function VodsPage() {
 	}
 
 	function handleWatchVod(vodId: string) {
-		watchVod(vodId);
+		watchVod(vodId).catch((error: unknown) => {
+			console.error("Failed to launch VOD:", error);
+		});
 	}
 
 	return (
@@ -75,7 +77,7 @@ function VodsPage() {
 
 			{error !== null && <p className="text-live text-sm">{error.message}</p>}
 
-			{data !== null && data !== undefined && (
+			{data !== null && (
 				<div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
 					{data.videos.map((vod) => (
 						<VodCard key={vod.id} vod={vod} onWatch={handleWatchVod} />
@@ -83,7 +85,7 @@ function VodsPage() {
 				</div>
 			)}
 
-			{data !== null && data !== undefined && data.videos.length === 0 && (
+			{data !== null && data.videos.length === 0 && (
 				<p className="text-text-dim text-sm">No VODs found for {searchQuery}</p>
 			)}
 		</section>

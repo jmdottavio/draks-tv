@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 
 import { ChannelCard } from "./channel-card";
 
-import type { Channel } from "../lib/api";
+import type { Channel } from "../channels.types";
 
 interface ChannelGridProps {
 	channels: Array<Channel>;

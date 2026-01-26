@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { getAuth } from "@/src/db/repositories/auth-repository";
-import { getAllFavorites } from "@/src/db/repositories/favorites-repository";
-import { getAllLastSeenDates } from "@/src/db/repositories/channel-last-seen-repository";
+import { getAuth } from "@/src/features/auth/auth.repository";
+import { getAllFavorites } from "@/src/features/channels/favorites.repository";
+import { getAllLastSeenDates } from "@/src/features/sidebar/channel-last-seen.repository";
 import { getFollowedStreams, getFollowedChannels, getUsers } from "@/src/services/twitch-service";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 
@@ -37,19 +37,31 @@ export const Route = createFileRoute("/api/channels/followed/")({
 				const followedResult = await getFollowedChannels(authResult.userId);
 
 				if (followedResult instanceof Error) {
-					return createErrorResponse(followedResult.message, ErrorCode.TWITCH_API_ERROR, 500);
+					return createErrorResponse(
+						followedResult.message,
+						ErrorCode.TWITCH_API_ERROR,
+						500,
+					);
 				}
 
 				const streamsResult = await getFollowedStreams(authResult.userId);
 
 				if (streamsResult instanceof Error) {
-					return createErrorResponse(streamsResult.message, ErrorCode.TWITCH_API_ERROR, 500);
+					return createErrorResponse(
+						streamsResult.message,
+						ErrorCode.TWITCH_API_ERROR,
+						500,
+					);
 				}
 
 				const favoritesResult = getAllFavorites();
 
 				if (favoritesResult instanceof Error) {
-					return createErrorResponse(favoritesResult.message, ErrorCode.DATABASE_ERROR, 500);
+					return createErrorResponse(
+						favoritesResult.message,
+						ErrorCode.DATABASE_ERROR,
+						500,
+					);
 				}
 
 				const lastSeenDates = getAllLastSeenDates();

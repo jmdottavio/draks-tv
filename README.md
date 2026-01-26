@@ -92,21 +92,24 @@ Help me set up this draks-tv project. I need you to:
 
 ```
 src/
-├── app/              # Application routes & API
-│   ├── api/          # Backend API endpoints
-│   └── ...           # Frontend route components
-├── db/               # Database layer
-│   ├── repositories/ # Data access repositories
-│   └── schema.ts     # Drizzle schema definitions
-├── services/         # Domain services
+├── app/                    # TanStack Start routes & API
+│   ├── api/                # Backend API endpoints
+│   └── ...                 # Frontend route components
+├── features/               # Feature-based modules
+│   ├── auth/               # Authentication
+│   ├── channels/           # Channels & Favorites
+│   ├── sidebar/            # Sidebar navigation
+│   └── vods/               # VOD browsing
+├── services/               # External integrations
 │   ├── streamlink-service.ts
 │   └── twitch-service.ts
-└── shared/           # Shared resources
-    ├── components/   # Reusable UI components
-    ├── context/      # React contexts
-    ├── hooks/        # Custom hooks
-    ├── lib/          # Core libraries
-    └── utils/        # Helper functions
+├── db/                     # Database layer
+│   ├── schema.ts           # Drizzle schema
+│   └── index.ts            # Database instance
+└── shared/                 # Cross-cutting utilities
+    ├── components/         # header, icons
+    ├── context/            # layout-context
+    └── utils/              # api-errors, format
 ```
 
 ## License
