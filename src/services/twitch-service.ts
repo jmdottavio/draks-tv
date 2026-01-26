@@ -1,4 +1,6 @@
 import { getAuth, setAuth, clearAuth } from "@/src/features/auth/auth.repository";
+import { FORM_HEADERS } from "@/src/shared/utils/http";
+import { TWITCH_HELIX_BASE_URL, TWITCH_OAUTH_TOKEN_URL } from "@/src/shared/utils/twitch-urls";
 
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID ?? "";
 const TWITCH_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET ?? "";
@@ -61,9 +63,9 @@ async function refreshAccessToken() {
 		return false;
 	}
 
-	const response = await fetch("https://id.twitch.tv/oauth2/token", {
+	const response = await fetch(TWITCH_OAUTH_TOKEN_URL, {
 		method: "POST",
-		headers: { "Content-Type": "application/x-www-form-urlencoded" },
+		headers: FORM_HEADERS,
 		body: new URLSearchParams({
 			client_id: TWITCH_CLIENT_ID,
 			client_secret: TWITCH_CLIENT_SECRET,
@@ -99,7 +101,7 @@ async function twitchFetch<T>(endpoint: string, isRetry: boolean = false) {
 		return new Error("Not authenticated");
 	}
 
-	const response = await fetch(`https://api.twitch.tv/helix${endpoint}`, {
+	const response = await fetch(`${TWITCH_HELIX_BASE_URL}${endpoint}`, {
 		headers: {
 			"Client-ID": TWITCH_CLIENT_ID,
 			Authorization: `Bearer ${authResult.accessToken}`,

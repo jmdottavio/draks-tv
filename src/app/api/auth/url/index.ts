@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { getAuthRedirectUri } from "@/src/shared/utils/server-config";
+import { TWITCH_OAUTH_AUTHORIZE_URL } from "@/src/shared/utils/twitch-urls";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 
 export const Route = createFileRoute("/api/auth/url/")({
@@ -16,17 +18,16 @@ export const Route = createFileRoute("/api/auth/url/")({
 					);
 				}
 
-				const redirectUri = "http://localhost:9442/api/auth/callback";
 				const scope = "user:read:follows";
 
 				const params = new URLSearchParams({
 					client_id: clientId,
-					redirect_uri: redirectUri,
+					redirect_uri: getAuthRedirectUri(),
 					response_type: "code",
 					scope,
 				});
 
-				const url = `https://id.twitch.tv/oauth2/authorize?${params.toString()}`;
+				const url = `${TWITCH_OAUTH_AUTHORIZE_URL}?${params.toString()}`;
 
 				return Response.json({ url });
 			},

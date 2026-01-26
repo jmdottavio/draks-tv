@@ -1,4 +1,5 @@
 import { extractApiErrorMessage } from "@/src/shared/utils/api-errors";
+import { JSON_HEADERS } from "@/src/shared/utils/http";
 
 async function toggleFavorite(id: string): Promise<{ isFavorite: boolean }> {
 	const response = await fetch(`/api/favorites/toggle/${id}`, { method: "POST" });
@@ -14,7 +15,7 @@ async function toggleFavorite(id: string): Promise<{ isFavorite: boolean }> {
 async function reorderFavoritesApi(orderedIds: Array<string>): Promise<void> {
 	const response = await fetch("/api/favorites/reorder", {
 		method: "PUT",
-		headers: { "Content-Type": "application/json" },
+		headers: JSON_HEADERS,
 		body: JSON.stringify({ orderedIds }),
 	});
 

@@ -1,6 +1,9 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import { setAuth } from "@/src/features/auth/auth.repository";
+import { FORM_HEADERS } from "@/src/shared/utils/http";
+import { getAuthRedirectUri } from "@/src/shared/utils/server-config";
+import { TWITCH_HELIX_BASE_URL, TWITCH_OAUTH_TOKEN_URL } from "@/src/shared/utils/twitch-urls";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 
 interface TwitchTokenResponse {
@@ -46,17 +49,15 @@ export const Route = createFileRoute("/api/auth/callback/")({
 					);
 				}
 
-				const tokenResponse = await fetch("https://id.twitch.tv/oauth2/token", {
+				const tokenResponse = await fetch(TWITCH_OAUTH_TOKEN_URL, {
 					method: "POST",
-					headers: {
-						"Content-Type": "application/x-www-form-urlencoded",
-					},
+					headers: FORM_HEADERS,
 					body: new URLSearchParams({
 						client_id: clientId,
 						client_secret: clientSecret,
 						code,
 						grant_type: "authorization_code",
-						redirect_uri: "http://localhost:9442/api/auth/callback",
+						redirect_uri: getAuthRedirectUri(),
 					}),
 				});
 
@@ -70,7 +71,7 @@ export const Route = createFileRoute("/api/auth/callback/")({
 
 				const tokenData = (await tokenResponse.json()) as TwitchTokenResponse;
 
-				const userResponse = await fetch("https://api.twitch.tv/helix/users", {
+				const userResponse = await fetch(`${TWITCH_HELIX_BASE_URL}/users`, {
 					headers: {
 						Authorization: `Bearer ${tokenData.access_token}`,
 						"Client-Id": clientId,
