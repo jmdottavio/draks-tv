@@ -13,6 +13,25 @@ App runs at http://localhost:9442
 
 ## Project Structure
 
+```
+src/
+├── app/              # Application routes & API
+│   ├── api/          # Backend API endpoints
+│   └── ...           # Frontend route components
+├── db/               # Database layer
+│   ├── repositories/ # Data access repositories
+│   └── schema.ts     # Drizzle schema definitions
+├── services/         # Domain services
+│   ├── streamlink-service.ts
+│   └── twitch-service.ts
+└── shared/           # Shared resources
+    ├── components/   # Reusable UI components
+    ├── context/      # React contexts
+    ├── hooks/        # Custom hooks
+    ├── lib/          # Core libraries
+    └── utils/        # Helper functions
+```
+
 ## Key Features
 
 - OAuth with Twitch for followed channels
