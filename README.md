@@ -14,40 +14,55 @@ A local web app for browsing Twitch followed channels and launching streams dire
 ## Prerequisites
 
 - [Bun](https://bun.sh/) - JavaScript runtime and package manager
-- [Streamlink](https://streamlink.github.io/) - Extracts streams for playback
-- [VLC](https://www.videolan.org/) - Media player (Streamlink's default)
+- [VLC](https://www.videolan.org/) - Media player for stream playback
+- [Streamlink](https://streamlink.github.io/) - CLI tool that extracts streams and pipes them to VLC
 - [Twitch Developer App](https://dev.twitch.tv/console/apps) - For API access
+
+### Installing Streamlink
+
+Streamlink is the tool that makes one-click stream launching work. It grabs the stream URL from Twitch and opens it in VLC.
+
+**Windows**: Download the installer from [Streamlink releases](https://github.com/streamlink/streamlink/releases) or use `winget install streamlink`
+
+**macOS**: `brew install streamlink`
+
+**Linux**: `sudo apt install streamlink` or equivalent for your distro
+
+After installing, verify it works: `streamlink --version`
 
 ## Setup
 
-1. **Clone the repo**
+If you have [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed, copy this prompt to set everything up:
+
+```
+Help me set up this draks-tv project. I need you to:
+1. Check if bun, streamlink, and vlc are installed on my system
+2. Run bun install
+3. Walk me through creating a Twitch application at https://dev.twitch.tv/console/apps (the OAuth redirect URL should be http://localhost:9442/callback)
+4. Create my .env file from .env.example and help me fill in the TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET
+5. Start the dev server
+```
+
+### Manual Setup
+
+1. Clone the repo and install dependencies:
    ```bash
    git clone https://github.com/yourusername/draks-tv.git
    cd draks-tv
-   ```
-
-2. **Install dependencies**
-   ```bash
    bun install
    ```
 
-3. **Create a Twitch application**
-   - Go to [Twitch Developer Console](https://dev.twitch.tv/console/apps)
-   - Create a new application
+2. Create a Twitch application at [dev.twitch.tv/console/apps](https://dev.twitch.tv/console/apps):
    - Set OAuth Redirect URL to `http://localhost:9442/callback`
-   - Note your Client ID and Client Secret
+   - Copy your Client ID and Client Secret
 
-4. **Configure environment**
+3. Configure environment:
    ```bash
    cp .env.example .env
    ```
-   Edit `.env` and add your Twitch credentials:
-   ```
-   TWITCH_CLIENT_ID=your_client_id
-   TWITCH_CLIENT_SECRET=your_client_secret
-   ```
+   Add your Twitch credentials to `.env`
 
-5. **Run the app**
+4. Run the app:
    ```bash
    bun run dev
    ```
