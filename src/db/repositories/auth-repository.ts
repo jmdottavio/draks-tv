@@ -3,12 +3,6 @@ import { eq, sql } from "drizzle-orm";
 import { database } from "@/src/db";
 import { auth } from "@/src/db/schema";
 
-interface AuthData {
-	accessToken: string | null;
-	refreshToken: string | null;
-	userId: string | null;
-}
-
 function ensureAuthRowExists() {
 	database
 		.insert(auth)
@@ -83,4 +77,3 @@ function clearAuth() {
 }
 
 export { getAuth, setAuth, clearAuth };
-export type { AuthData };

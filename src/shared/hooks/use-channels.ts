@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { fetchChannels, toggleFavorite, addFavorite, reorderFavorites } from "../lib/api";
+import { fetchChannels, toggleFavorite, reorderFavorites } from "../lib/api";
 
 import type { Channel } from "../lib/api";
 
@@ -17,17 +17,6 @@ function useToggleFavorite() {
 
 	return useMutation({
 		mutationFn: toggleFavorite,
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["channels"] });
-		},
-	});
-}
-
-function useAddFavorite() {
-	const queryClient = useQueryClient();
-
-	return useMutation({
-		mutationFn: addFavorite,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["channels"] });
 		},
@@ -85,4 +74,4 @@ function useReorderFavorites() {
 	});
 }
 
-export { useChannels, useToggleFavorite, useAddFavorite, useReorderFavorites };
+export { useChannels, useToggleFavorite, useReorderFavorites };

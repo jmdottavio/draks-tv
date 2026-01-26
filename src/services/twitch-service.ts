@@ -159,21 +159,6 @@ async function getFollowedStreams(userId: string) {
 	return result.data;
 }
 
-async function getStreamsByUserIds(userIds: Array<string>) {
-	if (userIds.length === 0) {
-		return [];
-	}
-
-	const query = userIds.map((id) => `user_id=${id}`).join("&");
-	const result = await twitchFetch<TwitchStream>(`/streams?${query}`);
-
-	if (result instanceof Error) {
-		return result;
-	}
-
-	return result.data;
-}
-
 async function getVideos(userId: string, limit: number = 1) {
 	const result = await twitchFetch<TwitchVideo>(
 		`/videos?user_id=${userId}&type=archive&first=${limit}`,
@@ -208,13 +193,6 @@ async function getFollowedChannels(userId: string) {
 	return allChannels;
 }
 
-export {
-	twitchFetch,
-	getUsers,
-	getFollowedStreams,
-	getStreamsByUserIds,
-	getVideos,
-	getFollowedChannels,
-};
+export { getUsers, getFollowedStreams, getVideos, getFollowedChannels };
 
 export type { TwitchUser, TwitchStream, TwitchVideo, TwitchFollowedChannel };

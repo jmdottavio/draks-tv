@@ -92,19 +92,6 @@ async function toggleFavorite(id: string): Promise<{ isFavorite: boolean }> {
 	return response.json();
 }
 
-async function addFavorite(login: string): Promise<void> {
-	const response = await fetch("/api/favorites", {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ login }),
-	});
-
-	if (!response.ok) {
-		const message = await extractApiErrorMessage(response, "Failed to add favorite");
-		throw new Error(message);
-	}
-}
-
 async function fetchUserByLogin(login: string): Promise<TwitchUser | null> {
 	const response = await fetch(`/api/users?login=${encodeURIComponent(login)}`);
 	const data: { data: Array<TwitchUser> } = await response.json();
@@ -172,7 +159,6 @@ export {
 	fetchChannels,
 	fetchFollowedChannels,
 	toggleFavorite,
-	addFavorite,
 	reorderFavorites,
 	fetchUserByLogin,
 	fetchVideos,
@@ -180,4 +166,4 @@ export {
 	watchVod,
 };
 
-export type { AuthStatus, Channel, Stream, Vod, TwitchUser, TwitchVideo, SidebarChannel };
+export type { Channel, TwitchVideo, SidebarChannel };

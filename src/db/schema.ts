@@ -30,7 +30,3 @@ export const channelLastSeen = sqliteTable("channel_last_seen", {
 	lastSeenAt: text("last_seen_at").notNull(),
 	updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
 });
-
-export type Auth = typeof auth.$inferSelect;
-export type Favorite = typeof favorites.$inferSelect;
-export type ChannelLastSeen = typeof channelLastSeen.$inferSelect;
