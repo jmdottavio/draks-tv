@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+@theme {
+	/* Brand colors */
+	--color-twitch-purple: #9147ff;
+	--color-twitch-purple-hover: #772ce8;
+	--color-twitch-purple-light: #bf94ff;
+
+	/* Status colors */
+	--color-live: #ff4444;
+	--color-live-glow: #ff6b6b;
+	--color-favorite: #fbbf24;
+	--color-favorite-hover: #f59e0b;
+
+	/* Surface colors */
+	--color-surface-page: #18181b;
+	--color-surface-card: #1f1f23;
+	--color-surface-elevated: #26262c;
+	--color-surface-border: #3f3f46;
+	--color-surface-border-muted: #2f2f35;
+
+	/* Text colors */
+	--color-text-primary: #efeff1;
+	--color-text-secondary: #c4c4cc;
+	--color-text-muted: #a0a0a8;
+	--color-text-dim: #8e8e99;
+
+	/* Sidebar */
+	--color-sidebar-bg: #18181b;
+	--color-sidebar-hover: #26262c;
+	--color-sidebar-border: #3f3f46;
+	--color-sidebar-text: #efeff1;
+	--color-sidebar-text-muted: #c4c4cc;
+	--color-sidebar-text-dim: #8e8e99;
+
+	/* Semantic aliases */
+	--color-background: #18181b;
+}
+
+body {
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+}
+
+/* Sidebar Scrollbar - Ghost Style */
+.sidebar-scroll {
+	scrollbar-width: thin;
+	scrollbar-color: transparent transparent;
+}
+
+.sidebar-scroll:hover {
+	scrollbar-color: #3f3f46 transparent;
+}
+
+/* Webkit (Chrome, Safari, Edge) */
+.sidebar-scroll::-webkit-scrollbar {
+	width: 6px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+	background: transparent;
+	border-radius: 3px;
+}
+
+.sidebar-scroll:hover::-webkit-scrollbar-thumb {
+	background: #3f3f46;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+	background: #52525b;
+	box-shadow: 0 0 8px rgba(145, 71, 255, 0.3);
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:active {
+	background: #9147ff;
+}

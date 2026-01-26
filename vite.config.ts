@@ -1,30 +1,23 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { resolve } from 'path';
+import { defineConfig } from "vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import viteReact from "@vitejs/plugin-react";
+import tsconfigPaths from "vite-tsconfig-paths";
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  plugins: [react()],
-  root: 'src/client',
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, 'src'),
-    },
-  },
-  server: {
-    port: 9442,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:9443',
-        changeOrigin: true,
-      },
-      '/callback': {
-        target: 'http://localhost:9443',
-        changeOrigin: true,
-      },
-    },
-  },
-  build: {
-    outDir: '../../dist/client',
-    emptyOutDir: true,
-  },
+	server: {
+		port: 9442,
+	},
+	plugins: [
+		// Order matters! Tailwind first, then paths, then start, then react
+		tailwindcss(),
+		tsconfigPaths(),
+		tanstackStart({
+			srcDirectory: "src",
+			router: {
+				routesDirectory: "app",
+			},
+		}),
+		viteReact(),
+	],
 });
