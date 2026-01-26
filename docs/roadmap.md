@@ -59,6 +59,7 @@
 ### Medium-High Priority
 
 - Sidebar for live and offline doesn't refresh very often / when I refocus the tab. It should refresh every 30 seconds or so. Check the react query implementation for this. Same for them section that shows live channels.
+- Order sidebar by favorites, then by last seen, then by name.
 - Add a logout button.
 - Replace all uses of interface with types unless an interface is absolutely needed.
 - Add a means of integrating with twitch chat for any channel I'm watching. Not sure if this is something in VLC or what.
@@ -96,7 +97,7 @@
 ### Low-Medium Priority
 
 - Drag-and-drop reordering in sidebar (currently only in main grid)
-- Local watch history
+- Local watch history that includes total time watched
 
 ### Low Priority
 
