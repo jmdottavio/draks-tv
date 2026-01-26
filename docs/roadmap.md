@@ -111,14 +111,3 @@
 
 - YouTube integration (similar favorites + VOD browsing)
 - Keyboard shortcuts (refresh, navigate)
-
-## Technical Notes
-
-### Current Port Configuration
-
-- Frontend (Vite): 9442
-- Backend (Express/Bun): 9443
-
-### After TanStack Start Migration
-
-- Single unified server on port 9442
