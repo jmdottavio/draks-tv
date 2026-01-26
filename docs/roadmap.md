@@ -63,8 +63,9 @@
 - Order sidebar by favorites, then by last seen, then by name.
 - Replace all uses of interface with types unless an interface is absolutely needed.
 - Stream uptime display - Show how long the stream has been live on cards
-- Add a means of integrating with twitch chat for any channel I'm watching. Not sure if this is something in VLC or what.
-    - maybe this? Chatterino integration - Launch Chatterino alongside VLC pointed at the right channel
+- Add a means of integrating with twitch chat for any channel I'm watching.
+    - Chatterino integration - Launch Chatterino alongside VLC pointed at the right channel - see `docs/chatterino-integration-notes.md`
+    - Be sure a stream or VOD can be launched with or without chat.
 
 ### Medium Priority
 
