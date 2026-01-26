@@ -20,9 +20,11 @@ function Header({ onAddChannel, onRefresh, onToggleSidebar, isRefreshing }: Head
 				>
 					<MenuIcon className="w-5 h-5" />
 				</button>
-				<Link to="/" className="text-xl font-bold text-twitch-purple tracking-tight">
-					draks-tv
-				</Link>
+				<h1 className="m-0 text-xl font-bold tracking-tight">
+					<Link to="/" className="text-twitch-purple">
+						draks-tv
+					</Link>
+				</h1>
 			</div>
 
 			<div className="flex items-center gap-3">
