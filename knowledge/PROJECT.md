@@ -13,14 +13,22 @@ bun run build         # Build for production
 
 ## API Routes
 
-Route handlers in `src/app/api/`. Uses TanStack Start API routes:
+Route handlers in `src/app/api/`. Uses TanStack Start with server handlers:
 
 ```typescript
-import { createAPIFileRoute } from "@tanstack/start/api";
+import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createAPIFileRoute("/api/channels")({
-	GET: async ({ request }) => {
-		return new Response(JSON.stringify({ message: "Hello" }));
+export const Route = createFileRoute("/api/channels/")({
+	server: {
+		handlers: {
+			GET: async function handler() {
+				return Response.json({ message: "Hello" });
+			},
+			POST: async ({ request }) => {
+				const body = await request.json();
+				return Response.json({ success: true }, { status: 201 });
+			},
+		},
 	},
 });
 ```

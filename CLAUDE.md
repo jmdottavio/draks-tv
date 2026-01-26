@@ -20,7 +20,7 @@ App runs at http://localhost:9442
 
 ## Project Structure
 
-```
+```text
 src/
 ├── app/                    # TanStack Start routes & API
 │   ├── api/                # Backend API endpoints
