@@ -6,3 +6,4 @@ favorites.json
 *.db
 bun.lock
 .claude/
+tsconfig.tsbuildinfo
