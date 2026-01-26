@@ -50,13 +50,17 @@ function RootComponent() {
 }
 
 function AuthenticatedLayout() {
-	const { data: authData, isLoading } = useAuth();
+	const { isAuthenticated, isLoading, error } = useAuth();
 
 	if (isLoading) {
 		return <LoadingScreen />;
 	}
 
-	if (authData === undefined || !authData.authenticated) {
+	if (error !== null) {
+		return <ErrorScreen message={error.message} />;
+	}
+
+	if (!isAuthenticated) {
 		return <UnauthenticatedShell />;
 	}
 
@@ -70,6 +74,14 @@ function LoadingScreen() {
 				<span>Loading</span>
 				<span className="ml-3 w-6 h-6 border-2 border-surface-border-muted border-t-twitch-purple rounded-full animate-spin" />
 			</div>
+		</div>
+	);
+}
+
+function ErrorScreen({ message }: { message: string }) {
+	return (
+		<div className="min-h-screen flex items-center justify-center">
+			<p className="text-live text-sm">{message}</p>
 		</div>
 	);
 }

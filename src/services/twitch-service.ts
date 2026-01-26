@@ -107,9 +107,9 @@ async function twitchFetch<T>(endpoint: string, isRetry: boolean = false) {
 	});
 
 	if (response.status === 401 && !isRetry) {
-		const refreshed = await refreshAccessToken();
+		const wasRefreshed = await refreshAccessToken();
 
-		if (refreshed) {
+		if (wasRefreshed) {
 			return twitchFetch<T>(endpoint, true);
 		}
 
@@ -195,4 +195,4 @@ async function getFollowedChannels(userId: string) {
 
 export { getUsers, getFollowedStreams, getVideos, getFollowedChannels };
 
-export type { TwitchUser, TwitchStream, TwitchVideo, TwitchFollowedChannel };
+export type { TwitchUser, TwitchStream, TwitchVideo };

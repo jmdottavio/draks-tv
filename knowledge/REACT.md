@@ -6,11 +6,11 @@ Use function declarations for components:
 
 ```typescript
 function ChannelCard({ channel }: ChannelCardProps) {
-  return (
-    <div className="channel-card">
-      {channel.name}
-    </div>
-  );
+	return (
+		<div className="channel-card">
+			{channel.name}
+		</div>
+	);
 }
 ```
 
@@ -29,21 +29,21 @@ Never use `useState` for values that can be computed:
 ```typescript
 // Good
 function ChannelList({ channels }: Props) {
-  const liveChannels = channels.filter((ch) => ch.isLive);
-  const liveCount = liveChannels.length;
+	const liveChannels = channels.filter((ch) => ch.isLive);
+	const liveCount = liveChannels.length;
 
-  return <div>Live: {liveCount}</div>;
+	return <div>Live: {liveCount}</div>;
 }
 
 // Bad
 function ChannelList({ channels }: Props) {
-  const [liveCount, setLiveCount] = useState(0);
+	const [liveCount, setLiveCount] = useState(0);
 
-  useEffect(() => {
-    setLiveCount(channels.filter((ch) => ch.isLive).length);
-  }, [channels]);
+	useEffect(() => {
+		setLiveCount(channels.filter((ch) => ch.isLive).length);
+	}, [channels]);
 
-  return <div>Live: {liveCount}</div>;
+	return <div>Live: {liveCount}</div>;
 }
 ```
 
@@ -53,22 +53,22 @@ Use TanStack Query for all data fetching:
 
 ```typescript
 function useChannels() {
-  return useQuery({
-    queryKey: ['channels'],
-    queryFn: fetchChannels,
-    staleTime: 30_000, // 30 seconds
-  });
+	return useQuery({
+		queryKey: ["channels"],
+		queryFn: fetchChannels,
+		staleTime: 30_000, // 30 seconds
+	});
 }
 
 function useFavoriteToggle() {
-  const queryClient = useQueryClient();
+	const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: toggleFavorite,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['channels'] });
-    },
-  });
+	return useMutation({
+		mutationFn: toggleFavorite,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["channels"] });
+		},
+	});
 }
 ```
 
@@ -79,18 +79,18 @@ Use early returns, not ternaries for conditional JSX:
 ```typescript
 // Good
 function ChannelCard({ channel }: Props) {
-  if (channel.isLive) {
-    return <LiveChannelCard channel={channel} />;
-  }
+	if (channel.isLive) {
+		return <LiveChannelCard channel={channel} />;
+	}
 
-  return <OfflineChannelCard channel={channel} />;
+	return <OfflineChannelCard channel={channel} />;
 }
 
 // Bad
 function ChannelCard({ channel }: Props) {
-  return channel.isLive
-    ? <LiveChannelCard channel={channel} />
-    : <OfflineChannelCard channel={channel} />;
+	return channel.isLive
+		? <LiveChannelCard channel={channel} />
+		: <OfflineChannelCard channel={channel} />;
 }
 ```
 
@@ -108,31 +108,31 @@ Name handlers with `handle` prefix:
 
 ```typescript
 function ChannelCard({ channel, onFavorite }: Props) {
-  function handleFavoriteClick() {
-    onFavorite(channel.id);
-  }
+	function handleFavoriteClick() {
+		onFavorite(channel.id);
+	}
 
-  return (
-    <button onClick={handleFavoriteClick}>
-      Favorite
-    </button>
-  );
+	return (
+		<button onClick={handleFavoriteClick}>
+			Favorite
+		</button>
+	);
 }
 ```
 
 ## Props
 
-Define props with interface, not inline:
+Define props with type, not inline:
 
 ```typescript
-interface ChannelCardProps {
-  channel: Channel;
-  isFavorite: boolean;
-  onFavorite: (id: string) => void;
-}
+type ChannelCardProps = {
+	channel: Channel;
+	isFavorite: boolean;
+	onFavorite: (id: string) => void;
+};
 
 function ChannelCard({ channel, isFavorite, onFavorite }: ChannelCardProps) {
-  // ...
+	// ...
 }
 ```
 

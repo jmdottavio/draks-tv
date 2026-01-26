@@ -67,13 +67,24 @@ interface SidebarChannel {
 
 async function fetchAuthStatus(): Promise<AuthStatus> {
 	const response = await fetch("/api/auth/status");
-	return response.json();
+
+	if (!response.ok) {
+		const message = await extractApiErrorMessage(response, "Failed to fetch auth status");
+		throw new Error(message);
+	}
+
+	return response.json() as Promise<AuthStatus>;
 }
 
-async function fetchAuthUrl(): Promise<string> {
+async function fetchAuthUrl(): Promise<AuthUrl> {
 	const response = await fetch("/api/auth/url");
-	const data: AuthUrl = await response.json();
-	return data.url;
+
+	if (!response.ok) {
+		const message = await extractApiErrorMessage(response, "Failed to fetch auth URL");
+		throw new Error(message);
+	}
+
+	return response.json() as Promise<AuthUrl>;
 }
 
 async function fetchChannels(): Promise<Array<Channel>> {
@@ -84,31 +95,40 @@ async function fetchChannels(): Promise<Array<Channel>> {
 		throw new Error(message);
 	}
 
-	return response.json();
+	return response.json() as Promise<Array<Channel>>;
 }
 
 async function toggleFavorite(id: string): Promise<{ isFavorite: boolean }> {
 	const response = await fetch(`/api/favorites/toggle/${id}`, { method: "POST" });
-	return response.json();
-}
 
-async function fetchUserByLogin(login: string): Promise<TwitchUser | null> {
-	const response = await fetch(`/api/users?login=${encodeURIComponent(login)}`);
-	const data: { data: Array<TwitchUser> } = await response.json();
-
-	const user = data.data[0];
-
-	if (user === undefined) {
-		return null;
+	if (!response.ok) {
+		const message = await extractApiErrorMessage(response, "Failed to toggle favorite");
+		throw new Error(message);
 	}
 
-	return user;
+	return response.json() as Promise<{ isFavorite: boolean }>;
+}
+
+async function fetchUsers(logins: Array<string>): Promise<Array<TwitchUser>> {
+	const response = await fetch(`/api/users?logins=${logins.map(encodeURIComponent).join(",")}`);
+
+	if (!response.ok) {
+		const message = await extractApiErrorMessage(response, "Failed to fetch users");
+		throw new Error(message);
+	}
+
+	return response.json() as Promise<Array<TwitchUser>>;
 }
 
 async function fetchVideos(userId: string): Promise<Array<TwitchVideo>> {
-	const response = await fetch(`/api/videos?user_id=${userId}`);
-	const data: { data: Array<TwitchVideo> } = await response.json();
-	return data.data;
+	const response = await fetch(`/api/videos?userId=${userId}`);
+
+	if (!response.ok) {
+		const message = await extractApiErrorMessage(response, "Failed to fetch videos");
+		throw new Error(message);
+	}
+
+	return response.json() as Promise<Array<TwitchVideo>>;
 }
 
 async function watchLive(channel: string): Promise<void> {
@@ -137,7 +157,7 @@ async function fetchFollowedChannels(): Promise<Array<SidebarChannel>> {
 		throw new Error(message);
 	}
 
-	return response.json();
+	return response.json() as Promise<Array<SidebarChannel>>;
 }
 
 async function reorderFavorites(orderedIds: Array<string>): Promise<void> {
@@ -160,7 +180,7 @@ export {
 	fetchFollowedChannels,
 	toggleFavorite,
 	reorderFavorites,
-	fetchUserByLogin,
+	fetchUsers,
 	fetchVideos,
 	watchLive,
 	watchVod,

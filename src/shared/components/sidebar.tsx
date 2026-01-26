@@ -1,6 +1,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useFollowedChannels } from "../hooks/use-followed-channels";
+import {
+	useFollowedChannels,
+	FOLLOWED_CHANNELS_QUERY_KEY,
+} from "../hooks/use-followed-channels";
+import { CHANNELS_QUERY_KEY } from "../hooks/use-channels";
 import { toggleFavorite, watchLive } from "../lib/api";
 import { formatDate, formatViewers } from "../lib/format";
 import { ChevronLeftIcon, ChevronRightIcon, StarIcon } from "./icons";
@@ -25,16 +29,12 @@ function getOfflineStatusText(lastVodDate: string | null): string {
 	return "Offline";
 }
 
-function categorizeChannels(channels: Array<SidebarChannel> | undefined): {
+function categorizeChannels(channels: Array<SidebarChannel>): {
 	live: Array<SidebarChannel>;
 	offline: Array<SidebarChannel>;
 } {
 	const live: Array<SidebarChannel> = [];
 	const offline: Array<SidebarChannel> = [];
-
-	if (channels === undefined) {
-		return { live, offline };
-	}
 
 	for (const channel of channels) {
 		if (channel.isLive) {
@@ -47,7 +47,12 @@ function categorizeChannels(channels: Array<SidebarChannel> | undefined): {
 	return { live, offline };
 }
 
-function ChannelAvatar({ channel, isExpanded }: { channel: SidebarChannel; isExpanded: boolean }) {
+interface ChannelAvatarProps {
+	channel: SidebarChannel;
+	isExpanded: boolean;
+}
+
+function ChannelAvatar({ channel, isExpanded }: ChannelAvatarProps) {
 	const ringColor = channel.isLive ? "ring-live" : "ring-sidebar-text-dim";
 	const glowClass = channel.isLive ? "shadow-[0_0_8px_rgba(255,68,68,0.5)]" : "";
 	const sizeClass = isExpanded ? "h-9 w-9" : "h-8 w-8";
@@ -157,15 +162,34 @@ function SidebarLoading({ isExpanded }: { isExpanded: boolean }) {
 	);
 }
 
-function SectionHeader({
-	title,
-	count,
-	isExpanded,
-}: {
+interface SidebarErrorProps {
+	isExpanded: boolean;
+	message: string;
+}
+
+function SidebarError({ isExpanded, message }: SidebarErrorProps) {
+	if (!isExpanded) {
+		return (
+			<div className="flex justify-center py-6">
+				<div className="h-2 w-2 rounded-full bg-live" title={message} />
+			</div>
+		);
+	}
+
+	return (
+		<div className="px-3 py-8 text-center text-sm text-live">
+			{message}
+		</div>
+	);
+}
+
+interface SectionHeaderProps {
 	title: string;
 	count: number;
 	isExpanded: boolean;
-}) {
+}
+
+function SectionHeader({ title, count, isExpanded }: SectionHeaderProps) {
 	if (!isExpanded) {
 		return (
 			<div className="flex justify-center py-2">
@@ -191,7 +215,7 @@ function SectionHeader({
 }
 
 interface ChannelListProps {
-	channels: Array<SidebarChannel> | undefined;
+	channels: Array<SidebarChannel>;
 	isExpanded: boolean;
 	onFavoriteToggle: (id: string) => void;
 }
@@ -199,7 +223,7 @@ interface ChannelListProps {
 function ChannelList({ channels, isExpanded, onFavoriteToggle }: ChannelListProps) {
 	const { live: liveChannels, offline: offlineChannels } = categorizeChannels(channels);
 
-	if (channels?.length === 0) {
+	if (channels.length === 0) {
 		return (
 			<div
 				className={`py-8 text-center text-sm text-sidebar-text-dim ${!isExpanded && "px-1"}`}
@@ -255,13 +279,13 @@ function ChannelList({ channels, isExpanded, onFavoriteToggle }: ChannelListProp
 }
 
 function Sidebar({ isExpanded, onToggle }: SidebarProps) {
-	const { data: channels, isLoading } = useFollowedChannels();
+	const { channels, isLoading, error } = useFollowedChannels();
 	const queryClient = useQueryClient();
 
 	async function handleFavoriteToggle(id: string) {
 		await toggleFavorite(id);
-		queryClient.invalidateQueries({ queryKey: ["followed-channels"] });
-		queryClient.invalidateQueries({ queryKey: ["channels"] });
+		queryClient.invalidateQueries({ queryKey: FOLLOWED_CHANNELS_QUERY_KEY });
+		queryClient.invalidateQueries({ queryKey: CHANNELS_QUERY_KEY });
 	}
 
 	return (
@@ -310,6 +334,8 @@ function Sidebar({ isExpanded, onToggle }: SidebarProps) {
 				>
 					{isLoading ? (
 						<SidebarLoading isExpanded={isExpanded} />
+					) : error !== null ? (
+						<SidebarError isExpanded={isExpanded} message={error.message} />
 					) : (
 						<ChannelList
 							channels={channels}

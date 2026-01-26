@@ -1,18 +1,41 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { fetchUserByLogin, fetchVideos } from "../lib/api";
+import { fetchUsers, fetchVideos } from "../lib/api";
 
-function useVodSearch(channelLogin: string | null) {
-	return useQuery({
-		queryKey: ["vods", channelLogin],
+import type { TwitchVideo } from "../lib/api";
+
+export function getVodsQueryKey(channelLogin: string) {
+	return ["vods", channelLogin] as const;
+}
+
+interface VodSearchData {
+	user: {
+		id: string;
+		login: string;
+		display_name: string;
+		profile_image_url: string;
+	};
+	videos: Array<TwitchVideo>;
+}
+
+interface UseVodSearchResult {
+	data: VodSearchData | null;
+	isLoading: boolean;
+	error: Error | null;
+}
+
+function useVodSearch(channelLogin: string | null): UseVodSearchResult {
+	const { data, isLoading, error } = useQuery({
+		queryKey: channelLogin !== null ? getVodsQueryKey(channelLogin) : ["vods"],
 		queryFn: async () => {
 			if (channelLogin === null) {
 				return null;
 			}
 
-			const user = await fetchUserByLogin(channelLogin);
+			const users = await fetchUsers([channelLogin]);
+			const user = users[0];
 
-			if (user === null) {
+			if (user === undefined) {
 				throw new Error(`Channel "${channelLogin}" not found`);
 			}
 
@@ -21,6 +44,12 @@ function useVodSearch(channelLogin: string | null) {
 		},
 		enabled: channelLogin !== null,
 	});
+
+	return {
+		data: data ?? null,
+		isLoading,
+		error: error instanceof Error ? error : null,
+	};
 }
 
 export { useVodSearch };

@@ -12,7 +12,7 @@ export const Route = createFileRoute("/")({
 });
 
 function ChannelsPage() {
-	const { data: channels, isLoading } = useChannels();
+	const { channels, isLoading, error } = useChannels();
 	const toggleFavoriteMutation = useToggleFavorite();
 	const reorderFavoritesMutation = useReorderFavorites();
 
@@ -33,8 +33,12 @@ function ChannelsPage() {
 		);
 	}
 
-	if (channels === undefined) {
-		return null;
+	if (error !== null) {
+		return (
+			<div className="flex items-center justify-center py-16">
+				<p className="text-live text-sm">{error.message}</p>
+			</div>
+		);
 	}
 
 	return (

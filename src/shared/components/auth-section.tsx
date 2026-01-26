@@ -3,7 +3,7 @@ import { fetchAuthUrl } from "../lib/api";
 
 function AuthSection() {
 	async function handleLogin() {
-		const url = await fetchAuthUrl();
+		const { url } = await fetchAuthUrl();
 		window.location.href = url;
 	}
 

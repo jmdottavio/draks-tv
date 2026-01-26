@@ -137,4 +137,5 @@ function reorderFavorites(orderedIds: Array<string>) {
 }
 
 export { addFavorite, getAllFavorites, isFavorite, removeFavorite, reorderFavorites };
-export type { FavoriteInput };
+
+export type { FavoriteOutput };
