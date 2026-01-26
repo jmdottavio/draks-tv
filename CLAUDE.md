@@ -11,6 +11,13 @@ bun run dev
 
 App runs at http://localhost:9442
 
+## Architecture
+
+- **Frontend**: TanStack Start (SSR/Client). Components in `shared/components`.
+- **Backend API**: `src/app/api`.
+- **Data Flow**: API Route -> Service -> Repository -> Drizzle/SQLite.
+- **State**: TanStack Query for server state.
+
 ## Project Structure
 
 ```
