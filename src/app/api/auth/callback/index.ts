@@ -2,22 +2,11 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import { setAuth } from "@/src/features/auth/auth.repository";
 import { validateStateToken } from "@/src/shared/utils/oauth-state";
-import { FORM_HEADERS } from "@/src/shared/utils/http";
-import { checkAuthRateLimit } from "@/src/shared/utils/rate-limiter";
+import { FORM_HEADERS, getClientIp } from "@/src/shared/utils/http";
+import { checkAuthRateLimit, createRateLimitResponse } from "@/src/shared/utils/rate-limiter";
 import { getAuthRedirectUri } from "@/src/shared/utils/server-config";
 import { TWITCH_HELIX_BASE_URL, TWITCH_OAUTH_TOKEN_URL } from "@/src/shared/utils/twitch-urls";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
-
-function getClientIp(request: Request): string {
-	const forwarded = request.headers.get("x-forwarded-for");
-	if (forwarded !== null) {
-		const firstIp = forwarded.split(",")[0];
-		if (firstIp !== undefined) {
-			return firstIp.trim();
-		}
-	}
-	return "unknown";
-}
 
 interface TwitchTokenResponse {
 	access_token: string;
@@ -43,13 +32,7 @@ export const Route = createFileRoute("/api/auth/callback/")({
 				const clientIp = getClientIp(request);
 				const rateLimit = checkAuthRateLimit(clientIp);
 				if (!rateLimit.allowed) {
-					return new Response(JSON.stringify({ error: "Too many requests" }), {
-						status: 429,
-						headers: {
-							"Content-Type": "application/json",
-							"Retry-After": String(Math.ceil((rateLimit.retryAfterMs ?? 60000) / 1000)),
-						},
-					});
+					return createRateLimitResponse(rateLimit.retryAfterMs);
 				}
 
 				const url = new URL(request.url);

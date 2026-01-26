@@ -1,6 +1,10 @@
 import { getAuth, setAuth, clearAuth } from "@/src/features/auth/auth.repository";
 import { FORM_HEADERS } from "@/src/shared/utils/http";
-import { TWITCH_HELIX_BASE_URL, TWITCH_OAUTH_REVOKE_URL, TWITCH_OAUTH_TOKEN_URL } from "@/src/shared/utils/twitch-urls";
+import {
+	TWITCH_HELIX_BASE_URL,
+	TWITCH_OAUTH_REVOKE_URL,
+	TWITCH_OAUTH_TOKEN_URL,
+} from "@/src/shared/utils/twitch-urls";
 
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID ?? "";
 const TWITCH_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET ?? "";
@@ -89,7 +93,12 @@ async function refreshAccessToken() {
 		return false;
 	}
 
-	setAuth(tokenData.access_token, tokenData.refresh_token, authResult.userId, tokenData.expires_in);
+	setAuth(
+		tokenData.access_token,
+		tokenData.refresh_token,
+		authResult.userId,
+		tokenData.expires_in,
+	);
 	return true;
 }
 
@@ -229,7 +238,9 @@ async function revokeToken(token: string): Promise<void | Error> {
 			return new Error(`Token revocation failed: ${response.status}`);
 		}
 	} catch (error) {
-		return new Error(`Token revocation request failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+		return new Error(
+			`Token revocation request failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+		);
 	}
 }
 

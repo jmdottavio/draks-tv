@@ -284,7 +284,12 @@ function reEncryptToken(ciphertext: string, oldSecret?: string): string | Error 
 
 	if (oldSecret !== undefined) {
 		// Use provided old secret for decryption
-		const oldKey = scryptSync(oldSecret, cachedSalt ?? getOrCreateSalt(oldSecret), KEY_LENGTH, SCRYPT_OPTIONS);
+		const oldKey = scryptSync(
+			oldSecret,
+			cachedSalt ?? getOrCreateSalt(oldSecret),
+			KEY_LENGTH,
+			SCRYPT_OPTIONS,
+		);
 		plaintext = decryptWithKey(ciphertext, oldKey);
 	} else {
 		// Try normal decryption (handles v1 and v2 formats)

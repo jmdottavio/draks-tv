@@ -17,7 +17,11 @@ function requireAuth(): AuthResult {
 	if (authResult instanceof Error) {
 		return {
 			authenticated: false,
-			response: createErrorResponse("Authentication check failed", ErrorCode.DATABASE_ERROR, 500),
+			response: createErrorResponse(
+				"Authentication check failed",
+				ErrorCode.DATABASE_ERROR,
+				500,
+			),
 		};
 	}
 

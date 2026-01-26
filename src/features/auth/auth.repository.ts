@@ -51,9 +51,8 @@ function setAuth(accessToken: string, refreshToken: string, userId: string, expi
 		const encryptedRefreshToken = encryptToken(refreshToken);
 
 		// Calculate expiry timestamp from expires_in (seconds until expiry)
-		const expiresAt = expiresIn !== undefined
-			? Math.floor(Date.now() / 1000) + expiresIn
-			: null;
+		const expiresAt =
+			expiresIn !== undefined ? Math.floor(Date.now() / 1000) + expiresIn : null;
 
 		database
 			.update(auth)

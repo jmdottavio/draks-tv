@@ -1,6 +1,8 @@
+import { JSON_HEADERS } from "./http";
+
 interface RateLimitConfig {
-	windowMs: number;      // Time window in milliseconds
-	maxRequests: number;   // Max requests per window
+	windowMs: number; // Time window in milliseconds
+	maxRequests: number; // Max requests per window
 }
 
 interface RequestRecord {
@@ -29,7 +31,10 @@ function cleanup(windowMs: number) {
 	}
 }
 
-function checkRateLimit(identifier: string, config: RateLimitConfig): { allowed: boolean; retryAfterMs?: number } {
+function checkRateLimit(
+	identifier: string,
+	config: RateLimitConfig,
+): { allowed: boolean; retryAfterMs?: number } {
 	const now = Date.now();
 	cleanup(config.windowMs);
 
@@ -55,8 +60,8 @@ function checkRateLimit(identifier: string, config: RateLimitConfig): { allowed:
 
 // Pre-configured rate limiters
 const AUTH_RATE_LIMIT: RateLimitConfig = {
-	windowMs: 60 * 1000,  // 1 minute
-	maxRequests: 10,       // 10 requests per minute for auth endpoints
+	windowMs: 60 * 1000, // 1 minute
+	maxRequests: 10, // 10 requests per minute for auth endpoints
 };
 
 function checkAuthRateLimit(ip: string): { allowed: boolean; retryAfterMs?: number } {
@@ -67,11 +72,11 @@ function createRateLimitResponse(retryAfterMs?: number): Response {
 	return new Response(JSON.stringify({ error: "Too many requests" }), {
 		status: 429,
 		headers: {
-			"Content-Type": "application/json",
+			...JSON_HEADERS,
 			"Retry-After": String(Math.ceil((retryAfterMs ?? 60000) / 1000)),
 		},
 	});
 }
 
-export { checkRateLimit, checkAuthRateLimit, createRateLimitResponse };
+export { checkAuthRateLimit, checkRateLimit, createRateLimitResponse };
 export type { RateLimitConfig };

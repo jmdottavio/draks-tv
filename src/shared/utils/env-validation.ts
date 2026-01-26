@@ -20,17 +20,14 @@ function validateEnvironment(): EnvValidationResult {
 	// Optional but recommended for security
 	if (!process.env.TOKEN_ENCRYPTION_KEY) {
 		warnings.push(
-			"TOKEN_ENCRYPTION_KEY not set - an auto-generated key will be used. Set this for production deployments."
+			"TOKEN_ENCRYPTION_KEY not set - an auto-generated key will be used. Set this for production deployments.",
 		);
 	}
 
 	// Check if encryption key is strong enough (if provided)
-	if (
-		process.env.TOKEN_ENCRYPTION_KEY &&
-		process.env.TOKEN_ENCRYPTION_KEY.length < 32
-	) {
+	if (process.env.TOKEN_ENCRYPTION_KEY && process.env.TOKEN_ENCRYPTION_KEY.length < 32) {
 		warnings.push(
-			"TOKEN_ENCRYPTION_KEY should be at least 32 characters for adequate security"
+			"TOKEN_ENCRYPTION_KEY should be at least 32 characters for adequate security",
 		);
 	}
 
@@ -53,9 +50,7 @@ function validateAndLog(): boolean {
 	}
 
 	if (!result.valid) {
-		console.error(
-			"[ENV] Environment validation failed. Please check your .env file."
-		);
+		console.error("[ENV] Environment validation failed. Please check your .env file.");
 	}
 
 	return result.valid;
