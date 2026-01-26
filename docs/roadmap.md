@@ -59,10 +59,12 @@
 ### Medium-High Priority
 
 - Sidebar for live and offline doesn't refresh very often / when I refocus the tab. It should refresh every 30 seconds or so. Check the react query implementation for this. Same for them section that shows live channels.
+    - Be sure thumbnails refresh regularly as well.
 - Order sidebar by favorites, then by last seen, then by name.
-- Add a logout button.
 - Replace all uses of interface with types unless an interface is absolutely needed.
+- Stream uptime display - Show how long the stream has been live on cards
 - Add a means of integrating with twitch chat for any channel I'm watching. Not sure if this is something in VLC or what.
+    - maybe this? Chatterino integration - Launch Chatterino alongside VLC pointed at the right channel
 
 ### Medium Priority
 
@@ -93,17 +95,23 @@
 - Remove all explicit return types.
 - API endpoints - instead of inline anonymous functions, have descriptively named functions (if possible)
 - Abstract components like ones that use danger classes, buttons, etc.
+- Local watch history that includes total time watched
 
 ### Low-Medium Priority
 
+- Multi-stream launcher - Open 2-4 streams simultaneously in separate VLC windows with predefined layouts
+- VOD resume tracking - Remember playback position in VODs so you can continue where you left off
+- VOD chapters/markers - Display and jump to Twitch's chapter markers when launching VODs
+- Clips browser - Browse and launch clips for any channel, not just VODs
 - Drag-and-drop reordering in sidebar (currently only in main grid)
-- Local watch history that includes total time watched
+- Similar channels - Based on category overlap or Twitch's recommendation data
+- Add a logout button.
 
 ### Low Priority
 
 - "Add channel" option to follow OR just add to favorites (currently only favorites)
 - Loading states and error handling polish
-- Right-click context menu for quick actions in sidebar
+- Audio-only mode - Streamlink flag for low-bandwidth listening while working
 - Remember scroll position when returning from VODs view
 - Stream quality selector before launching (always want highest anyway)
 
