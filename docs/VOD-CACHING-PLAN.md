@@ -1323,7 +1323,8 @@ async function initializeVideoCache() {
         console.log(`[startup] Cache initialized in ${Date.now() - startTime}ms`);
     }
 
-    // Start background refresh regardless of initial population result
+    // Start background refresh even if populateInitialCache had errors
+    // (auth is already validated above - without a valid token we return early)
     startBackgroundRefresh(auth.accessToken);
 }
 
@@ -1332,29 +1333,49 @@ export { initializeVideoCache };
 
 ### File: `src/server.ts`
 
-TanStack Start uses `createStartHandler` and `defaultStreamHandler` from `@tanstack/react-start/server`.
+TanStack Start discovers server entry by file convention at `src/server.ts`. The entry must export a WinterCG-compatible `ServerEntry` interface wrapped with `createServerEntry`.
 
 ```typescript
-import {
-    createStartHandler,
-    defaultStreamHandler,
-} from "@tanstack/react-start/server";
+import handler, { createServerEntry } from "@tanstack/react-start/server-entry";
 
 import { initializeVideoCache } from "./lib/startup";
 
-const handler = createStartHandler(defaultStreamHandler);
+// Prevent re-initialization on hot reload in development
+declare global {
+    var __vodCacheInitialized: boolean | undefined;
+}
 
-// Start initialization in background - do NOT block requests
-// First requests may have cache misses, which fall back to direct Twitch API calls
-initializeVideoCache().catch((error) => {
-    console.error("[startup] Video cache initialization failed:", error);
+if (!globalThis.__vodCacheInitialized) {
+    globalThis.__vodCacheInitialized = true;
+
+    // Start initialization in background - do NOT block requests
+    // First requests may have cache misses, which fall back to direct Twitch API calls
+    initializeVideoCache().catch((error) => {
+        console.error("[startup] Video cache initialization failed:", error);
+    });
+}
+
+export default createServerEntry({
+    fetch(request) {
+        return handler.fetch(request);
+    },
+});
+```
+
+**Note:** For custom request handling (logging, auth checks, etc.), use `createStartHandler` with `defineHandlerCallback`:
+
+```typescript
+import { createStartHandler, defaultStreamHandler, defineHandlerCallback } from "@tanstack/react-start/server";
+import { createServerEntry } from "@tanstack/react-start/server-entry";
+
+const customHandler = defineHandlerCallback((context) => {
+    // Add custom logic here
+    return defaultStreamHandler(context);
 });
 
-export default {
-    fetch(request: Request) {
-        return handler(request);
-    },
-};
+const fetch = createStartHandler(customHandler);
+
+export default createServerEntry({ fetch });
 ```
 
 ---
