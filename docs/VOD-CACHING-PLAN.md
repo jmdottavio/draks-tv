@@ -17,7 +17,7 @@ Implement a **cache-first VOD system** with:
 
 - Live stream data is NEVER cached - `getFollowedStreams()` hits Twitch API every request
 - Main page refreshes every 30 seconds for real-time live status
-- VOD cache pre-populated on server start
+- VOD cache pre-populated on server start (non-blocking)
 - Background 30-minute refresh keeps VODs fresh automatically
 
 ---
@@ -32,6 +32,7 @@ All code in this plan follows the project standards:
 - **No abbreviations** - Use `previous` not `prev`, `index` not `idx`, `channel` not `ch`
 - **Function declarations** - Use `function` keyword, not arrow function variables
 - **Manual timestamps on UPDATE** - SQLite `DEFAULT CURRENT_TIMESTAMP` only applies on INSERT
+- **Import order** - External packages, then internal (`@/`), then relative (`./`), then types
 
 ---
 
@@ -50,6 +51,7 @@ export const cachedVods = sqliteTable(
     "cached_vods",
     {
         id: integer("id").primaryKey({ autoIncrement: true }),
+        // videoId has implicit unique index from .unique() constraint - used for conflict resolution
         videoId: text("video_id").notNull().unique(),
         channelId: text("channel_id").notNull(),
         title: text("title").notNull(),
@@ -77,7 +79,6 @@ export const channelCache = sqliteTable(
     },
     (table) => [
         index("channel_cache_latest_video_id_idx").on(table.latestVideoId),
-        index("channel_cache_is_live_idx").on(table.isLive),
     ]
 );
 
@@ -102,10 +103,8 @@ bun run drizzle-kit migrate
 ### File: `src/features/vods/vods.types.ts`
 
 ```typescript
-import type { cachedVods, channelCache } from "@/src/db/schema";
-
-type CachedVideoSelect = typeof cachedVods.$inferSelect;
-type ChannelCacheSelect = typeof channelCache.$inferSelect;
+// Import types from schema - do not re-declare
+import type { CachedVideoSelect, ChannelCacheSelect } from "@/src/db/schema";
 
 type VideoInput = {
     videoId: string;
@@ -132,14 +131,8 @@ type ChannelCacheWithVideo = {
     latestVideo: CachedVideoSelect | null;
 };
 
-type CacheOptions = {
-    maxAgeMilliseconds?: number;
-    forceRefresh?: boolean;
-};
-
 export type {
     CachedVideoSelect,
-    CacheOptions,
     ChannelCacheInput,
     ChannelCacheSelect,
     ChannelCacheWithVideo,
@@ -154,10 +147,10 @@ export type {
 ### File: `src/features/vods/vods.repository.ts`
 
 ```typescript
-import { desc, eq, sql, and, notInArray } from "drizzle-orm";
+import { and, desc, eq, notInArray, sql } from "drizzle-orm";
 
 import { database } from "@/src/db";
-import { cachedVods } from "@/src/db/schema";
+import { cachedVods, channelCache } from "@/src/db/schema";
 
 import type { VideoInput } from "./vods.types";
 
@@ -216,6 +209,15 @@ function upsertVideo(videoData: VideoInput) {
 
 function deleteOldVideos(channelId: string, keepCount: number) {
     try {
+        // Get the latestVideoId from channelCache to protect it from deletion
+        const cacheRow = database
+            .select({ latestVideoId: channelCache.latestVideoId })
+            .from(channelCache)
+            .where(eq(channelCache.channelId, channelId))
+            .get();
+
+        const protectedVideoId = cacheRow?.latestVideoId;
+
         const videosToKeep = database
             .select({ id: cachedVods.id })
             .from(cachedVods)
@@ -225,6 +227,13 @@ function deleteOldVideos(channelId: string, keepCount: number) {
             .all();
 
         const idsToKeep = videosToKeep.map((video) => video.id);
+
+        // Also protect the latestVideoId if it exists and is not already in the keep list
+        if (protectedVideoId !== null && protectedVideoId !== undefined) {
+            if (!idsToKeep.includes(protectedVideoId)) {
+                idsToKeep.push(protectedVideoId);
+            }
+        }
 
         if (idsToKeep.length === 0) {
             const deleted = database
@@ -264,7 +273,8 @@ export { deleteOldVideos, getVideosForChannel, upsertVideo };
 ### File: `src/features/vods/channel-cache.repository.ts`
 
 ```typescript
-import { eq, inArray, sql, and, notInArray } from "drizzle-orm";
+import { and, eq, inArray, notInArray, sql } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 
 import { database } from "@/src/db";
 import { cachedVods, channelCache } from "@/src/db/schema";
@@ -300,6 +310,7 @@ function getChannelCache(channelId: string) {
             return null;
         }
 
+        // When id is not null, all other fields are guaranteed non-null due to LEFT JOIN semantics
         const result: ChannelCacheWithVideo = {
             channelId: row.channelId,
             isLive: row.isLive,
@@ -345,6 +356,7 @@ function getChannelCacheBulk(channelIds: Array<string>) {
             .where(inArray(channelCache.channelId, channelIds))
             .all();
 
+        // When id is not null, all other fields are guaranteed non-null due to LEFT JOIN semantics
         const results: Array<ChannelCacheWithVideo> = rows.map((row) => ({
             channelId: row.channelId,
             isLive: row.isLive,
@@ -418,7 +430,7 @@ function updateChannelLiveState(channelId: string, isLive: boolean, lastLiveAt?:
     try {
         const setValues: {
             isLive: boolean;
-            updatedAt: ReturnType<typeof sql>;
+            updatedAt: SQL<unknown>;
             lastLiveAt?: string;
         } = {
             isLive: isLive,
@@ -456,18 +468,26 @@ function updateChannelLiveState(channelId: string, isLive: boolean, lastLiveAt?:
 
 function updateLatestVideoId(channelId: string, latestVideoId: number) {
     try {
-        const updated = database
-            .update(channelCache)
-            .set({
+        // Use upsert to handle case where channel cache does not exist yet
+        const result = database
+            .insert(channelCache)
+            .values({
+                channelId: channelId,
+                isLive: false,
                 latestVideoId: latestVideoId,
-                updatedAt: sql`CURRENT_TIMESTAMP`,
             })
-            .where(eq(channelCache.channelId, channelId))
+            .onConflictDoUpdate({
+                target: channelCache.channelId,
+                set: {
+                    latestVideoId: latestVideoId,
+                    updatedAt: sql`CURRENT_TIMESTAMP`,
+                },
+            })
             .returning({ channelId: channelCache.channelId })
             .get();
 
-        if (updated === undefined) {
-            return new Error("Channel cache not found for update");
+        if (result === undefined) {
+            return new Error("Upsert did not return a row");
         }
 
         return null;
@@ -479,6 +499,12 @@ function updateLatestVideoId(channelId: string, latestVideoId: number) {
 
 function processLiveStateChangesAtomic(currentlyLiveChannelIds: Array<string>) {
     try {
+        // Build the condition for channels not in the live list
+        let notInLiveChannelsCondition: SQL<unknown> = sql`1=1`;
+        if (currentlyLiveChannelIds.length > 0) {
+            notInLiveChannelsCondition = notInArray(channelCache.channelId, currentlyLiveChannelIds);
+        }
+
         // Atomic update: set isLive = false for channels that were live but are now offline
         const wentOffline = database
             .update(channelCache)
@@ -490,13 +516,23 @@ function processLiveStateChangesAtomic(currentlyLiveChannelIds: Array<string>) {
             .where(
                 and(
                     eq(channelCache.isLive, true),
-                    currentlyLiveChannelIds.length > 0
-                        ? notInArray(channelCache.channelId, currentlyLiveChannelIds)
-                        : sql`1=1`
+                    notInLiveChannelsCondition
                 )
             )
             .returning({ channelId: channelCache.channelId })
             .all();
+
+        // Also mark channels that are now live
+        if (currentlyLiveChannelIds.length > 0) {
+            database
+                .update(channelCache)
+                .set({
+                    isLive: true,
+                    updatedAt: sql`CURRENT_TIMESTAMP`,
+                })
+                .where(inArray(channelCache.channelId, currentlyLiveChannelIds))
+                .run();
+        }
 
         return wentOffline.map((row) => row.channelId);
     } catch (error) {
@@ -523,115 +559,159 @@ export {
 ### File: `src/services/video-cache-service.ts`
 
 ```typescript
+import { and, desc, eq, notInArray, sql } from "drizzle-orm";
+
 import { database } from "@/src/db";
 import { cachedVods, channelCache } from "@/src/db/schema";
-import { getVideos } from "@/src/services/twitch-service";
 import { getAllFavorites } from "@/src/features/channels/favorites.repository";
 import {
-    getAllChannelCaches,
     getChannelCacheBulk,
     processLiveStateChangesAtomic,
-    updateChannelLiveState,
 } from "@/src/features/vods/channel-cache.repository";
-import { eq, sql, desc } from "drizzle-orm";
+import { getVideos } from "@/src/services/twitch-service";
 
 import type { TwitchStream } from "@/src/services/twitch-service";
-import type { ChannelCacheWithVideo } from "@/src/features/vods/vods.types";
 
 const VIDEO_CACHE_TTL_MS = 30 * 60 * 1000;
 const VIDEOS_PER_CHANNEL_LIMIT = 5;
-const BATCH_SIZE = 5;
-const BATCH_DELAY_MS = 100;
+const BATCH_SIZE = 3;
+const BATCH_DELAY_MS = 500;
+const BASE_BACKOFF_MS = 60 * 1000; // 1 minute
+const MAX_BACKOFF_MS = 60 * 60 * 1000; // 1 hour
 
 // Track background refresh state
 let refreshIntervalId: ReturnType<typeof setInterval> | null = null;
 const channelBackoffState = new Map<string, { failureCount: number; nextAttemptAt: number }>();
 
-function refreshVideosForChannel(channelId: string, accessToken: string) {
-    return database.transaction(async (transaction) => {
-        const videosResult = await getVideos(channelId, accessToken, VIDEOS_PER_CHANNEL_LIMIT);
+// Cleanup interval for stale backoff entries
+let cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
 
-        if (videosResult instanceof Error) {
-            console.error("[video-cache] Failed to fetch videos from Twitch:", videosResult.message);
-            throw videosResult;
-        }
+function calculateBackoffWithJitter(failureCount: number) {
+    const baseBackoff = BASE_BACKOFF_MS * Math.pow(2, failureCount - 1);
+    const cappedBackoff = Math.min(baseBackoff, MAX_BACKOFF_MS);
+    const jitter = Math.random() * 0.3 * cappedBackoff; // 0-30% jitter
+    return Math.floor(cappedBackoff + jitter);
+}
 
-        if (videosResult.length === 0) {
-            return null;
-        }
+function getRefreshIntervalMs(favoriteCount: number) {
+    if (favoriteCount === 0) {
+        return VIDEO_CACHE_TTL_MS;
+    }
 
-        const latestVideo = videosResult[0];
-        if (latestVideo === undefined) {
-            return null;
-        }
+    // Ensure all channels refresh within 80% of TTL (20% safety margin)
+    const targetRefreshWindow = VIDEO_CACHE_TTL_MS * 0.8;
+    const intervalMs = Math.floor(targetRefreshWindow / favoriteCount);
 
-        // Upsert the latest video
-        const videoResult = transaction
-            .insert(cachedVods)
-            .values({
-                videoId: latestVideo.id,
-                channelId: channelId,
-                title: latestVideo.title,
-                duration: latestVideo.duration,
-                createdAt: latestVideo.created_at,
-                thumbnailUrl: latestVideo.thumbnail_url,
-            })
-            .onConflictDoUpdate({
-                target: cachedVods.videoId,
-                set: {
+    // Clamp between reasonable bounds
+    const MIN_INTERVAL_MS = 5000;
+    const MAX_INTERVAL_MS = 5 * 60 * 1000;
+
+    return Math.max(MIN_INTERVAL_MS, Math.min(intervalMs, MAX_INTERVAL_MS));
+}
+
+async function refreshVideosForChannel(channelId: string, accessToken: string) {
+    // Fetch from Twitch API OUTSIDE the transaction to avoid holding DB lock during network call
+    const videosResult = await getVideos(channelId, accessToken, VIDEOS_PER_CHANNEL_LIMIT);
+
+    if (videosResult instanceof Error) {
+        console.error("[video-cache] Failed to fetch videos from Twitch:", videosResult.message);
+        return videosResult;
+    }
+
+    if (videosResult.length === 0) {
+        return null;
+    }
+
+    const latestVideo = videosResult[0];
+    if (latestVideo === undefined) {
+        return null;
+    }
+
+    // Perform synchronous database transaction (no async operations inside)
+    try {
+        const videoRowId = database.transaction((transaction) => {
+            // Upsert the latest video
+            const videoResult = transaction
+                .insert(cachedVods)
+                .values({
+                    videoId: latestVideo.id,
+                    channelId: channelId,
                     title: latestVideo.title,
                     duration: latestVideo.duration,
                     createdAt: latestVideo.created_at,
                     thumbnailUrl: latestVideo.thumbnail_url,
-                    fetchedAt: sql`CURRENT_TIMESTAMP`,
-                },
-            })
-            .returning({ id: cachedVods.id })
-            .get();
+                })
+                .onConflictDoUpdate({
+                    target: cachedVods.videoId,
+                    set: {
+                        title: latestVideo.title,
+                        duration: latestVideo.duration,
+                        createdAt: latestVideo.created_at,
+                        thumbnailUrl: latestVideo.thumbnail_url,
+                        fetchedAt: sql`CURRENT_TIMESTAMP`,
+                    },
+                })
+                .returning({ id: cachedVods.id })
+                .get();
 
-        if (videoResult === undefined) {
-            throw new Error("Video upsert did not return a row");
-        }
+            if (videoResult === undefined) {
+                throw new Error("Video upsert did not return a row");
+            }
 
-        const videoRowId = videoResult.id;
+            // Upsert channel cache with foreign key - verify with returning()
+            const cacheResult = transaction
+                .insert(channelCache)
+                .values({
+                    channelId: channelId,
+                    isLive: false,
+                    latestVideoId: videoResult.id,
+                })
+                .onConflictDoUpdate({
+                    target: channelCache.channelId,
+                    set: {
+                        latestVideoId: videoResult.id,
+                        updatedAt: sql`CURRENT_TIMESTAMP`,
+                    },
+                })
+                .returning({ channelId: channelCache.channelId })
+                .get();
 
-        // Upsert channel cache with foreign key
-        transaction
-            .insert(channelCache)
-            .values({
-                channelId: channelId,
-                isLive: false,
-                latestVideoId: videoRowId,
-            })
-            .onConflictDoUpdate({
-                target: channelCache.channelId,
-                set: {
-                    latestVideoId: videoRowId,
-                    updatedAt: sql`CURRENT_TIMESTAMP`,
-                },
-            })
-            .run();
+            if (cacheResult === undefined) {
+                throw new Error("Channel cache upsert did not return a row");
+            }
 
-        // Clean up old videos (keep only VIDEOS_PER_CHANNEL_LIMIT)
-        const videosToKeep = transaction
-            .select({ id: cachedVods.id })
-            .from(cachedVods)
-            .where(eq(cachedVods.channelId, channelId))
-            .orderBy(desc(cachedVods.createdAt))
-            .limit(VIDEOS_PER_CHANNEL_LIMIT)
-            .all();
+            // Clean up old videos (keep only VIDEOS_PER_CHANNEL_LIMIT)
+            // Use notInArray instead of sql.raw for type safety
+            const videosToKeep = transaction
+                .select({ id: cachedVods.id })
+                .from(cachedVods)
+                .where(eq(cachedVods.channelId, channelId))
+                .orderBy(desc(cachedVods.createdAt))
+                .limit(VIDEOS_PER_CHANNEL_LIMIT)
+                .all();
 
-        const idsToKeep = videosToKeep.map((video) => video.id);
+            const idsToKeep = videosToKeep.map((video) => video.id);
 
-        if (idsToKeep.length > 0) {
-            const keepIdsString = idsToKeep.join(",");
-            transaction.run(
-                sql`DELETE FROM cached_vods WHERE channel_id = ${channelId} AND id NOT IN (${sql.raw(keepIdsString)})`
-            );
-        }
+            if (idsToKeep.length > 0) {
+                transaction
+                    .delete(cachedVods)
+                    .where(
+                        and(
+                            eq(cachedVods.channelId, channelId),
+                            notInArray(cachedVods.id, idsToKeep)
+                        )
+                    )
+                    .run();
+            }
+
+            return videoResult.id;
+        });
 
         return videoRowId;
-    });
+    } catch (error) {
+        console.error("[video-cache] Database transaction failed:", error);
+        return error instanceof Error ? error : new Error("Database transaction failed");
+    }
 }
 
 async function refreshVideosForChannelSafe(channelId: string, accessToken: string) {
@@ -642,25 +722,24 @@ async function refreshVideosForChannelSafe(channelId: string, accessToken: strin
         return null;
     }
 
-    try {
-        const result = await refreshVideosForChannel(channelId, accessToken);
-        channelBackoffState.delete(channelId);
-        return result;
-    } catch (error) {
+    const result = await refreshVideosForChannel(channelId, accessToken);
+
+    if (result instanceof Error) {
         state.failureCount++;
-        const backoffMs = Math.min(
-            VIDEO_CACHE_TTL_MS * Math.pow(2, state.failureCount - 1),
-            24 * 60 * 60 * 1000
-        );
+        const backoffMs = calculateBackoffWithJitter(state.failureCount);
         state.nextAttemptAt = now + backoffMs;
         channelBackoffState.set(channelId, state);
 
-        if (state.failureCount >= 5) {
-            console.warn(`[video-cache] Channel ${channelId} failed ${state.failureCount} times, backoff: ${backoffMs}ms`);
+        if (state.failureCount >= 3) {
+            console.warn(`[video-cache] Channel ${channelId} failed ${state.failureCount} times, backoff: ${Math.round(backoffMs / 1000)}s`);
         }
 
-        return error instanceof Error ? error : new Error("Unknown error");
+        return result;
     }
+
+    // Success - clear backoff state
+    channelBackoffState.delete(channelId);
+    return result;
 }
 
 async function populateInitialCache(accessToken: string) {
@@ -684,19 +763,12 @@ async function populateInitialCache(accessToken: string) {
     for (let batchStartIndex = 0; batchStartIndex < favorites.length; batchStartIndex += BATCH_SIZE) {
         const batch = favorites.slice(batchStartIndex, batchStartIndex + BATCH_SIZE);
 
-        const results = await Promise.all(
-            batch.map(async (favorite) => {
-                try {
-                    await refreshVideosForChannel(favorite.channelId, accessToken);
-                    return null;
-                } catch (error) {
-                    return error instanceof Error ? error : new Error("Unknown error");
-                }
-            })
+        const results = await Promise.allSettled(
+            batch.map((favorite) => refreshVideosForChannel(favorite.channelId, accessToken))
         );
 
         for (const result of results) {
-            if (result instanceof Error) {
+            if (result.status === "rejected" || result.value instanceof Error) {
                 errorCount++;
             } else {
                 successCount++;
@@ -719,35 +791,70 @@ function startBackgroundRefresh(accessToken: string) {
     }
 
     let refreshIndex = 0;
+    let currentIntervalMs = VIDEO_CACHE_TTL_MS / 20; // Initial fallback
 
-    refreshIntervalId = setInterval(async () => {
+    function scheduleNextRefresh() {
         const favorites = getAllFavorites();
-        if (favorites instanceof Error || favorites.length === 0) {
+
+        if (favorites instanceof Error) {
+            console.error("[video-cache] Background refresh failed to get favorites:", favorites.message);
+            refreshIntervalId = setTimeout(scheduleNextRefresh, currentIntervalMs);
             return;
         }
+
+        if (favorites.length === 0) {
+            refreshIntervalId = setTimeout(scheduleNextRefresh, currentIntervalMs);
+            return;
+        }
+
+        // Recalculate interval based on current favorites count
+        currentIntervalMs = getRefreshIntervalMs(favorites.length);
 
         const currentIndex = refreshIndex % favorites.length;
         const favorite = favorites[currentIndex];
 
         if (favorite !== undefined) {
-            const result = await refreshVideosForChannelSafe(favorite.channelId, accessToken);
-            if (result instanceof Error) {
-                console.error("[video-cache] Background refresh failed for:", favorite.channelId, result.message);
-            }
+            refreshVideosForChannelSafe(favorite.channelId, accessToken).then((result) => {
+                if (result instanceof Error) {
+                    console.error("[video-cache] Background refresh failed for:", favorite.channelId, result.message);
+                }
+            });
         }
 
         refreshIndex++;
-    }, VIDEO_CACHE_TTL_MS / 20);
+        refreshIntervalId = setTimeout(scheduleNextRefresh, currentIntervalMs);
+    }
 
+    // Start cleanup interval for stale backoff entries
+    cleanupIntervalId = setInterval(() => {
+        const favorites = getAllFavorites();
+        if (favorites instanceof Error) return;
+
+        const favoriteIds = new Set(favorites.map((favorite) => favorite.channelId));
+        const now = Date.now();
+
+        for (const [channelId, state] of channelBackoffState) {
+            const expiredLongAgo = now > state.nextAttemptAt + (24 * 60 * 60 * 1000);
+            if (!favoriteIds.has(channelId) || expiredLongAgo) {
+                channelBackoffState.delete(channelId);
+            }
+        }
+    }, 60 * 60 * 1000); // Cleanup every hour
+
+    scheduleNextRefresh();
     console.log("[video-cache] Background refresh started");
 }
 
 function stopBackgroundRefresh() {
     if (refreshIntervalId !== null) {
-        clearInterval(refreshIntervalId);
+        clearTimeout(refreshIntervalId);
         refreshIntervalId = null;
-        console.log("[video-cache] Background refresh stopped");
     }
+    if (cleanupIntervalId !== null) {
+        clearInterval(cleanupIntervalId);
+        cleanupIntervalId = null;
+    }
+    console.log("[video-cache] Background refresh stopped");
 }
 
 function processLiveStateChanges(currentStreams: Array<TwitchStream>) {
@@ -759,10 +866,26 @@ function getChannelsWithVideos(channelIds: Array<string>) {
     return getChannelCacheBulk(channelIds);
 }
 
+async function refreshOfflineChannelsBatched(channelIds: Array<string>, accessToken: string) {
+    // Batch the refresh to avoid rate limits and overwhelming the API
+    for (let batchIndex = 0; batchIndex < channelIds.length; batchIndex += BATCH_SIZE) {
+        const batch = channelIds.slice(batchIndex, batchIndex + BATCH_SIZE);
+
+        await Promise.allSettled(
+            batch.map((channelId) => refreshVideosForChannelSafe(channelId, accessToken))
+        );
+
+        if (batchIndex + BATCH_SIZE < channelIds.length) {
+            await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
+        }
+    }
+}
+
 export {
     getChannelsWithVideos,
     populateInitialCache,
     processLiveStateChanges,
+    refreshOfflineChannelsBatched,
     refreshVideosForChannel,
     refreshVideosForChannelSafe,
     startBackgroundRefresh,
@@ -782,8 +905,10 @@ Update the GET handler to use the cache:
 import {
     getChannelsWithVideos,
     processLiveStateChanges,
-    refreshVideosForChannel,
+    refreshOfflineChannelsBatched,
 } from "@/src/services/video-cache-service";
+
+import type { CachedVideoSelect } from "@/src/db/schema";
 
 // In the handler, after fetching live streams:
 
@@ -804,13 +929,10 @@ if (followedResult instanceof Error) {
 // 2. Process live state changes (detect offline transitions)
 const channelsThatWentOffline = processLiveStateChanges(streamsResult);
 
-// 3. Refresh videos for channels that just went offline
-if (!(channelsThatWentOffline instanceof Error)) {
-    await Promise.all(
-        channelsThatWentOffline.map((channelId) =>
-            refreshVideosForChannel(channelId, authResult.accessToken)
-        )
-    );
+// 3. Refresh videos for channels that just went offline (batched to avoid rate limits)
+if (!(channelsThatWentOffline instanceof Error) && channelsThatWentOffline.length > 0) {
+    // Fire and forget - don't block response for VOD refresh
+    refreshOfflineChannelsBatched(channelsThatWentOffline, authResult.accessToken);
 }
 
 // 4. Get cached videos for offline favorites
@@ -836,33 +958,37 @@ if (!(cachedChannels instanceof Error)) {
 
 To eliminate stale closure bugs with React.memo, components should call mutation hooks directly instead of receiving callback props.
 
+### File: `src/shared/query-keys.ts`
+
+Create a shared module for query keys to avoid cross-feature imports:
+
+```typescript
+export const QUERY_KEYS = {
+    channels: ["channels"] as const,
+    followedChannels: ["followed-channels"] as const,
+} as const;
+```
+
 ### File: `src/features/channels/hooks/use-channels.ts`
 
 ```typescript
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { QUERY_KEYS } from "@/src/shared/query-keys";
+
+import { reorderFavoritesApi, toggleFavorite } from "../api/channels-mutations";
 import { fetchChannels } from "../api/channels-queries";
-import { toggleFavorite, reorderFavoritesApi } from "../api/channels-mutations";
-import { FOLLOWED_CHANNELS_QUERY_KEY } from "@/src/features/sidebar/hooks/use-followed-channels";
 
 import type { Channel } from "../channels.types";
 import type { SidebarChannel } from "@/src/features/sidebar/sidebar.types";
 
-export const CHANNELS_QUERY_KEY = ["channels"] as const;
+export const CHANNELS_QUERY_KEY = QUERY_KEYS.channels;
 
-type UseChannelsResult = {
-    channels: Array<Channel>;
-    isLoading: boolean;
-    isFetching: boolean;
-    error: Error | null;
-    refetch: () => void;
-};
-
-function useChannels(): UseChannelsResult {
+function useChannels() {
     const { data, isLoading, isFetching, error, refetch } = useQuery({
         queryKey: CHANNELS_QUERY_KEY,
         queryFn: fetchChannels,
-        staleTime: 25_000,
+        staleTime: 30_000,
         gcTime: 5 * 60 * 1000,
         refetchInterval: 30_000,
         refetchIntervalInBackground: false,
@@ -887,15 +1013,15 @@ function useToggleFavorite() {
 
     return useMutation({
         mutationFn: toggleFavorite,
-        onMutate: async (channelId: string): Promise<ToggleFavoriteMutationContext> => {
+        onMutate: async (channelId: string) => {
             await Promise.all([
                 queryClient.cancelQueries({ queryKey: CHANNELS_QUERY_KEY }),
-                queryClient.cancelQueries({ queryKey: FOLLOWED_CHANNELS_QUERY_KEY }),
+                queryClient.cancelQueries({ queryKey: QUERY_KEYS.followedChannels }),
             ]);
 
             const previousChannels = queryClient.getQueryData<Array<Channel>>(CHANNELS_QUERY_KEY);
             const previousFollowedChannels = queryClient.getQueryData<Array<SidebarChannel>>(
-                FOLLOWED_CHANNELS_QUERY_KEY
+                QUERY_KEYS.followedChannels
             );
 
             if (previousChannels !== undefined) {
@@ -912,7 +1038,7 @@ function useToggleFavorite() {
 
             if (previousFollowedChannels !== undefined) {
                 queryClient.setQueryData(
-                    FOLLOWED_CHANNELS_QUERY_KEY,
+                    QUERY_KEYS.followedChannels,
                     previousFollowedChannels.map((channel) => {
                         if (channel.id === channelId) {
                             return { ...channel, isFavorite: !channel.isFavorite };
@@ -922,19 +1048,26 @@ function useToggleFavorite() {
                 );
             }
 
-            return { previousChannels, previousFollowedChannels };
+            const context: ToggleFavoriteMutationContext = {
+                previousChannels,
+                previousFollowedChannels,
+            };
+
+            return context;
         },
         onError: (_error, _channelId, context) => {
             if (context?.previousChannels !== undefined) {
                 queryClient.setQueryData(CHANNELS_QUERY_KEY, context.previousChannels);
             }
             if (context?.previousFollowedChannels !== undefined) {
-                queryClient.setQueryData(FOLLOWED_CHANNELS_QUERY_KEY, context.previousFollowedChannels);
+                queryClient.setQueryData(QUERY_KEYS.followedChannels, context.previousFollowedChannels);
             }
         },
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: CHANNELS_QUERY_KEY });
-            queryClient.invalidateQueries({ queryKey: FOLLOWED_CHANNELS_QUERY_KEY });
+        onSettled: async () => {
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: CHANNELS_QUERY_KEY }),
+                queryClient.invalidateQueries({ queryKey: QUERY_KEYS.followedChannels }),
+            ]);
         },
     });
 }
@@ -986,18 +1119,18 @@ function useReorderFavorites() {
                 queryClient.setQueryData(CHANNELS_QUERY_KEY, context.previousChannels);
             }
         },
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: CHANNELS_QUERY_KEY });
+        onSettled: async () => {
+            await queryClient.invalidateQueries({ queryKey: CHANNELS_QUERY_KEY });
         },
     });
 }
 
-export { useChannels, useToggleFavorite, useReorderFavorites };
+export { useChannels, useReorderFavorites, useToggleFavorite };
 ```
 
 ### File: `src/features/channels/components/channel-card.tsx`
 
-Remove `onToggleFavorite` prop - call hook directly:
+Remove `onToggleFavorite` prop - call hook directly with accessibility improvements:
 
 ```typescript
 import { memo } from "react";
@@ -1014,10 +1147,34 @@ type ChannelCardProps = {
 function ChannelCardComponent({ channel, variant = "full" }: ChannelCardProps) {
     const toggleFavoriteMutation = useToggleFavorite();
 
-    function handleFavoriteClick(event: React.MouseEvent) {
+    const isToggling = toggleFavoriteMutation.isPending &&
+        toggleFavoriteMutation.variables === channel.id;
+
+    function handleFavoriteClick(event: React.MouseEvent | React.KeyboardEvent) {
         event.stopPropagation();
-        toggleFavoriteMutation.mutate(channel.id);
+        if (!isToggling) {
+            toggleFavoriteMutation.mutate(channel.id);
+        }
     }
+
+    const favoriteButtonLabel = channel.isFavorite
+        ? `Remove ${channel.displayName} from favorites`
+        : `Add ${channel.displayName} to favorites`;
+
+    // In the JSX, the favorite button should include:
+    // <button
+    //     type="button"
+    //     onClick={handleFavoriteClick}
+    //     onKeyDown={(event) => {
+    //         if (event.key === "Enter" || event.key === " ") {
+    //             handleFavoriteClick(event);
+    //         }
+    //     }}
+    //     disabled={isToggling}
+    //     aria-label={favoriteButtonLabel}
+    //     aria-pressed={channel.isFavorite}
+    //     className={isToggling ? "opacity-50 cursor-not-allowed" : ""}
+    // >
 
     // ... rest of component
 }
@@ -1029,10 +1186,12 @@ export { ChannelCard };
 
 ### File: `src/features/channels/components/channel-grid.tsx`
 
-Remove `onToggleFavorite` prop, add `useMemo` for categorization:
+Remove callback props, add `useMemo` for categorization:
 
 ```typescript
-import { useState, useRef, useMemo } from "react";
+import { memo, useMemo, useRef, useState } from "react";
+
+import { useReorderFavorites } from "../hooks/use-channels";
 
 import { ChannelCard } from "./channel-card";
 
@@ -1040,13 +1199,14 @@ import type { Channel } from "../channels.types";
 
 type ChannelGridProps = {
     channels: Array<Channel>;
-    onReorderFavorites: (orderedIds: Array<string>) => void;
 };
 
-function ChannelGrid({ channels, onReorderFavorites }: ChannelGridProps) {
+function ChannelGrid({ channels }: ChannelGridProps) {
     const [draggedId, setDraggedId] = useState<string | null>(null);
     const [dragOverId, setDragOverId] = useState<string | null>(null);
     const dragCounter = useRef(0);
+
+    const reorderFavoritesMutation = useReorderFavorites();
 
     const { liveFavorites, offlineFavorites, nonFavoriteChannels, allFavorites } = useMemo(() => {
         const live: Array<Channel> = [];
@@ -1073,7 +1233,7 @@ function ChannelGrid({ channels, onReorderFavorites }: ChannelGridProps) {
         };
     }, [channels]);
 
-    // ... drag handlers ...
+    // Drag handlers call reorderFavoritesMutation.mutate() directly
 
     return (
         <div className="space-y-8">
@@ -1099,23 +1259,17 @@ export { ChannelGrid };
 ```typescript
 import { useQuery } from "@tanstack/react-query";
 
+import { QUERY_KEYS } from "@/src/shared/query-keys";
+
 import { fetchFollowedChannels } from "../api/sidebar-queries";
 
-import type { SidebarChannel } from "../sidebar.types";
+export const FOLLOWED_CHANNELS_QUERY_KEY = QUERY_KEYS.followedChannels;
 
-export const FOLLOWED_CHANNELS_QUERY_KEY = ["followed-channels"] as const;
-
-type UseFollowedChannelsResult = {
-    channels: Array<SidebarChannel>;
-    isLoading: boolean;
-    error: Error | null;
-};
-
-function useFollowedChannels(): UseFollowedChannelsResult {
+function useFollowedChannels() {
     const { data, isLoading, error } = useQuery({
         queryKey: FOLLOWED_CHANNELS_QUERY_KEY,
         queryFn: fetchFollowedChannels,
-        staleTime: 55_000,
+        staleTime: 60_000,
         gcTime: 10 * 60 * 1000,
         refetchInterval: 60_000,
         refetchIntervalInBackground: false,
@@ -1144,8 +1298,6 @@ import {
     startBackgroundRefresh,
 } from "@/src/services/video-cache-service";
 
-const STARTUP_TIMEOUT_MS = 30_000;
-
 async function initializeVideoCache() {
     console.log("[startup] Starting video cache initialization...");
     const startTime = Date.now();
@@ -1162,22 +1314,16 @@ async function initializeVideoCache() {
         return;
     }
 
-    try {
-        await Promise.race([
-            populateInitialCache(auth.accessToken),
-            new Promise<never>((_, reject) => {
-                setTimeout(() => {
-                    reject(new Error("Cache initialization timed out"));
-                }, STARTUP_TIMEOUT_MS);
-            }),
-        ]);
+    // Populate cache - this runs to completion or logs warnings on failure
+    const result = await populateInitialCache(auth.accessToken);
 
+    if (result instanceof Error) {
+        console.warn(`[startup] Cache initialization had errors: ${result.message}`);
+    } else {
         console.log(`[startup] Cache initialized in ${Date.now() - startTime}ms`);
-    } catch (error) {
-        const message = error instanceof Error ? error.message : "Unknown error";
-        console.warn(`[startup] Cache initialization failed: ${message}`);
     }
 
+    // Start background refresh regardless of initial population result
     startBackgroundRefresh(auth.accessToken);
 }
 
@@ -1186,23 +1332,29 @@ export { initializeVideoCache };
 
 ### File: `src/server.ts`
 
-TanStack Start automatically detects and uses a custom server entry at `src/server.ts` by convention. No vite.config.ts changes required.
+TanStack Start uses `createStartHandler` and `defaultStreamHandler` from `@tanstack/react-start/server`.
 
 ```typescript
-import handler, { createServerEntry } from "@tanstack/react-start/server-entry";
+import {
+    createStartHandler,
+    defaultStreamHandler,
+} from "@tanstack/react-start/server";
 
 import { initializeVideoCache } from "./lib/startup";
 
-// Start initialization at module load time (before server accepts requests)
-const initializationPromise = initializeVideoCache();
+const handler = createStartHandler(defaultStreamHandler);
 
-export default createServerEntry({
-    async fetch(request) {
-        // Block first request until initialization completes
-        await initializationPromise;
-        return handler.fetch(request);
-    },
+// Start initialization in background - do NOT block requests
+// First requests may have cache misses, which fall back to direct Twitch API calls
+initializeVideoCache().catch((error) => {
+    console.error("[startup] Video cache initialization failed:", error);
 });
+
+export default {
+    fetch(request: Request) {
+        return handler(request);
+    },
+};
 ```
 
 ---
@@ -1230,21 +1382,30 @@ export default createServerEntry({
 
 | Query | staleTime | refetchInterval | gcTime |
 |-------|-----------|-----------------|--------|
-| Main Grid | 25s | 30s | 5 min |
-| Sidebar | 55s | 60s | 10 min |
+| Main Grid | 30s | 30s | 5 min |
+| Sidebar | 60s | 60s | 10 min |
+
+### Backoff Configuration
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| Base backoff | 1 min | Initial retry delay after first failure |
+| Max backoff | 1 hour | Maximum delay between retries |
+| Jitter | 0-30% | Random variance to prevent thundering herd |
 
 ---
 
 ## Verification Checklist
 
-1. **Startup cache population** - Server logs show "Starting initial cache population..." before accepting requests
-2. **Instant cache hit** - VODs appear immediately on page load (no loading state)
+1. **Non-blocking startup** - Server accepts requests immediately, cache populates in background
+2. **Instant cache hit** - VODs appear immediately on page load after cache is warm
 3. **Live status refresh** - Network tab shows `/api/channels` requests every 30 seconds
 4. **Live status NOT cached** - When a channel goes live, it appears within 30 seconds
-5. **Background refresh** - Logs show refresh activity distributed over time
-6. **Offline detection** - When a channel goes offline, new VOD fetched immediately
+5. **Background refresh** - Logs show refresh activity distributed over time (interval scales with favorites count)
+6. **Offline detection** - When a channel goes offline, new VOD fetched (batched, non-blocking)
 7. **Optimistic updates** - Favorite toggle updates both grid and sidebar instantly
 8. **Error recovery** - Stale cache data served when Twitch API unavailable
+9. **Backoff working** - Failed channels use exponential backoff with jitter
 
 ---
 
@@ -1253,14 +1414,15 @@ export default createServerEntry({
 | File | Action |
 |------|--------|
 | `src/db/schema.ts` | Add `cachedVods` and `channelCache` tables |
-| `src/features/vods/vods.types.ts` | Create type definitions |
+| `src/features/vods/vods.types.ts` | Create type definitions (import from schema) |
 | `src/features/vods/vods.repository.ts` | Create VOD CRUD functions |
 | `src/features/vods/channel-cache.repository.ts` | Create cache CRUD functions |
 | `src/services/video-cache-service.ts` | Create cache orchestration service |
+| `src/shared/query-keys.ts` | Create shared query keys module |
 | `src/lib/startup.ts` | Create startup initialization function |
 | `src/server.ts` | Create custom server entry for TanStack Start |
 | `src/app/api/channels/index.ts` | Integrate cache with API |
 | `src/features/channels/hooks/use-channels.ts` | Update query config, add optimistic updates |
-| `src/features/channels/components/channel-card.tsx` | Call hook directly, add memo |
-| `src/features/channels/components/channel-grid.tsx` | Add useMemo, remove callback prop |
+| `src/features/channels/components/channel-card.tsx` | Call hook directly, add memo, accessibility |
+| `src/features/channels/components/channel-grid.tsx` | Add useMemo, call reorder hook directly |
 | `src/features/sidebar/hooks/use-followed-channels.ts` | Update query config |
