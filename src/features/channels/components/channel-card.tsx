@@ -17,9 +17,10 @@ import type { Channel } from "../channels.types";
 interface ChannelCardProps {
 	channel: Channel;
 	variant?: "full" | "compact";
+	priority?: boolean;
 }
 
-function ChannelCardComponent({ channel, variant = "full" }: ChannelCardProps) {
+function ChannelCardComponent({ channel, variant = "full", priority = false }: ChannelCardProps) {
 	const toggleFavoriteMutation = useToggleFavorite();
 
 	const isToggling =
@@ -131,6 +132,8 @@ function ChannelCardComponent({ channel, variant = "full" }: ChannelCardProps) {
 						src={thumbnailUrl}
 						alt={channel.displayName}
 						className="w-full h-full object-cover"
+						fetchPriority={priority ? "high" : "auto"}
+						loading={priority ? "eager" : "lazy"}
 					/>
 				)}
 

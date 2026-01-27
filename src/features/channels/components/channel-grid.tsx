@@ -149,7 +149,7 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 			{/* Live Favorites - Full cards in grid */}
 			{liveFavorites.length > 0 && (
 				<div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">
-					{liveFavorites.map((channel) => (
+					{liveFavorites.map((channel, index) => (
 						<div
 							key={channel.id}
 							draggable
@@ -161,7 +161,7 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 							onDrop={(event) => handleDrop(event, channel.id)}
 							className={getDragClassName(channel.id)}
 						>
-							<ChannelCard channel={channel} variant="full" />
+							<ChannelCard channel={channel} variant="full" priority={index < 4} />
 						</div>
 					))}
 				</div>
@@ -204,8 +204,13 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 						</h3>
 					)}
 					<div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">
-						{nonFavoriteChannels.map((channel) => (
-							<ChannelCard key={channel.id} channel={channel} variant="full" />
+						{nonFavoriteChannels.map((channel, index) => (
+							<ChannelCard
+								key={channel.id}
+								channel={channel}
+								variant="full"
+								priority={liveFavorites.length === 0 && index < 4}
+							/>
 						))}
 					</div>
 				</section>
