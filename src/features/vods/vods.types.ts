@@ -1,3 +1,5 @@
+import type { CachedVideoSelect, ChannelCacheSelect } from "@/src/db/schema";
+
 interface Vod {
 	id: string;
 	title: string;
@@ -23,4 +25,39 @@ interface TwitchVideo {
 	thumbnail_url: string;
 }
 
-export type { Vod, TwitchUser, TwitchVideo };
+// VOD caching types
+interface VideoInput {
+	videoId: string;
+	channelId: string;
+	title: string;
+	duration: string;
+	createdAt: string;
+	thumbnailUrl: string;
+}
+
+interface ChannelCacheInput {
+	channelId: string;
+	isLive: boolean;
+	lastLiveAt: string | null;
+	latestVideoId: number | null;
+}
+
+interface ChannelCacheWithVideo {
+	channelId: string;
+	isLive: boolean;
+	lastLiveAt: string | null;
+	latestVideoId: number | null;
+	updatedAt: string;
+	latestVideo: CachedVideoSelect | null;
+}
+
+export type {
+	CachedVideoSelect,
+	ChannelCacheInput,
+	ChannelCacheSelect,
+	ChannelCacheWithVideo,
+	TwitchUser,
+	TwitchVideo,
+	VideoInput,
+	Vod,
+};

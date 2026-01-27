@@ -5,12 +5,17 @@ import { getAllFavorites } from "@/src/features/channels/favorites.repository";
 import {
 	getFollowedStreams,
 	getFollowedChannels,
-	getVideos,
 	getUsers,
 } from "@/src/services/twitch-service";
+import {
+	getChannelsWithVideos,
+	processLiveStateChanges,
+	refreshOfflineChannelsBatched,
+} from "@/src/services/video-cache-service";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 
-import type { TwitchStream, TwitchVideo } from "@/src/services/twitch-service";
+import type { CachedVideoSelect } from "@/src/db/schema";
+import type { TwitchStream } from "@/src/services/twitch-service";
 
 interface StreamData {
 	title: string;
@@ -26,6 +31,16 @@ interface VodData {
 	duration: string;
 	createdAt: string;
 	thumbnailUrl: string;
+}
+
+function transformCachedVod(vod: CachedVideoSelect): VodData {
+	return {
+		id: vod.videoId,
+		title: vod.title,
+		duration: vod.duration,
+		createdAt: vod.createdAt,
+		thumbnailUrl: vod.thumbnailUrl,
+	};
 }
 
 interface ChannelData {
@@ -46,16 +61,6 @@ function transformStream(stream: TwitchStream): StreamData {
 		viewerCount: stream.viewer_count,
 		thumbnailUrl: stream.thumbnail_url,
 		startedAt: stream.started_at,
-	};
-}
-
-function transformVod(vod: TwitchVideo): VodData {
-	return {
-		id: vod.id,
-		title: vod.title,
-		duration: vod.duration,
-		createdAt: vod.created_at,
-		thumbnailUrl: vod.thumbnail_url,
 	};
 }
 
@@ -83,7 +88,11 @@ export const Route = createFileRoute("/api/channels/")({
 					);
 				}
 
-				const streamsResult = await getFollowedStreams(authResult.userId);
+				// Parallelize Twitch API calls
+				const [streamsResult, followedResult] = await Promise.all([
+					getFollowedStreams(authResult.userId),
+					getFollowedChannels(authResult.userId),
+				]);
 
 				if (streamsResult instanceof Error) {
 					return createErrorResponse(
@@ -93,14 +102,26 @@ export const Route = createFileRoute("/api/channels/")({
 					);
 				}
 
-				const followedResult = await getFollowedChannels(authResult.userId);
-
 				if (followedResult instanceof Error) {
 					return createErrorResponse(
 						followedResult.message,
 						ErrorCode.TWITCH_API_ERROR,
 						500,
 					);
+				}
+
+				// Process live state changes (detect offline transitions)
+				const channelsThatWentOffline = processLiveStateChanges(streamsResult);
+
+				// Refresh videos for channels that just went offline (batched to avoid rate limits)
+				if (
+					!(channelsThatWentOffline instanceof Error) &&
+					channelsThatWentOffline.length > 0
+				) {
+					// Fire and forget - don't block response for VOD refresh
+					refreshOfflineChannelsBatched(channelsThatWentOffline).catch((error) => {
+						console.error("[channels-api] Failed to refresh offline channels:", error);
+					});
 				}
 
 				const favoriteIds = new Set<string>();
@@ -135,25 +156,30 @@ export const Route = createFileRoute("/api/channels/")({
 					}
 				}
 
+				// Collect offline favorite IDs for cache lookup
+				const offlineFavoriteIds = favoritesResult
+					.filter((favorite) => !streamsByUserId.has(favorite.id))
+					.map((favorite) => favorite.id);
+
+				// Get cached videos for offline favorites
+				const cachedChannels = getChannelsWithVideos(offlineFavoriteIds);
+
+				// Build a map for lookup
+				const vodsByChannelId = new Map<string, VodData>();
+				if (!(cachedChannels instanceof Error)) {
+					for (const cached of cachedChannels) {
+						if (cached.latestVideo !== null) {
+							vodsByChannelId.set(cached.channelId, transformCachedVod(cached.latestVideo));
+						}
+					}
+				}
+
 				const favoriteChannels: Array<ChannelData> = [];
 
 				for (const favorite of favoritesResult) {
 					const rawStream = streamsByUserId.get(favorite.id);
 					const isLive = rawStream !== undefined;
 					const stream = rawStream !== undefined ? transformStream(rawStream) : null;
-
-					let latestVod: VodData | null = null;
-
-					if (!isLive) {
-						const vodResult = await getVideos(favorite.id, 1);
-
-						if (!(vodResult instanceof Error) && vodResult.length > 0) {
-							const firstVod = vodResult[0];
-							if (firstVod !== undefined) {
-								latestVod = transformVod(firstVod);
-							}
-						}
-					}
 
 					favoriteChannels.push({
 						id: favorite.id,
@@ -163,7 +189,7 @@ export const Route = createFileRoute("/api/channels/")({
 						isLive,
 						isFavorite: true,
 						stream,
-						latestVod,
+						latestVod: vodsByChannelId.get(favorite.id) ?? null,
 					});
 				}
 

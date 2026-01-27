@@ -1,4 +1,6 @@
-import { useState, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
+
+import { useReorderFavorites } from "../hooks/use-channels";
 
 import { ChannelCard } from "./channel-card";
 
@@ -6,34 +8,40 @@ import type { Channel } from "../channels.types";
 
 interface ChannelGridProps {
 	channels: Array<Channel>;
-	onToggleFavorite: (id: string) => void;
-	onReorderFavorites: (orderedIds: Array<string>) => void;
 }
 
-function ChannelGrid({ channels, onToggleFavorite, onReorderFavorites }: ChannelGridProps) {
+function ChannelGrid({ channels }: ChannelGridProps) {
 	const [draggedId, setDraggedId] = useState<string | null>(null);
 	const [dragOverId, setDragOverId] = useState<string | null>(null);
 	const dragCounter = useRef(0);
 
-	// Separate channels into categories
-	const liveFavorites: Array<Channel> = [];
-	const offlineFavorites: Array<Channel> = [];
-	const nonFavoriteChannels: Array<Channel> = [];
+	const reorderFavoritesMutation = useReorderFavorites();
 
-	for (const channel of channels) {
-		if (channel.isFavorite) {
-			if (channel.isLive) {
-				liveFavorites.push(channel);
-			} else {
-				offlineFavorites.push(channel);
+	const { liveFavorites, offlineFavorites, nonFavoriteChannels, allFavorites } =
+		useMemo(() => {
+			const live: Array<Channel> = [];
+			const offline: Array<Channel> = [];
+			const nonFavorite: Array<Channel> = [];
+
+			for (const channel of channels) {
+				if (channel.isFavorite) {
+					if (channel.isLive) {
+						live.push(channel);
+					} else {
+						offline.push(channel);
+					}
+				} else {
+					nonFavorite.push(channel);
+				}
 			}
-		} else {
-			nonFavoriteChannels.push(channel);
-		}
-	}
 
-	// Combined favorites for drag-and-drop ordering
-	const allFavorites = [...liveFavorites, ...offlineFavorites];
+			return {
+				liveFavorites: live,
+				offlineFavorites: offline,
+				nonFavoriteChannels: nonFavorite,
+				allFavorites: [...live, ...offline],
+			};
+		}, [channels]);
 
 	function handleDragStart(event: React.DragEvent, channelId: string) {
 		setDraggedId(channelId);
@@ -93,7 +101,7 @@ function ChannelGrid({ channels, onToggleFavorite, onReorderFavorites }: Channel
 		newOrder.splice(draggedIndex, 1);
 		newOrder.splice(targetIndex, 0, draggedId);
 
-		onReorderFavorites(newOrder);
+		reorderFavoritesMutation.mutate(newOrder);
 
 		setDraggedId(null);
 		setDragOverId(null);
@@ -119,7 +127,11 @@ function ChannelGrid({ channels, onToggleFavorite, onReorderFavorites }: Channel
 	if (channels.length === 0) {
 		return (
 			<div className="flex flex-col items-center justify-center text-center py-20 text-text-dim">
-				<svg className="w-12 h-12 mb-4 opacity-30" viewBox="0 0 24 24" fill="currentColor">
+				<svg
+					className="w-12 h-12 mb-4 opacity-30"
+					viewBox="0 0 24 24"
+					fill="currentColor"
+				>
 					<circle cx="12" cy="12" r="10" />
 				</svg>
 				<p className="text-base font-medium text-text-secondary mb-1">
@@ -149,11 +161,7 @@ function ChannelGrid({ channels, onToggleFavorite, onReorderFavorites }: Channel
 							onDrop={(event) => handleDrop(event, channel.id)}
 							className={getDragClassName(channel.id)}
 						>
-							<ChannelCard
-								channel={channel}
-								onToggleFavorite={onToggleFavorite}
-								variant="full"
-							/>
+							<ChannelCard channel={channel} variant="full" />
 						</div>
 					))}
 				</div>
@@ -180,11 +188,7 @@ function ChannelGrid({ channels, onToggleFavorite, onReorderFavorites }: Channel
 								onDrop={(event) => handleDrop(event, channel.id)}
 								className={getDragClassName(channel.id)}
 							>
-								<ChannelCard
-									channel={channel}
-									onToggleFavorite={onToggleFavorite}
-									variant="compact"
-								/>
+								<ChannelCard channel={channel} variant="compact" />
 							</div>
 						))}
 					</div>
@@ -201,12 +205,7 @@ function ChannelGrid({ channels, onToggleFavorite, onReorderFavorites }: Channel
 					)}
 					<div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">
 						{nonFavoriteChannels.map((channel) => (
-							<ChannelCard
-								key={channel.id}
-								channel={channel}
-								onToggleFavorite={onToggleFavorite}
-								variant="full"
-							/>
+							<ChannelCard key={channel.id} channel={channel} variant="full" />
 						))}
 					</div>
 				</section>

@@ -1,23 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 
+import { QUERY_KEYS } from "@/src/shared/query-keys";
+
 import { fetchFollowedChannels } from "../api/sidebar-queries";
 
-import type { SidebarChannel } from "../sidebar.types";
+export const FOLLOWED_CHANNELS_QUERY_KEY = QUERY_KEYS.followedChannels;
 
-export const FOLLOWED_CHANNELS_QUERY_KEY = ["followed-channels"] as const;
-
-interface UseFollowedChannelsResult {
-	channels: Array<SidebarChannel>;
-	isLoading: boolean;
-	error: Error | null;
-}
-
-function useFollowedChannels(): UseFollowedChannelsResult {
+function useFollowedChannels() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: FOLLOWED_CHANNELS_QUERY_KEY,
 		queryFn: fetchFollowedChannels,
-		staleTime: 120_000,
-		refetchInterval: 180_000,
+		staleTime: 60_000,
+		gcTime: 10 * 60 * 1000,
+		refetchInterval: 60_000,
+		refetchIntervalInBackground: false,
 	});
 
 	return {

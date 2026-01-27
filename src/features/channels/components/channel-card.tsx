@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 import { StarIcon } from "@/src/shared/components/icons";
 import {
 	formatViewers,
@@ -7,17 +9,23 @@ import {
 } from "@/src/shared/utils/format";
 
 import { watchLive } from "../api/channels-mutations";
+import { useToggleFavorite } from "../hooks/use-channels";
 import { watchVod } from "@/src/features/vods/api/vods-mutations";
 
 import type { Channel } from "../channels.types";
 
 interface ChannelCardProps {
 	channel: Channel;
-	onToggleFavorite: (id: string) => void;
 	variant?: "full" | "compact";
 }
 
-function ChannelCard({ channel, onToggleFavorite, variant = "full" }: ChannelCardProps) {
+function ChannelCardComponent({ channel, variant = "full" }: ChannelCardProps) {
+	const toggleFavoriteMutation = useToggleFavorite();
+
+	const isToggling =
+		toggleFavoriteMutation.isPending &&
+		toggleFavoriteMutation.variables === channel.id;
+
 	function handleWatchClick() {
 		if (channel.isLive) {
 			watchLive(channel.login).catch((error: unknown) => {
@@ -35,8 +43,14 @@ function ChannelCard({ channel, onToggleFavorite, variant = "full" }: ChannelCar
 
 	function handleFavoriteClick(event: React.MouseEvent) {
 		event.stopPropagation();
-		onToggleFavorite(channel.id);
+		if (!isToggling) {
+			toggleFavoriteMutation.mutate(channel.id);
+		}
 	}
+
+	const favoriteButtonLabel = channel.isFavorite
+		? `Remove ${channel.displayName} from favorites`
+		: `Add ${channel.displayName} to favorites`;
 
 	// Compact variant for offline favorites
 	if (variant === "compact") {
@@ -74,6 +88,7 @@ function ChannelCard({ channel, onToggleFavorite, variant = "full" }: ChannelCar
 				<div className="flex items-center gap-2 flex-shrink-0">
 					{channel.latestVod !== null && (
 						<button
+							type="button"
 							onClick={handleWatchClick}
 							className="py-2 px-4 rounded-md bg-surface-elevated border border-surface-border-muted text-text-primary text-sm font-semibold hover:bg-twitch-purple hover:border-twitch-purple transition-all"
 						>
@@ -81,11 +96,14 @@ function ChannelCard({ channel, onToggleFavorite, variant = "full" }: ChannelCar
 						</button>
 					)}
 					<button
+						type="button"
 						onClick={handleFavoriteClick}
+						disabled={isToggling}
+						aria-label={favoriteButtonLabel}
+						aria-pressed={channel.isFavorite}
 						className={`p-2 rounded-full transition-all hover:scale-110 ${
 							channel.isFavorite ? "text-favorite" : "text-text-dim"
-						}`}
-						title={channel.isFavorite ? "Remove from favorites" : "Add to favorites"}
+						} ${isToggling ? "opacity-50 cursor-not-allowed" : ""}`}
 					>
 						<StarIcon className="w-5 h-5" filled={channel.isFavorite} />
 					</button>
@@ -137,11 +155,14 @@ function ChannelCard({ channel, onToggleFavorite, variant = "full" }: ChannelCar
 				)}
 
 				<button
+					type="button"
 					onClick={handleFavoriteClick}
+					disabled={isToggling}
+					aria-label={favoriteButtonLabel}
+					aria-pressed={channel.isFavorite}
 					className={`absolute top-2.5 right-2.5 bg-black/60 p-2 rounded-full transition-all hover:bg-black/80 hover:scale-110 ${
 						channel.isFavorite ? "text-favorite" : "text-text-dim"
-					}`}
-					title={channel.isFavorite ? "Remove from favorites" : "Add to favorites"}
+					} ${isToggling ? "opacity-50 cursor-not-allowed" : ""}`}
 				>
 					<StarIcon className="w-5 h-5" filled={channel.isFavorite} />
 				</button>
@@ -202,6 +223,7 @@ function ChannelCard({ channel, onToggleFavorite, variant = "full" }: ChannelCar
 
 				{hasContent && (
 					<button
+						type="button"
 						onClick={handleWatchClick}
 						className="w-full py-2.5 px-4 rounded-md bg-surface-elevated border border-surface-border-muted text-text-primary text-sm font-semibold hover:bg-twitch-purple hover:border-twitch-purple transition-all"
 					>
@@ -224,5 +246,7 @@ function getThumbnailUrl(channel: Channel): string | null {
 
 	return null;
 }
+
+const ChannelCard = memo(ChannelCardComponent);
 
 export { ChannelCard };

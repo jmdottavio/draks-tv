@@ -1,11 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { ChannelGrid } from "@/src/features/channels/components/channel-grid";
-import {
-	useChannels,
-	useToggleFavorite,
-	useReorderFavorites,
-} from "@/src/features/channels/hooks/use-channels";
+import { useChannels } from "@/src/features/channels/hooks/use-channels";
 
 export const Route = createFileRoute("/")({
 	component: ChannelsPage,
@@ -13,16 +9,6 @@ export const Route = createFileRoute("/")({
 
 function ChannelsPage() {
 	const { channels, isLoading, error } = useChannels();
-	const toggleFavoriteMutation = useToggleFavorite();
-	const reorderFavoritesMutation = useReorderFavorites();
-
-	function handleToggleFavorite(id: string) {
-		toggleFavoriteMutation.mutate(id);
-	}
-
-	function handleReorderFavorites(orderedIds: Array<string>) {
-		reorderFavoritesMutation.mutate(orderedIds);
-	}
 
 	if (isLoading) {
 		return (
@@ -43,11 +29,7 @@ function ChannelsPage() {
 
 	return (
 		<section className="animate-[fadeIn_0.2s_ease]">
-			<ChannelGrid
-				channels={channels}
-				onToggleFavorite={handleToggleFavorite}
-				onReorderFavorites={handleReorderFavorites}
-			/>
+			<ChannelGrid channels={channels} />
 		</section>
 	);
 }
