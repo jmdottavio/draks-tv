@@ -1,11 +1,11 @@
 import { useQueryClient } from "@tanstack/react-query";
 
-import { CHANNELS_QUERY_KEY } from "@/src/features/channels/hooks/use-channels";
 import { toggleFavorite, watchLive } from "@/src/features/channels/api/channels-mutations";
 import { ChevronLeftIcon, ChevronRightIcon, StarIcon } from "@/src/shared/components/icons";
+import { QUERY_KEYS } from "@/src/shared/query-keys";
 import { formatDate, formatViewers } from "@/src/shared/utils/format";
 
-import { FOLLOWED_CHANNELS_QUERY_KEY, useFollowedChannels } from "../hooks/use-followed-channels";
+import { useFollowedChannels } from "../hooks/use-followed-channels";
 
 import type { SidebarChannel } from "../sidebar.types";
 
@@ -278,8 +278,8 @@ function Sidebar({ isExpanded, onToggle }: SidebarProps) {
 
 	async function handleFavoriteToggle(id: string) {
 		await toggleFavorite(id);
-		queryClient.invalidateQueries({ queryKey: FOLLOWED_CHANNELS_QUERY_KEY });
-		queryClient.invalidateQueries({ queryKey: CHANNELS_QUERY_KEY });
+		queryClient.invalidateQueries({ queryKey: QUERY_KEYS.followedChannels });
+		queryClient.invalidateQueries({ queryKey: QUERY_KEYS.channels });
 	}
 
 	return (

@@ -1,27 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 
+import { getVodsQueryKey, QUERY_KEYS } from "@/src/shared/query-keys";
+
 import { fetchUsers, fetchVideos } from "../api/vods-queries";
 
 import type { TwitchUser, TwitchVideo } from "../vods.types";
-
-function getVodsQueryKey(channelLogin: string) {
-	return ["vods", channelLogin] as const;
-}
 
 interface VodSearchData {
 	user: TwitchUser;
 	videos: Array<TwitchVideo>;
 }
 
-interface UseVodSearchResult {
-	data: VodSearchData | null;
-	isLoading: boolean;
-	error: Error | null;
-}
-
-function useVodSearch(channelLogin: string | null): UseVodSearchResult {
+function useVodSearch(channelLogin: string | null) {
 	const { data, isLoading, error } = useQuery({
-		queryKey: channelLogin !== null ? getVodsQueryKey(channelLogin) : ["vods"],
+		queryKey: channelLogin !== null ? getVodsQueryKey(channelLogin) : QUERY_KEYS.vods,
 		queryFn: async () => {
 			if (channelLogin === null) {
 				return null;
@@ -41,10 +33,10 @@ function useVodSearch(channelLogin: string | null): UseVodSearchResult {
 	});
 
 	return {
-		data: data ?? null,
+		data: (data ?? null) as VodSearchData | null,
 		isLoading,
 		error: error instanceof Error ? error : null,
 	};
 }
 
-export { getVodsQueryKey, useVodSearch };
+export { useVodSearch };

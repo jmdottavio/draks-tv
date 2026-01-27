@@ -8,11 +8,9 @@ import { fetchChannels } from "../api/channels-queries";
 import type { Channel } from "../channels.types";
 import type { SidebarChannel } from "@/src/features/sidebar/sidebar.types";
 
-export const CHANNELS_QUERY_KEY = QUERY_KEYS.channels;
-
 function useChannels() {
 	const { data, isLoading, isFetching, error, refetch } = useQuery({
-		queryKey: CHANNELS_QUERY_KEY,
+		queryKey: QUERY_KEYS.channels,
 		queryFn: fetchChannels,
 		staleTime: 30_000,
 		gcTime: 5 * 60 * 1000,
@@ -41,19 +39,19 @@ function useToggleFavorite() {
 		mutationFn: toggleFavorite,
 		onMutate: async (channelId: string) => {
 			await Promise.all([
-				queryClient.cancelQueries({ queryKey: CHANNELS_QUERY_KEY }),
+				queryClient.cancelQueries({ queryKey: QUERY_KEYS.channels }),
 				queryClient.cancelQueries({ queryKey: QUERY_KEYS.followedChannels }),
 			]);
 
 			const previousChannels =
-				queryClient.getQueryData<Array<Channel>>(CHANNELS_QUERY_KEY);
+				queryClient.getQueryData<Array<Channel>>(QUERY_KEYS.channels);
 			const previousFollowedChannels = queryClient.getQueryData<Array<SidebarChannel>>(
 				QUERY_KEYS.followedChannels
 			);
 
 			if (previousChannels !== undefined) {
 				queryClient.setQueryData(
-					CHANNELS_QUERY_KEY,
+					QUERY_KEYS.channels,
 					previousChannels.map((channel) => {
 						if (channel.id === channelId) {
 							return { ...channel, isFavorite: !channel.isFavorite };
@@ -84,7 +82,7 @@ function useToggleFavorite() {
 		},
 		onError: (_error, _channelId, context) => {
 			if (context?.previousChannels !== undefined) {
-				queryClient.setQueryData(CHANNELS_QUERY_KEY, context.previousChannels);
+				queryClient.setQueryData(QUERY_KEYS.channels, context.previousChannels);
 			}
 			if (context?.previousFollowedChannels !== undefined) {
 				queryClient.setQueryData(
@@ -95,7 +93,7 @@ function useToggleFavorite() {
 		},
 		onSettled: async () => {
 			await Promise.all([
-				queryClient.invalidateQueries({ queryKey: CHANNELS_QUERY_KEY }),
+				queryClient.invalidateQueries({ queryKey: QUERY_KEYS.channels }),
 				queryClient.invalidateQueries({ queryKey: QUERY_KEYS.followedChannels }),
 			]);
 		},
@@ -108,10 +106,10 @@ function useReorderFavorites() {
 	return useMutation({
 		mutationFn: reorderFavoritesApi,
 		onMutate: async (orderedIds: Array<string>) => {
-			await queryClient.cancelQueries({ queryKey: CHANNELS_QUERY_KEY });
+			await queryClient.cancelQueries({ queryKey: QUERY_KEYS.channels });
 
 			const previousChannels =
-				queryClient.getQueryData<Array<Channel>>(CHANNELS_QUERY_KEY);
+				queryClient.getQueryData<Array<Channel>>(QUERY_KEYS.channels);
 
 			if (previousChannels !== undefined) {
 				const favoriteChannels: Array<Channel> = [];
@@ -137,7 +135,7 @@ function useReorderFavorites() {
 					}
 				}
 
-				queryClient.setQueryData(CHANNELS_QUERY_KEY, [
+				queryClient.setQueryData(QUERY_KEYS.channels, [
 					...reorderedFavorites,
 					...nonFavoriteChannels,
 				]);
@@ -147,11 +145,11 @@ function useReorderFavorites() {
 		},
 		onError: (_error, _orderedIds, context) => {
 			if (context?.previousChannels !== undefined) {
-				queryClient.setQueryData(CHANNELS_QUERY_KEY, context.previousChannels);
+				queryClient.setQueryData(QUERY_KEYS.channels, context.previousChannels);
 			}
 		},
 		onSettled: async () => {
-			await queryClient.invalidateQueries({ queryKey: CHANNELS_QUERY_KEY });
+			await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.channels });
 		},
 	});
 }

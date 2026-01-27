@@ -4,11 +4,9 @@ import { QUERY_KEYS } from "@/src/shared/query-keys";
 
 import { fetchFollowedChannels } from "../api/sidebar-queries";
 
-export const FOLLOWED_CHANNELS_QUERY_KEY = QUERY_KEYS.followedChannels;
-
 function useFollowedChannels() {
 	const { data, isLoading, error } = useQuery({
-		queryKey: FOLLOWED_CHANNELS_QUERY_KEY,
+		queryKey: QUERY_KEYS.followedChannels,
 		queryFn: fetchFollowedChannels,
 		staleTime: 60_000,
 		gcTime: 10 * 60 * 1000,

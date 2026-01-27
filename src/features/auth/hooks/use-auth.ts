@@ -1,19 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 
+import { QUERY_KEYS } from "@/src/shared/query-keys";
+
 import { fetchAuthStatus } from "../api/auth-queries";
 
-export const AUTH_QUERY_KEY = ["auth"] as const;
-
-interface UseAuthResult {
-	isAuthenticated: boolean;
-	userId: string | null;
-	isLoading: boolean;
-	error: Error | null;
-}
-
-function useAuth(): UseAuthResult {
+function useAuth() {
 	const { data, isLoading, error } = useQuery({
-		queryKey: AUTH_QUERY_KEY,
+		queryKey: QUERY_KEYS.auth,
 		queryFn: fetchAuthStatus,
 	});
 
