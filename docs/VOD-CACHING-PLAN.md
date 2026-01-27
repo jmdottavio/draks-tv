@@ -61,7 +61,7 @@ export const cachedVods = sqliteTable(
         fetchedAt: text("fetched_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
     },
     (table) => [
-        index("cached_vods_channel_id_idx").on(table.channelId),
+        // Single composite index covers both channelId-only and channelId+createdAt queries
         index("cached_vods_channel_created_idx").on(table.channelId, table.createdAt),
     ]
 );
@@ -79,6 +79,7 @@ export const channelCache = sqliteTable(
     },
     (table) => [
         index("channel_cache_latest_video_id_idx").on(table.latestVideoId),
+        index("channel_cache_is_live_idx").on(table.isLive),
     ]
 );
 
@@ -106,30 +107,30 @@ bun run drizzle-kit migrate
 // Import types from schema - do not re-declare
 import type { CachedVideoSelect, ChannelCacheSelect } from "@/src/db/schema";
 
-type VideoInput = {
+interface VideoInput {
     videoId: string;
     channelId: string;
     title: string;
     duration: string;
     createdAt: string;
     thumbnailUrl: string;
-};
+}
 
-type ChannelCacheInput = {
+interface ChannelCacheInput {
     channelId: string;
     isLive: boolean;
     lastLiveAt: string | null;
     latestVideoId: number | null;
-};
+}
 
-type ChannelCacheWithVideo = {
+interface ChannelCacheWithVideo {
     channelId: string;
     isLive: boolean;
     lastLiveAt: string | null;
     latestVideoId: number | null;
     updatedAt: string;
     latestVideo: CachedVideoSelect | null;
-};
+}
 
 export type {
     CachedVideoSelect,
@@ -209,54 +210,59 @@ function upsertVideo(videoData: VideoInput) {
 
 function deleteOldVideos(channelId: string, keepCount: number) {
     try {
-        // Get the latestVideoId from channelCache to protect it from deletion
-        const cacheRow = database
-            .select({ latestVideoId: channelCache.latestVideoId })
-            .from(channelCache)
-            .where(eq(channelCache.channelId, channelId))
-            .get();
+        // Wrap in transaction to prevent race conditions between read and delete
+        const deletedCount = database.transaction((transaction) => {
+            // Get the latestVideoId from channelCache to protect it from deletion
+            const cacheRow = transaction
+                .select({ latestVideoId: channelCache.latestVideoId })
+                .from(channelCache)
+                .where(eq(channelCache.channelId, channelId))
+                .get();
 
-        const protectedVideoId = cacheRow?.latestVideoId;
+            const protectedVideoId = cacheRow?.latestVideoId;
 
-        const videosToKeep = database
-            .select({ id: cachedVods.id })
-            .from(cachedVods)
-            .where(eq(cachedVods.channelId, channelId))
-            .orderBy(desc(cachedVods.createdAt))
-            .limit(keepCount)
-            .all();
-
-        const idsToKeep = videosToKeep.map((video) => video.id);
-
-        // Also protect the latestVideoId if it exists and is not already in the keep list
-        if (protectedVideoId !== null && protectedVideoId !== undefined) {
-            if (!idsToKeep.includes(protectedVideoId)) {
-                idsToKeep.push(protectedVideoId);
-            }
-        }
-
-        if (idsToKeep.length === 0) {
-            const deleted = database
-                .delete(cachedVods)
+            const videosToKeep = transaction
+                .select({ id: cachedVods.id })
+                .from(cachedVods)
                 .where(eq(cachedVods.channelId, channelId))
+                .orderBy(desc(cachedVods.createdAt))
+                .limit(keepCount)
+                .all();
+
+            const idsToKeep = videosToKeep.map((video) => video.id);
+
+            // Also protect the latestVideoId if it exists and is not already in the keep list
+            if (protectedVideoId !== null && protectedVideoId !== undefined) {
+                if (!idsToKeep.includes(protectedVideoId)) {
+                    idsToKeep.push(protectedVideoId);
+                }
+            }
+
+            if (idsToKeep.length === 0) {
+                const deleted = transaction
+                    .delete(cachedVods)
+                    .where(eq(cachedVods.channelId, channelId))
+                    .returning({ id: cachedVods.id })
+                    .all();
+
+                return deleted.length;
+            }
+
+            const deleted = transaction
+                .delete(cachedVods)
+                .where(
+                    and(
+                        eq(cachedVods.channelId, channelId),
+                        notInArray(cachedVods.id, idsToKeep)
+                    )
+                )
                 .returning({ id: cachedVods.id })
                 .all();
 
             return deleted.length;
-        }
+        });
 
-        const deleted = database
-            .delete(cachedVods)
-            .where(
-                and(
-                    eq(cachedVods.channelId, channelId),
-                    notInArray(cachedVods.id, idsToKeep)
-                )
-            )
-            .returning({ id: cachedVods.id })
-            .all();
-
-        return deleted.length;
+        return deletedCount;
     } catch (error) {
         console.error("[vods.repository] deleteOldVideos failed:", error);
         return new Error("Failed to delete old videos");
@@ -274,11 +280,12 @@ export { deleteOldVideos, getVideosForChannel, upsertVideo };
 
 ```typescript
 import { and, eq, inArray, notInArray, sql } from "drizzle-orm";
-import type { SQL } from "drizzle-orm";
 
 import { database } from "@/src/db";
 import { cachedVods, channelCache } from "@/src/db/schema";
 
+import type { SQL } from "drizzle-orm";
+import type { CachedVideoSelect } from "@/src/db/schema";
 import type { ChannelCacheInput, ChannelCacheWithVideo } from "./vods.types";
 
 function getChannelCache(channelId: string) {
@@ -311,13 +318,16 @@ function getChannelCache(channelId: string) {
         }
 
         // When id is not null, all other fields are guaranteed non-null due to LEFT JOIN semantics
+        // Type assertion needed because TypeScript cannot verify this SQL semantic
         const result: ChannelCacheWithVideo = {
             channelId: row.channelId,
             isLive: row.isLive,
             lastLiveAt: row.lastLiveAt,
             latestVideoId: row.latestVideoId,
             updatedAt: row.updatedAt,
-            latestVideo: row.latestVideo.id !== null ? row.latestVideo : null,
+            latestVideo: row.latestVideo.id !== null
+                ? (row.latestVideo as CachedVideoSelect)
+                : null,
         };
 
         return result;
@@ -357,13 +367,16 @@ function getChannelCacheBulk(channelIds: Array<string>) {
             .all();
 
         // When id is not null, all other fields are guaranteed non-null due to LEFT JOIN semantics
+        // Type assertion needed because TypeScript cannot verify this SQL semantic
         const results: Array<ChannelCacheWithVideo> = rows.map((row) => ({
             channelId: row.channelId,
             isLive: row.isLive,
             lastLiveAt: row.lastLiveAt,
             latestVideoId: row.latestVideoId,
             updatedAt: row.updatedAt,
-            latestVideo: row.latestVideo.id !== null ? row.latestVideo : null,
+            latestVideo: row.latestVideo.id !== null
+                ? (row.latestVideo as CachedVideoSelect)
+                : null,
         }));
 
         return results;
@@ -468,26 +481,21 @@ function updateChannelLiveState(channelId: string, isLive: boolean, lastLiveAt?:
 
 function updateLatestVideoId(channelId: string, latestVideoId: number) {
     try {
-        // Use upsert to handle case where channel cache does not exist yet
+        // Only update existing records - do not create new ones with potentially wrong isLive state
+        // If channel cache doesn't exist, caller should use upsertChannelCache instead
         const result = database
-            .insert(channelCache)
-            .values({
-                channelId: channelId,
-                isLive: false,
+            .update(channelCache)
+            .set({
                 latestVideoId: latestVideoId,
+                updatedAt: sql`CURRENT_TIMESTAMP`,
             })
-            .onConflictDoUpdate({
-                target: channelCache.channelId,
-                set: {
-                    latestVideoId: latestVideoId,
-                    updatedAt: sql`CURRENT_TIMESTAMP`,
-                },
-            })
+            .where(eq(channelCache.channelId, channelId))
             .returning({ channelId: channelCache.channelId })
             .get();
 
         if (result === undefined) {
-            return new Error("Upsert did not return a row");
+            // Channel cache doesn't exist - not an error, caller should handle this
+            return null;
         }
 
         return null;
@@ -499,42 +507,45 @@ function updateLatestVideoId(channelId: string, latestVideoId: number) {
 
 function processLiveStateChangesAtomic(currentlyLiveChannelIds: Array<string>) {
     try {
-        // Build the condition for channels not in the live list
-        let notInLiveChannelsCondition: SQL<unknown> = sql`1=1`;
-        if (currentlyLiveChannelIds.length > 0) {
-            notInLiveChannelsCondition = notInArray(channelCache.channelId, currentlyLiveChannelIds);
-        }
+        // Wrap in transaction to ensure both updates happen atomically
+        return database.transaction((transaction) => {
+            // Build the condition for channels not in the live list
+            let notInLiveChannelsCondition: SQL<unknown> = sql`1=1`;
+            if (currentlyLiveChannelIds.length > 0) {
+                notInLiveChannelsCondition = notInArray(channelCache.channelId, currentlyLiveChannelIds);
+            }
 
-        // Atomic update: set isLive = false for channels that were live but are now offline
-        const wentOffline = database
-            .update(channelCache)
-            .set({
-                isLive: false,
-                lastLiveAt: sql`CURRENT_TIMESTAMP`,
-                updatedAt: sql`CURRENT_TIMESTAMP`,
-            })
-            .where(
-                and(
-                    eq(channelCache.isLive, true),
-                    notInLiveChannelsCondition
-                )
-            )
-            .returning({ channelId: channelCache.channelId })
-            .all();
-
-        // Also mark channels that are now live
-        if (currentlyLiveChannelIds.length > 0) {
-            database
+            // Atomic update: set isLive = false for channels that were live but are now offline
+            const wentOffline = transaction
                 .update(channelCache)
                 .set({
-                    isLive: true,
+                    isLive: false,
+                    lastLiveAt: sql`CURRENT_TIMESTAMP`,
                     updatedAt: sql`CURRENT_TIMESTAMP`,
                 })
-                .where(inArray(channelCache.channelId, currentlyLiveChannelIds))
-                .run();
-        }
+                .where(
+                    and(
+                        eq(channelCache.isLive, true),
+                        notInLiveChannelsCondition
+                    )
+                )
+                .returning({ channelId: channelCache.channelId })
+                .all();
 
-        return wentOffline.map((row) => row.channelId);
+            // Also mark channels that are now live
+            if (currentlyLiveChannelIds.length > 0) {
+                transaction
+                    .update(channelCache)
+                    .set({
+                        isLive: true,
+                        updatedAt: sql`CURRENT_TIMESTAMP`,
+                    })
+                    .where(inArray(channelCache.channelId, currentlyLiveChannelIds))
+                    .run();
+            }
+
+            return wentOffline.map((row) => row.channelId);
+        });
     } catch (error) {
         console.error("[channel-cache.repository] processLiveStateChangesAtomic failed:", error);
         return new Error("Failed to process live state changes");
@@ -609,9 +620,9 @@ function getRefreshIntervalMs(favoriteCount: number) {
     return Math.max(MIN_INTERVAL_MS, Math.min(intervalMs, MAX_INTERVAL_MS));
 }
 
-async function refreshVideosForChannel(channelId: string, accessToken: string) {
+async function refreshVideosForChannel(channelId: string) {
     // Fetch from Twitch API OUTSIDE the transaction to avoid holding DB lock during network call
-    const videosResult = await getVideos(channelId, accessToken, VIDEOS_PER_CHANNEL_LIMIT);
+    const videosResult = await getVideos(channelId, VIDEOS_PER_CHANNEL_LIMIT);
 
     if (videosResult instanceof Error) {
         console.error("[video-cache] Failed to fetch videos from Twitch:", videosResult.message);
@@ -714,7 +725,7 @@ async function refreshVideosForChannel(channelId: string, accessToken: string) {
     }
 }
 
-async function refreshVideosForChannelSafe(channelId: string, accessToken: string) {
+async function refreshVideosForChannelSafe(channelId: string) {
     const state = channelBackoffState.get(channelId) ?? { failureCount: 0, nextAttemptAt: 0 };
 
     const now = Date.now();
@@ -722,7 +733,7 @@ async function refreshVideosForChannelSafe(channelId: string, accessToken: strin
         return null;
     }
 
-    const result = await refreshVideosForChannel(channelId, accessToken);
+    const result = await refreshVideosForChannel(channelId);
 
     if (result instanceof Error) {
         state.failureCount++;
@@ -742,7 +753,7 @@ async function refreshVideosForChannelSafe(channelId: string, accessToken: strin
     return result;
 }
 
-async function populateInitialCache(accessToken: string) {
+async function populateInitialCache() {
     console.log("[video-cache] Starting initial cache population...");
 
     const favorites = getAllFavorites();
@@ -764,7 +775,7 @@ async function populateInitialCache(accessToken: string) {
         const batch = favorites.slice(batchStartIndex, batchStartIndex + BATCH_SIZE);
 
         const results = await Promise.allSettled(
-            batch.map((favorite) => refreshVideosForChannel(favorite.channelId, accessToken))
+            batch.map((favorite) => refreshVideosForChannel(favorite.id))
         );
 
         for (const result of results) {
@@ -785,7 +796,7 @@ async function populateInitialCache(accessToken: string) {
     return null;
 }
 
-function startBackgroundRefresh(accessToken: string) {
+function startBackgroundRefresh() {
     if (refreshIntervalId !== null) {
         clearInterval(refreshIntervalId);
     }
@@ -814,11 +825,15 @@ function startBackgroundRefresh(accessToken: string) {
         const favorite = favorites[currentIndex];
 
         if (favorite !== undefined) {
-            refreshVideosForChannelSafe(favorite.channelId, accessToken).then((result) => {
-                if (result instanceof Error) {
-                    console.error("[video-cache] Background refresh failed for:", favorite.channelId, result.message);
-                }
-            });
+            refreshVideosForChannelSafe(favorite.id)
+                .then((result) => {
+                    if (result instanceof Error) {
+                        console.error("[video-cache] Background refresh failed for:", favorite.id, result.message);
+                    }
+                })
+                .catch((error) => {
+                    console.error("[video-cache] Unexpected error in background refresh:", error);
+                });
         }
 
         refreshIndex++;
@@ -830,7 +845,7 @@ function startBackgroundRefresh(accessToken: string) {
         const favorites = getAllFavorites();
         if (favorites instanceof Error) return;
 
-        const favoriteIds = new Set(favorites.map((favorite) => favorite.channelId));
+        const favoriteIds = new Set(favorites.map((favorite) => favorite.id));
         const now = Date.now();
 
         for (const [channelId, state] of channelBackoffState) {
@@ -866,16 +881,16 @@ function getChannelsWithVideos(channelIds: Array<string>) {
     return getChannelCacheBulk(channelIds);
 }
 
-async function refreshOfflineChannelsBatched(channelIds: Array<string>, accessToken: string) {
+async function refreshOfflineChannelsBatched(channelIds: Array<string>) {
     // Batch the refresh to avoid rate limits and overwhelming the API
-    for (let batchIndex = 0; batchIndex < channelIds.length; batchIndex += BATCH_SIZE) {
-        const batch = channelIds.slice(batchIndex, batchIndex + BATCH_SIZE);
+    for (let batchStartIndex = 0; batchStartIndex < channelIds.length; batchStartIndex += BATCH_SIZE) {
+        const batch = channelIds.slice(batchStartIndex, batchStartIndex + BATCH_SIZE);
 
         await Promise.allSettled(
-            batch.map((channelId) => refreshVideosForChannelSafe(channelId, accessToken))
+            batch.map((channelId) => refreshVideosForChannelSafe(channelId))
         );
 
-        if (batchIndex + BATCH_SIZE < channelIds.length) {
+        if (batchStartIndex + BATCH_SIZE < channelIds.length) {
             await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
         }
     }
@@ -886,8 +901,6 @@ export {
     populateInitialCache,
     processLiveStateChanges,
     refreshOfflineChannelsBatched,
-    refreshVideosForChannel,
-    refreshVideosForChannelSafe,
     startBackgroundRefresh,
     stopBackgroundRefresh,
 };
@@ -932,7 +945,9 @@ const channelsThatWentOffline = processLiveStateChanges(streamsResult);
 // 3. Refresh videos for channels that just went offline (batched to avoid rate limits)
 if (!(channelsThatWentOffline instanceof Error) && channelsThatWentOffline.length > 0) {
     // Fire and forget - don't block response for VOD refresh
-    refreshOfflineChannelsBatched(channelsThatWentOffline, authResult.accessToken);
+    refreshOfflineChannelsBatched(channelsThatWentOffline).catch((error) => {
+        console.error("[channels-api] Failed to refresh offline channels:", error);
+    });
 }
 
 // 4. Get cached videos for offline favorites
@@ -1150,7 +1165,7 @@ function ChannelCardComponent({ channel, variant = "full" }: ChannelCardProps) {
     const isToggling = toggleFavoriteMutation.isPending &&
         toggleFavoriteMutation.variables === channel.id;
 
-    function handleFavoriteClick(event: React.MouseEvent | React.KeyboardEvent) {
+    function handleFavoriteClick(event: React.MouseEvent) {
         event.stopPropagation();
         if (!isToggling) {
             toggleFavoriteMutation.mutate(channel.id);
@@ -1162,14 +1177,10 @@ function ChannelCardComponent({ channel, variant = "full" }: ChannelCardProps) {
         : `Add ${channel.displayName} to favorites`;
 
     // In the JSX, the favorite button should include:
+    // Note: Native <button> elements already handle Enter/Space keys - no onKeyDown needed
     // <button
     //     type="button"
     //     onClick={handleFavoriteClick}
-    //     onKeyDown={(event) => {
-    //         if (event.key === "Enter" || event.key === " ") {
-    //             handleFavoriteClick(event);
-    //         }
-    //     }}
     //     disabled={isToggling}
     //     aria-label={favoriteButtonLabel}
     //     aria-pressed={channel.isFavorite}
@@ -1302,20 +1313,8 @@ async function initializeVideoCache() {
     console.log("[startup] Starting video cache initialization...");
     const startTime = Date.now();
 
-    const auth = getAuth();
-
-    if (auth instanceof Error) {
-        console.error("[startup] Auth error, skipping video cache initialization:", auth.message);
-        return;
-    }
-
-    if (auth.accessToken === null) {
-        console.log("[startup] No access token available, skipping video cache initialization");
-        return;
-    }
-
     // Populate cache - this runs to completion or logs warnings on failure
-    const result = await populateInitialCache(auth.accessToken);
+    const result = await populateInitialCache();
 
     if (result instanceof Error) {
         console.warn(`[startup] Cache initialization had errors: ${result.message}`);
@@ -1324,8 +1323,7 @@ async function initializeVideoCache() {
     }
 
     // Start background refresh even if populateInitialCache had errors
-    // (auth is already validated above - without a valid token we return early)
-    startBackgroundRefresh(auth.accessToken);
+    startBackgroundRefresh();
 }
 
 export { initializeVideoCache };
