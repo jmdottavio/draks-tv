@@ -59,16 +59,16 @@
 ### Medium-High Priority
 
 - Sidebar for live and offline doesn't refresh very often / when I refocus the tab. It should refresh every 30 seconds or so. Check the react query implementation for this. Same for them section that shows live channels.
-    - Be sure thumbnails refresh regularly as well.
+    - Be sure thumbnails refresh regularly as well, seems like even if i refresh and the correct channels are shown live, the thumbnails are not updated.
 - Order sidebar by favorites, then by last seen, then by name.
 - Replace all uses of interface with types unless an interface is absolutely needed.
-- Stream uptime display - Show how long the stream has been live on cards
 - Add a means of integrating with twitch chat for any channel I'm watching.
     - Chatterino integration - Launch Chatterino alongside VLC pointed at the right channel - see `docs/chatterino-integration-notes.md`
-    - Be sure a stream or VOD can be launched with or without chat.
+    - Be sure a stream or VOD can be launched with or without chat. It'd be great if I can pop chat entirely separately, so I could be watching the stream, open chat for a bit, then close it again without closing the stream.
 
 ### Medium Priority
 
+- Stream uptime display - Show how long the stream has been live on cards
 - Channel detail page when clicking a channel (after TanStack Start migration)
     - Proper `/channels/:id` route with URL
     - Show latest 5 VODs with watch buttons
@@ -79,7 +79,6 @@
     - The favorite but offline channels is too wide, should be more of a 2 column layout at least.
     - If it is possible to show the preview image for the VODs whenever showing them
     - The live channel items (each individual channel in the live section) should be more compact. They are too tall and wide.
-- Search/filter channels in sidebar
 - Tooltip on collapsed icons showing channel name and status
 - A means of following or unfollowing channels from the sidebar or main section.
 - Browse mode - I still want a way to search/browse channels that I don't have favorited or followed.
@@ -100,6 +99,7 @@
 
 ### Low-Medium Priority
 
+- Search/filter channels in sidebar
 - Multi-stream launcher - Open 2-4 streams simultaneously in separate VLC windows with predefined layouts
 - VOD resume tracking - Remember playback position in VODs so you can continue where you left off
 - VOD chapters/markers - Display and jump to Twitch's chapter markers when launching VODs
