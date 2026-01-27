@@ -1144,18 +1144,38 @@ import {
     startBackgroundRefresh,
 } from "@/src/services/video-cache-service";
 
+const STARTUP_TIMEOUT_MS = 30_000;
+
 async function initializeVideoCache() {
+    console.log("[startup] Starting video cache initialization...");
+    const startTime = Date.now();
+
     const auth = getAuth();
 
-    if (auth instanceof Error || auth === null) {
-        console.log("[startup] No auth available, skipping video cache initialization");
+    if (auth instanceof Error) {
+        console.error("[startup] Auth error, skipping video cache initialization:", auth.message);
         return;
     }
 
-    const populateResult = await populateInitialCache(auth.accessToken);
+    if (auth.accessToken === null) {
+        console.log("[startup] No access token available, skipping video cache initialization");
+        return;
+    }
 
-    if (populateResult instanceof Error) {
-        console.error("[startup] Failed to populate initial cache:", populateResult.message);
+    try {
+        await Promise.race([
+            populateInitialCache(auth.accessToken),
+            new Promise<never>((_, reject) => {
+                setTimeout(() => {
+                    reject(new Error("Cache initialization timed out"));
+                }, STARTUP_TIMEOUT_MS);
+            }),
+        ]);
+
+        console.log(`[startup] Cache initialized in ${Date.now() - startTime}ms`);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        console.warn(`[startup] Cache initialization failed: ${message}`);
     }
 
     startBackgroundRefresh(auth.accessToken);
@@ -1164,7 +1184,26 @@ async function initializeVideoCache() {
 export { initializeVideoCache };
 ```
 
-Call `initializeVideoCache()` from your server entry point before accepting requests.
+### File: `src/server.ts`
+
+TanStack Start automatically detects and uses a custom server entry at `src/server.ts` by convention. No vite.config.ts changes required.
+
+```typescript
+import handler, { createServerEntry } from "@tanstack/react-start/server-entry";
+
+import { initializeVideoCache } from "./lib/startup";
+
+// Start initialization at module load time (before server accepts requests)
+const initializationPromise = initializeVideoCache();
+
+export default createServerEntry({
+    async fetch(request) {
+        // Block first request until initialization completes
+        await initializationPromise;
+        return handler.fetch(request);
+    },
+});
+```
 
 ---
 
@@ -1218,7 +1257,8 @@ Call `initializeVideoCache()` from your server entry point before accepting requ
 | `src/features/vods/vods.repository.ts` | Create VOD CRUD functions |
 | `src/features/vods/channel-cache.repository.ts` | Create cache CRUD functions |
 | `src/services/video-cache-service.ts` | Create cache orchestration service |
-| `src/lib/startup.ts` | Create server initialization |
+| `src/lib/startup.ts` | Create startup initialization function |
+| `src/server.ts` | Create custom server entry for TanStack Start |
 | `src/app/api/channels/index.ts` | Integrate cache with API |
 | `src/features/channels/hooks/use-channels.ts` | Update query config, add optimistic updates |
 | `src/features/channels/components/channel-card.tsx` | Call hook directly, add memo |
