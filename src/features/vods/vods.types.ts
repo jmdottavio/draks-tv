@@ -25,16 +25,6 @@ interface TwitchVideo {
 	thumbnail_url: string;
 }
 
-// VOD caching types
-interface VideoInput {
-	videoId: string;
-	channelId: string;
-	title: string;
-	duration: string;
-	createdAt: string;
-	thumbnailUrl: string;
-}
-
 interface ChannelCacheInput {
 	channelId: string;
 	isLive: boolean;
@@ -58,6 +48,5 @@ export type {
 	ChannelCacheWithVideo,
 	TwitchUser,
 	TwitchVideo,
-	VideoInput,
 	Vod,
 };
