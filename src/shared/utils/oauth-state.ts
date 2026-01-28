@@ -1,4 +1,4 @@
-import { randomBytes, createHmac } from "node:crypto";
+import { randomBytes, createHmac, timingSafeEqual } from "node:crypto";
 
 const STATE_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -39,11 +39,14 @@ function validateStateToken(token: string): boolean {
 
 	const data = `${timestamp}.${random}`;
 
-	// Verify HMAC
+	// Verify HMAC with constant-time comparison
 	const secret = getStateSecret();
 	const expectedHmac = createHmac("sha256", secret).update(data).digest("hex");
 
-	if (providedHmac !== expectedHmac) {
+	const providedBuf = Buffer.from(providedHmac, "hex");
+	const expectedBuf = Buffer.from(expectedHmac, "hex");
+
+	if (providedBuf.length !== expectedBuf.length || !timingSafeEqual(providedBuf, expectedBuf)) {
 		return false;
 	}
 
