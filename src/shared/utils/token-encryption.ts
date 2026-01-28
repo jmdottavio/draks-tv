@@ -55,11 +55,30 @@ function getOrCreateKeyConfig(): KeyConfig {
 	if (existsSync(KEY_FILE_PATH)) {
 		try {
 			const content = readFileSync(KEY_FILE_PATH, "utf8");
-			const parsed = JSON.parse(content) as { secret: string; salt: string };
+			const parsed: unknown = JSON.parse(content);
+
+			// Validate parsed content has required fields
+			if (
+				typeof parsed === "object" &&
+				parsed !== null &&
+				"secret" in parsed &&
+				typeof parsed.secret === "string" &&
+				parsed.secret !== "" &&
+				"salt" in parsed &&
+				typeof parsed.salt === "string" &&
+				parsed.salt !== ""
+			) {
+				console.warn(
+					"[SECURITY WARNING] Using auto-generated encryption key from file. Set TOKEN_ENCRYPTION_KEY environment variable for production use.",
+				);
+				return { secret: parsed.secret, salt: Buffer.from(parsed.salt, "hex") };
+			}
+
+			// File exists but is missing secret (e.g., salt-only from env key usage)
+			// Fall through to generate new key
 			console.warn(
-				"[SECURITY WARNING] Using auto-generated encryption key from file. Set TOKEN_ENCRYPTION_KEY environment variable for production use.",
+				"[SECURITY WARNING] Key file exists but is missing secret. Generating new key.",
 			);
-			return { secret: parsed.secret, salt: Buffer.from(parsed.salt, "hex") };
 		} catch {
 			// Fall through to generate new key
 		}
@@ -98,8 +117,15 @@ function getOrCreateSalt(envSecret: string): Buffer {
 	if (existsSync(KEY_FILE_PATH)) {
 		try {
 			const content = readFileSync(KEY_FILE_PATH, "utf8");
-			const parsed = JSON.parse(content) as { salt?: string };
-			if (parsed.salt) {
+			const parsed: unknown = JSON.parse(content);
+
+			if (
+				typeof parsed === "object" &&
+				parsed !== null &&
+				"salt" in parsed &&
+				typeof parsed.salt === "string" &&
+				parsed.salt !== ""
+			) {
 				cachedSalt = Buffer.from(parsed.salt, "hex");
 				cachedSecret = envSecret;
 				return cachedSalt;
@@ -157,9 +183,21 @@ function getLegacyEncryptionKey(): Buffer {
 		if (existsSync(KEY_FILE_PATH)) {
 			try {
 				const content = readFileSync(KEY_FILE_PATH, "utf8");
-				const parsed = JSON.parse(content) as { secret: string };
-				// Use the stored secret with legacy salt
-				cachedV1Key = scryptSync(parsed.secret, LEGACY_SALT, KEY_LENGTH);
+				const parsed: unknown = JSON.parse(content);
+
+				if (
+					typeof parsed === "object" &&
+					parsed !== null &&
+					"secret" in parsed &&
+					typeof parsed.secret === "string" &&
+					parsed.secret !== ""
+				) {
+					// Use the stored secret with legacy salt
+					cachedV1Key = scryptSync(parsed.secret, LEGACY_SALT, KEY_LENGTH);
+				} else {
+					// File exists but no secret - fall back to default
+					cachedV1Key = scryptSync("draks-tv-default-key", LEGACY_SALT, KEY_LENGTH);
+				}
 			} catch {
 				// Fall back to the hardcoded default key for legacy tokens
 				cachedV1Key = scryptSync("draks-tv-default-key", LEGACY_SALT, KEY_LENGTH);
