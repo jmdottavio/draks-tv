@@ -1,12 +1,6 @@
-import type { CachedVideoSelect, ChannelCacheSelect } from "@/src/db/schema";
+import type { cachedVods } from "@/src/db/schema";
 
-interface Vod {
-	id: string;
-	title: string;
-	duration: string;
-	createdAt: string;
-	thumbnailUrl: string;
-}
+type CachedVideoSelect = typeof cachedVods.$inferSelect;
 
 interface TwitchUser {
 	id: string;
@@ -44,9 +38,7 @@ interface ChannelCacheWithVideo {
 export type {
 	CachedVideoSelect,
 	ChannelCacheInput,
-	ChannelCacheSelect,
 	ChannelCacheWithVideo,
 	TwitchUser,
 	TwitchVideo,
-	Vod,
 };

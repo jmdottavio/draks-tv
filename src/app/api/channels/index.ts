@@ -14,7 +14,7 @@ import {
 } from "@/src/services/video-cache-service";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 
-import type { CachedVideoSelect } from "@/src/db/schema";
+import type { CachedVideoSelect } from "@/src/features/vods/vods.types";
 import type { TwitchStream } from "@/src/services/twitch-service";
 
 interface StreamData {

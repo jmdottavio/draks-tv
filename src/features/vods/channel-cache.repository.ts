@@ -4,8 +4,7 @@ import { database } from "@/src/db";
 import { cachedVods, channelCache } from "@/src/db/schema";
 
 import type { SQL } from "drizzle-orm";
-import type { CachedVideoSelect } from "@/src/db/schema";
-import type { ChannelCacheInput, ChannelCacheWithVideo } from "./vods.types";
+import type { CachedVideoSelect, ChannelCacheInput, ChannelCacheWithVideo } from "./vods.types";
 
 function getChannelCache(channelId: string) {
 	try {

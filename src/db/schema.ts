@@ -69,8 +69,3 @@ export const channelCache = sqliteTable(
 	]
 );
 
-// Export inferred types for VOD caching
-export type CachedVideoSelect = typeof cachedVods.$inferSelect;
-export type CachedVideoInsert = typeof cachedVods.$inferInsert;
-export type ChannelCacheSelect = typeof channelCache.$inferSelect;
-export type ChannelCacheInsert = typeof channelCache.$inferInsert;
