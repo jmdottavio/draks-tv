@@ -76,17 +76,6 @@ This document outlines the implementation plan for addressing all security issue
 - Explicitly set scrypt options: `{ N: 131072, r: 8, p: 1, maxmem: 256 * 1024 * 1024 }`
 - Add key caching to avoid repeated derivation
 
-### 2.4 Add Key Rotation Support
-
-**Files to modify:**
-- `src/shared/utils/token-encryption.ts`
-- `src/features/auth/auth.repository.ts`
-
-**Changes:**
-- Add version prefix to encrypted data format
-- Support decryption with old keys during rotation
-- Add migration function for re-encryption
-
 ---
 
 ## Phase 3: Token Lifecycle Management
@@ -296,7 +285,6 @@ Permissions-Policy: geolocation=(), microphone=(), camera=()
 | 8 | Phase 6 (Security Headers) | MEDIUM | 2 files |
 | 9 | Phase 4.3 (Rate Limiting) | MEDIUM | 4 files |
 | 10 | Phase 7 (Error Handling) | MEDIUM | 4 files |
-| 11 | Phase 2.4 (Key Rotation) | LOW | 2 files |
 | 12 | Phase 5.2 (Input Validation) | LOW | 1 file |
 | 13 | Phase 9 (Env Config) | LOW | 3 files |
 
@@ -335,7 +323,7 @@ After each phase:
 If issues arise:
 1. Each phase can be reverted independently via git
 2. Database migrations include down migrations
-3. Encryption changes maintain backwards compatibility during transition
+3. Encryption format is simple and consistent
 
 ---
 
