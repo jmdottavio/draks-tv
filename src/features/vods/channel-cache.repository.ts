@@ -203,21 +203,15 @@ function updateChannelLiveState(channelId: string, isLive: boolean, lastLiveAt?:
 function updateLatestVideoId(channelId: string, latestVideoId: number) {
 	try {
 		// Only update existing records - do not create new ones with potentially wrong isLive state
-		// If channel cache doesn't exist, caller should use upsertChannelCache instead
-		const result = database
+		// No-op if channel cache doesn't exist (caller should use upsertChannelCache instead)
+		database
 			.update(channelCache)
 			.set({
 				latestVideoId: latestVideoId,
 				updatedAt: sql`CURRENT_TIMESTAMP`,
 			})
 			.where(eq(channelCache.channelId, channelId))
-			.returning({ channelId: channelCache.channelId })
-			.get();
-
-		if (result === undefined) {
-			// Channel cache doesn't exist - not an error, caller should handle this
-			return null;
-		}
+			.run();
 
 		return null;
 	} catch (error) {
