@@ -18,12 +18,4 @@ function getAuthRedirectUri() {
 	return `${getAppBaseUrl()}${AUTH_CALLBACK_PATH}`;
 }
 
-export {
-	DEFAULT_PORT,
-	APP_PORT,
-	APP_HOST,
-	APP_PROTOCOL,
-	AUTH_CALLBACK_PATH,
-	getAppBaseUrl,
-	getAuthRedirectUri,
-};
+export { getAuthRedirectUri };

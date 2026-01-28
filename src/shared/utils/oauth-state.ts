@@ -7,10 +7,6 @@ function getStateSecret(): string {
 	return process.env.TOKEN_ENCRYPTION_KEY ?? process.env.STATE_SECRET ?? "draks-tv-state-secret";
 }
 
-function generateState(): string {
-	return randomBytes(32).toString("hex");
-}
-
 function createStateToken(): string {
 	const timestamp = Date.now().toString(36);
 	const random = randomBytes(16).toString("hex");
@@ -61,4 +57,4 @@ function validateStateToken(token: string): boolean {
 	return true;
 }
 
-export { generateState, createStateToken, validateStateToken };
+export { createStateToken, validateStateToken };

@@ -78,5 +78,4 @@ function createRateLimitResponse(retryAfterMs?: number): Response {
 	});
 }
 
-export { checkAuthRateLimit, checkRateLimit, createRateLimitResponse };
-export type { RateLimitConfig };
+export { checkAuthRateLimit, createRateLimitResponse };

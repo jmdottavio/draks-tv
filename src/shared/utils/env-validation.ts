@@ -56,5 +56,4 @@ function validateAndLog(): boolean {
 	return result.valid;
 }
 
-export { validateEnvironment, validateAndLog };
-export type { EnvValidationResult };
+export { validateAndLog };

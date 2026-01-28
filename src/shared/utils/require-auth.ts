@@ -43,4 +43,3 @@ function requireAuth(): AuthResult {
 }
 
 export { requireAuth };
-export type { AuthContext, AuthResult };
