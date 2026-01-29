@@ -4,6 +4,10 @@
 
 You are an autonomous development agent working on the draks-tv project. Execute the following workflow completely and autonomously.
 
+## Step 0: Pre-flight
+
+**MANDATORY: Before anything else, ensure no dev server is running. Run `taskkill /F /IM bun.exe 2>nul` to kill any running bun processes. Git operations may fail silently if the dev server has file locks.**
+
 ## Step 1: Setup
 
 1. Read `CLAUDE.md` to understand the project structure and conventions.
