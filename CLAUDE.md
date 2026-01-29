@@ -11,23 +11,58 @@ bun run dev
 
 App runs at http://localhost:9442
 
+## Architecture
+
+- **Frontend**: TanStack Start (SSR/Client)
+- **Backend API**: `src/app/api`
+- **Data Flow**: API Route -> Service -> Repository -> Drizzle/SQLite
+- **State**: TanStack Query for server state
+
 ## Project Structure
 
-```
-draks-tv/
-├── src/
-│   ├── client/          # React frontend (Vite)
-│   │   ├── components/  # React components
-│   │   ├── hooks/       # Custom hooks (TanStack Query)
-│   │   └── lib/         # Utilities
-│   └── server/          # Express backend
-│       ├── routes/      # API route handlers
-│       ├── services/    # Business logic (Twitch API, Streamlink)
-│       └── database/    # SQLite schema and queries
-├── knowledge/           # Coding standards and patterns
-├── public/              # Static assets (if any)
-├── docs/                # Project documentation and roadmap
-└── data/                # SQLite database file
+```text
+src/
+├── app/                    # TanStack Start routes & API
+│   ├── api/                # Backend API endpoints
+│   └── ...                 # Frontend route components
+├── features/               # Feature-based modules
+│   ├── auth/               # Authentication
+│   │   ├── api/            # Auth queries
+│   │   ├── components/     # Auth UI
+│   │   ├── hooks/          # useAuth
+│   │   ├── auth.repository.ts
+│   │   ├── auth.types.ts
+│   │   └── index.ts
+│   ├── channels/           # Channels & Favorites
+│   │   ├── api/            # Queries & mutations
+│   │   ├── components/     # ChannelCard, ChannelGrid
+│   │   ├── hooks/          # useChannels
+│   │   ├── favorites.repository.ts
+│   │   ├── channels.types.ts
+│   │   ├── channels.validators.ts
+│   │   └── index.ts
+│   ├── sidebar/            # Sidebar navigation
+│   │   ├── api/            # Sidebar queries
+│   │   ├── components/     # Sidebar
+│   │   ├── hooks/          # useFollowedChannels
+│   │   ├── channel-last-seen.repository.ts
+│   │   ├── sidebar.types.ts
+│   │   └── index.ts
+│   └── vods/               # VOD browsing
+│       ├── api/            # VOD queries & mutations
+│       ├── hooks/          # useVodSearch
+│       ├── vods.types.ts
+│       └── index.ts
+├── services/               # External integrations
+│   ├── streamlink-service.ts
+│   └── twitch-service.ts
+├── db/                     # Database layer
+│   ├── schema.ts           # Drizzle schema definitions
+│   └── index.ts            # Database instance
+└── shared/                 # Cross-cutting utilities
+    ├── components/         # header, icons
+    ├── context/            # layout-context
+    └── utils/              # api-errors, format, parse-request-body
 ```
 
 ## Key Features
@@ -41,16 +76,10 @@ draks-tv/
 - One-click launch to VLC via Streamlink
 - Favorites stored in SQLite (toggle from sidebar or main grid)
 
-## Tech Stack
-
-- **Frontend**: React + Vite + TanStack Query + Tailwind CSS
-- **Backend**: Express.js + Bun
-- **Database**: SQLite (bun:sqlite)
-- **External**: Twitch Helix API, Streamlink
-
 ## Knowledge Files
 
 Read all files in `knowledge/` for coding standards:
+
 - `CODE-STANDARDS.md` - General patterns
 - `PROJECT.md` - Project-specific conventions
 - `REACT.md` - React patterns
@@ -59,6 +88,7 @@ Read all files in `knowledge/` for coding standards:
 ## Environment Variables
 
 Required in `.env`:
+
 - `TWITCH_CLIENT_ID`
 - `TWITCH_CLIENT_SECRET`
 - `PORT` (default: 9442)

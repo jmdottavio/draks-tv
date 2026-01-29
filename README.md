@@ -46,27 +46,30 @@ Help me set up this draks-tv project. I need you to:
 ### Manual Setup
 
 1. Clone the repo and install dependencies:
-   ```bash
-   git clone https://github.com/yourusername/draks-tv.git
-   cd draks-tv
-   bun install
-   ```
+
+    ```bash
+    git clone https://github.com/jmdottavio/draks-tv.git
+    cd draks-tv
+    bun install
+    ```
 
 2. Create a Twitch application at [dev.twitch.tv/console/apps](https://dev.twitch.tv/console/apps):
-   - Set OAuth Redirect URL to `http://localhost:9442/callback`
-   - Copy your Client ID and Client Secret
+    - Set OAuth Redirect URL to `http://localhost:9442/callback`
+    - Copy your Client ID and Client Secret
 
 3. Configure environment:
-   ```bash
-   cp .env.example .env
-   ```
-   Add your Twitch credentials to `.env`
+
+    ```bash
+    cp .env.example .env
+    ```
+
+    Add your Twitch credentials to `.env`
 
 4. Run the app:
-   ```bash
-   bun run dev
-   ```
-   Open http://localhost:9442
+    ```bash
+    bun run dev
+    ```
+    Open http://localhost:9442
 
 ## Usage
 
@@ -79,23 +82,34 @@ Help me set up this draks-tv project. I need you to:
 
 ## Tech Stack
 
-- **Frontend**: React, Vite, TanStack Query, Tailwind CSS
-- **Backend**: Express.js, Bun
-- **Database**: SQLite (stores favorites and auth tokens locally)
+- **Framework**: TanStack Start (React 19, Vite, TanStack Router)
+- **Styling**: Tailwind CSS v4
+- **Database**: SQLite (via Drizzle ORM)
+- **Runtime**: Bun
 - **External**: Twitch Helix API, Streamlink
 
 ## Project Structure
 
 ```
 src/
-├── client/           # React frontend
-│   ├── components/   # UI components
-│   ├── hooks/        # TanStack Query hooks
-│   └── lib/          # API client and utilities
-└── server/           # Express backend
-    ├── routes/       # API endpoints
-    ├── services/     # Twitch API, Streamlink integration
-    └── database/     # SQLite queries
+├── app/                    # TanStack Start routes & API
+│   ├── api/                # Backend API endpoints
+│   └── ...                 # Frontend route components
+├── features/               # Feature-based modules
+│   ├── auth/               # Authentication
+│   ├── channels/           # Channels & Favorites
+│   ├── sidebar/            # Sidebar navigation
+│   └── vods/               # VOD browsing
+├── services/               # External integrations
+│   ├── streamlink-service.ts
+│   └── twitch-service.ts
+├── db/                     # Database layer
+│   ├── schema.ts           # Drizzle schema
+│   └── index.ts            # Database instance
+└── shared/                 # Cross-cutting utilities
+    ├── components/         # header, icons
+    ├── context/            # layout-context
+    └── utils/              # api-errors, format
 ```
 
 ## License
