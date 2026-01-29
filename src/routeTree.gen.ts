@@ -16,6 +16,7 @@ import { Route as ApiUsersIndexRouteImport } from './app/api/users/index'
 import { Route as ApiFavoritesIndexRouteImport } from './app/api/favorites/index'
 import { Route as ApiChannelsIndexRouteImport } from './app/api/channels/index'
 import { Route as ApiFavoritesReorderIndexRouteImport } from './app/api/favorites/reorder/index'
+import { Route as ApiChatChannelIndexRouteImport } from './app/api/chat/$channel/index'
 import { Route as ApiChannelsFollowedIndexRouteImport } from './app/api/channels/followed/index'
 import { Route as ApiAuthUrlIndexRouteImport } from './app/api/auth/url/index'
 import { Route as ApiAuthStatusIndexRouteImport } from './app/api/auth/status/index'
@@ -61,6 +62,11 @@ const ApiFavoritesReorderIndexRoute =
     path: '/api/favorites/reorder/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiChatChannelIndexRoute = ApiChatChannelIndexRouteImport.update({
+  id: '/api/chat/$channel/',
+  path: '/api/chat/$channel/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChannelsFollowedIndexRoute =
   ApiChannelsFollowedIndexRouteImport.update({
     id: '/api/channels/followed/',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/status/': typeof ApiAuthStatusIndexRoute
   '/api/auth/url/': typeof ApiAuthUrlIndexRoute
   '/api/channels/followed/': typeof ApiChannelsFollowedIndexRoute
+  '/api/chat/$channel/': typeof ApiChatChannelIndexRoute
   '/api/favorites/reorder/': typeof ApiFavoritesReorderIndexRoute
   '/api/favorites/toggle/$id/': typeof ApiFavoritesToggleIdIndexRoute
   '/api/watch/live/$channel/': typeof ApiWatchLiveChannelIndexRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByTo {
   '/api/auth/status': typeof ApiAuthStatusIndexRoute
   '/api/auth/url': typeof ApiAuthUrlIndexRoute
   '/api/channels/followed': typeof ApiChannelsFollowedIndexRoute
+  '/api/chat/$channel': typeof ApiChatChannelIndexRoute
   '/api/favorites/reorder': typeof ApiFavoritesReorderIndexRoute
   '/api/favorites/toggle/$id': typeof ApiFavoritesToggleIdIndexRoute
   '/api/watch/live/$channel': typeof ApiWatchLiveChannelIndexRoute
@@ -152,6 +160,7 @@ export interface FileRoutesById {
   '/api/auth/status/': typeof ApiAuthStatusIndexRoute
   '/api/auth/url/': typeof ApiAuthUrlIndexRoute
   '/api/channels/followed/': typeof ApiChannelsFollowedIndexRoute
+  '/api/chat/$channel/': typeof ApiChatChannelIndexRoute
   '/api/favorites/reorder/': typeof ApiFavoritesReorderIndexRoute
   '/api/favorites/toggle/$id/': typeof ApiFavoritesToggleIdIndexRoute
   '/api/watch/live/$channel/': typeof ApiWatchLiveChannelIndexRoute
@@ -171,6 +180,7 @@ export interface FileRouteTypes {
     | '/api/auth/status/'
     | '/api/auth/url/'
     | '/api/channels/followed/'
+    | '/api/chat/$channel/'
     | '/api/favorites/reorder/'
     | '/api/favorites/toggle/$id/'
     | '/api/watch/live/$channel/'
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/api/auth/status'
     | '/api/auth/url'
     | '/api/channels/followed'
+    | '/api/chat/$channel'
     | '/api/favorites/reorder'
     | '/api/favorites/toggle/$id'
     | '/api/watch/live/$channel'
@@ -205,6 +216,7 @@ export interface FileRouteTypes {
     | '/api/auth/status/'
     | '/api/auth/url/'
     | '/api/channels/followed/'
+    | '/api/chat/$channel/'
     | '/api/favorites/reorder/'
     | '/api/favorites/toggle/$id/'
     | '/api/watch/live/$channel/'
@@ -223,6 +235,7 @@ export interface RootRouteChildren {
   ApiAuthStatusIndexRoute: typeof ApiAuthStatusIndexRoute
   ApiAuthUrlIndexRoute: typeof ApiAuthUrlIndexRoute
   ApiChannelsFollowedIndexRoute: typeof ApiChannelsFollowedIndexRoute
+  ApiChatChannelIndexRoute: typeof ApiChatChannelIndexRoute
   ApiFavoritesReorderIndexRoute: typeof ApiFavoritesReorderIndexRoute
   ApiFavoritesToggleIdIndexRoute: typeof ApiFavoritesToggleIdIndexRoute
   ApiWatchLiveChannelIndexRoute: typeof ApiWatchLiveChannelIndexRoute
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       path: '/api/favorites/reorder'
       fullPath: '/api/favorites/reorder/'
       preLoaderRoute: typeof ApiFavoritesReorderIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/chat/$channel/': {
+      id: '/api/chat/$channel/'
+      path: '/api/chat/$channel'
+      fullPath: '/api/chat/$channel/'
+      preLoaderRoute: typeof ApiChatChannelIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/channels/followed/': {
@@ -351,6 +371,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthStatusIndexRoute: ApiAuthStatusIndexRoute,
   ApiAuthUrlIndexRoute: ApiAuthUrlIndexRoute,
   ApiChannelsFollowedIndexRoute: ApiChannelsFollowedIndexRoute,
+  ApiChatChannelIndexRoute: ApiChatChannelIndexRoute,
   ApiFavoritesReorderIndexRoute: ApiFavoritesReorderIndexRoute,
   ApiFavoritesToggleIdIndexRoute: ApiFavoritesToggleIdIndexRoute,
   ApiWatchLiveChannelIndexRoute: ApiWatchLiveChannelIndexRoute,

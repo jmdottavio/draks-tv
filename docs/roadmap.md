@@ -51,9 +51,10 @@
 - [x] Order sidebar by favorites, then by last seen, then by name.
 - [x] Replace all uses of interface with types unless an interface is absolutely needed.
 - [x] Parallelize all possible DB / API calls.
-- Add a means of integrating with twitch chat for any channel I'm watching.
-    - Chatterino integration - Launch Chatterino alongside VLC pointed at the right channel - see `docs/chatterino-integration-notes.md`
-    - Be sure a stream or VOD can be launched with or without chat. It'd be great if I can pop chat entirely separately, so I could be watching the stream, open chat for a bit, then close it again without closing the stream.
+- [x] Add a means of integrating with twitch chat for any channel I'm watching.
+    - Chatterino integration - Launch Chatterino alongside VLC pointed at the right channel
+    - Chat button on live channel cards opens Chatterino for that channel
+    - Stream can be launched with or without chat (separate buttons)
 - VOD tracking
     - Overall VLC doesn't handle VODs well currently. I can't track through the whole video or go to a certain time or jump forward, etc. I can't even see the total duration of the video.
     - Remember playback position in VODs so you can continue where you left off

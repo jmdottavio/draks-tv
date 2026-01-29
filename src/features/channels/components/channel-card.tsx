@@ -1,6 +1,6 @@
 import { memo } from "react";
 
-import { StarIcon } from "@/src/shared/components/icons";
+import { ChatIcon, StarIcon } from "@/src/shared/components/icons";
 import {
 	formatDate,
 	formatDuration,
@@ -9,6 +9,7 @@ import {
 } from "@/src/shared/utils/format";
 
 import { watchVod } from "@/src/features/vods/api/vods-mutations";
+import { openChat } from "../api/chat-mutations";
 import { watchLive } from "../api/channels-mutations";
 import { useToggleFavorite } from "../hooks/use-channels";
 
@@ -46,6 +47,12 @@ function ChannelCardComponent({ channel, variant = "full", priority = false }: C
 		if (!isToggling) {
 			toggleFavoriteMutation.mutate(channel.id);
 		}
+	}
+
+	function handleChatClick() {
+		openChat(channel.login).catch((error: unknown) => {
+			console.error("Failed to open chat:", error);
+		});
 	}
 
 	const favoriteButtonLabel = channel.isFavorite
@@ -224,13 +231,26 @@ function ChannelCardComponent({ channel, variant = "full", priority = false }: C
 				)}
 
 				{hasContent && (
-					<button
-						type="button"
-						onClick={handleWatchClick}
-						className="w-full py-2.5 px-4 rounded-md bg-surface-elevated border border-surface-border-muted text-text-primary text-sm font-semibold hover:bg-twitch-purple hover:border-twitch-purple transition-all"
-					>
-						{channel.isLive ? "Watch Live" : "Watch VOD"}
-					</button>
+					<div className="flex gap-2">
+						<button
+							type="button"
+							onClick={handleWatchClick}
+							className="flex-1 py-2.5 px-4 rounded-md bg-surface-elevated border border-surface-border-muted text-text-primary text-sm font-semibold hover:bg-twitch-purple hover:border-twitch-purple transition-all"
+						>
+							{channel.isLive ? "Watch Live" : "Watch VOD"}
+						</button>
+						{channel.isLive && (
+							<button
+								type="button"
+								onClick={handleChatClick}
+								aria-label={`Open chat for ${channel.displayName}`}
+								title="Open Chat"
+								className="py-2.5 px-3 rounded-md bg-surface-elevated border border-surface-border-muted text-text-muted hover:text-text-primary hover:bg-twitch-purple hover:border-twitch-purple transition-all"
+							>
+								<ChatIcon className="w-5 h-5" />
+							</button>
+						)}
+					</div>
 				)}
 			</div>
 		</div>
