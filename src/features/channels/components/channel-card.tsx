@@ -11,18 +11,7 @@ import {
 import { useToggleFavorite } from "../hooks/use-channels";
 import { useOpenChat, useWatchLive, useWatchVod } from "../hooks/use-launch";
 
-import type { Channel } from "../channels.types";
-
-type DragHandlers = {
-	onDragStart: (event: React.DragEvent) => void;
-	onDragEnd: () => void;
-	onDragEnter: (event: React.DragEvent) => void;
-	onDragLeave: () => void;
-	onDragOver: (event: React.DragEvent) => void;
-	onDrop: (event: React.DragEvent) => void;
-	isDragging: boolean;
-	isDropTarget: boolean;
-};
+import type { Channel, DragHandlers } from "../channels.types";
 
 type ChannelCardProps = {
 	channel: Channel;

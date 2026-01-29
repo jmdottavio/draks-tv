@@ -281,6 +281,7 @@ const VodCard = memo(function VodCard({
 				<div className="flex flex-wrap gap-2">
 					{hasProgress && (
 						<button
+							type="button"
 							onClick={handleResumeClick}
 							className="flex-1 rounded-md bg-twitch-purple px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-twitch-purple-hover"
 						>
@@ -288,6 +289,7 @@ const VodCard = memo(function VodCard({
 						</button>
 					)}
 					<button
+						type="button"
 						onClick={handleWatchClick}
 						className="flex-1 rounded-md border border-surface-border-muted bg-surface-elevated px-4 py-2.5 text-sm font-semibold text-text-primary transition-all hover:border-twitch-purple hover:bg-twitch-purple"
 					>
@@ -295,6 +297,7 @@ const VodCard = memo(function VodCard({
 					</button>
 					{!showSaveInput && (
 						<button
+							type="button"
 							onClick={handleSaveProgressClick}
 							className="rounded-md border border-surface-border-muted bg-surface-elevated px-3 py-2.5 text-sm font-semibold text-text-muted transition-all hover:border-twitch-purple hover:text-text-primary"
 							title="Save progress"

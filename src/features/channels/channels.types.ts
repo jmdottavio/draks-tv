@@ -39,4 +39,15 @@ type FavoriteOutput = {
 	profileImage: string;
 };
 
-export type { Channel, Stream, Vod, FavoriteInput, FavoriteOutput };
+type DragHandlers = {
+	onDragStart: (event: React.DragEvent) => void;
+	onDragEnd: () => void;
+	onDragEnter: (event: React.DragEvent) => void;
+	onDragLeave: () => void;
+	onDragOver: (event: React.DragEvent) => void;
+	onDrop: (event: React.DragEvent) => void;
+	isDragging: boolean;
+	isDropTarget: boolean;
+};
+
+export type { Channel, DragHandlers, Stream, Vod, FavoriteInput, FavoriteOutput };

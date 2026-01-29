@@ -36,26 +36,11 @@ type ChannelCacheWithVideo = {
 	latestVideo: CachedVideoSelect | null;
 };
 
-type VodProgressResponse = {
-	progress: VodPlaybackProgressSelect | null;
-};
-
-type VodProgressBulkResponse = {
-	progress: Array<VodPlaybackProgressSelect>;
-};
-
-type RecentProgressResponse = {
-	progress: Array<VodPlaybackProgressSelect>;
-};
-
 export type {
 	CachedVideoSelect,
 	ChannelCacheInput,
 	ChannelCacheWithVideo,
-	RecentProgressResponse,
 	TwitchUser,
 	TwitchVideo,
 	VodPlaybackProgressSelect,
-	VodProgressBulkResponse,
-	VodProgressResponse,
 };

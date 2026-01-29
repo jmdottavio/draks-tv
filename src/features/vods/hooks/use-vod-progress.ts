@@ -9,8 +9,6 @@ import {
 import { deleteVodProgress, saveVodProgress } from "../api/vods-mutations";
 import { fetchRecentProgress, fetchVodProgress, fetchVodProgressBulk } from "../api/vods-queries";
 
-import type { SaveProgressInput } from "../playback-progress.repository";
-
 function useVodProgress(vodId: string) {
 	return useQuery({
 		queryKey: getVodProgressQueryKey(vodId),
@@ -44,7 +42,7 @@ function useSaveProgress() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: (data: SaveProgressInput) => saveVodProgress(data),
+		mutationFn: saveVodProgress,
 		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({ queryKey: getVodProgressQueryKey(variables.vodId) });
 			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.vodProgress });
@@ -56,7 +54,7 @@ function useDeleteProgress() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: (vodId: string) => deleteVodProgress(vodId),
+		mutationFn: deleteVodProgress,
 		onSuccess: (_, vodId) => {
 			queryClient.invalidateQueries({ queryKey: getVodProgressQueryKey(vodId) });
 			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.vodProgress });

@@ -1,6 +1,4 @@
-import type { SaveProgressInput } from "./playback-progress.repository";
-
-function parseSaveProgressBody(body: unknown): SaveProgressInput | Error {
+function parseSaveProgressBody(body: unknown) {
 	if (typeof body !== "object" || body === null) {
 		return new Error("Invalid request body");
 	}

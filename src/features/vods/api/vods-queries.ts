@@ -1,8 +1,8 @@
 import { extractApiErrorMessage } from "@/src/shared/utils/api-errors";
 
-import type { TwitchUser, TwitchVideo, VodPlaybackProgressSelect } from "../vods.types";
+import type { TwitchUser, TwitchVideo } from "../vods.types";
 
-async function fetchUsers(logins: Array<string>): Promise<Array<TwitchUser>> {
+async function fetchUsers(logins: Array<string>) {
 	const encodedLogins = logins.map(encodeURIComponent);
 	const loginsParam = encodedLogins.join(",");
 	const response = await fetch(`/api/users?logins=${loginsParam}`);
@@ -15,7 +15,7 @@ async function fetchUsers(logins: Array<string>): Promise<Array<TwitchUser>> {
 	return response.json() as Promise<Array<TwitchUser>>;
 }
 
-async function fetchVideos(userId: string): Promise<Array<TwitchVideo>> {
+async function fetchVideos(userId: string) {
 	const response = await fetch(`/api/videos?userId=${userId}`);
 
 	if (!response.ok) {
@@ -26,7 +26,7 @@ async function fetchVideos(userId: string): Promise<Array<TwitchVideo>> {
 	return response.json() as Promise<Array<TwitchVideo>>;
 }
 
-async function fetchVodProgress(vodId: string): Promise<VodPlaybackProgressSelect | null> {
+async function fetchVodProgress(vodId: string) {
 	const response = await fetch(`/api/vod-progress/${vodId}`);
 
 	if (!response.ok) {
@@ -38,9 +38,7 @@ async function fetchVodProgress(vodId: string): Promise<VodPlaybackProgressSelec
 	return data.progress;
 }
 
-async function fetchVodProgressBulk(
-	vodIds: Array<string>,
-): Promise<Array<VodPlaybackProgressSelect>> {
+async function fetchVodProgressBulk(vodIds: Array<string>) {
 	if (vodIds.length === 0) {
 		return [];
 	}
@@ -56,7 +54,7 @@ async function fetchVodProgressBulk(
 	return data.progress;
 }
 
-async function fetchRecentProgress(): Promise<Array<VodPlaybackProgressSelect>> {
+async function fetchRecentProgress() {
 	const response = await fetch("/api/vod-progress");
 
 	if (!response.ok) {

@@ -8,7 +8,7 @@ async function watchVod({
 }: {
 	id: string;
 	startTimeSeconds?: number;
-}): Promise<void> {
+}) {
 	const options: RequestInit = { method: "POST" };
 
 	if (startTimeSeconds !== undefined && startTimeSeconds > 0) {
@@ -24,7 +24,7 @@ async function watchVod({
 	}
 }
 
-async function saveVodProgress(data: SaveProgressInput): Promise<void> {
+async function saveVodProgress(data: SaveProgressInput) {
 	const response = await fetch("/api/vod-progress", {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
@@ -37,7 +37,7 @@ async function saveVodProgress(data: SaveProgressInput): Promise<void> {
 	}
 }
 
-async function deleteVodProgress(vodId: string): Promise<void> {
+async function deleteVodProgress(vodId: string) {
 	const response = await fetch(`/api/vod-progress/${vodId}`, {
 		method: "DELETE",
 	});

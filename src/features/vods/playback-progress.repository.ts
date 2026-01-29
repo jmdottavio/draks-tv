@@ -52,6 +52,10 @@ function savePlaybackProgress(data: SaveProgressInput) {
 			return new Error("Position cannot be negative");
 		}
 
+		if (data.durationSeconds !== undefined && data.durationSeconds < 0) {
+			return new Error("Duration cannot be negative");
+		}
+
 		const result = database
 			.insert(vodPlaybackProgress)
 			.values({
