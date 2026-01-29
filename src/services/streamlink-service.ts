@@ -37,11 +37,23 @@ function launchVod(vodId: string, startTimeSeconds?: number) {
 	const sanitizedId = vodId.replace(/[^0-9]/g, "");
 	const url = `twitch.tv/videos/${sanitizedId}`;
 
+	// Use --player-passthrough hls to pass the HLS stream directly to VLC
+	// This enables proper seeking and duration display for VODs
+	const args = [url, "best", "--player-passthrough", "hls"];
+
 	if (startTimeSeconds !== undefined && startTimeSeconds > 0) {
-		return launchStreamWithPlayerArgs(url, `--start-time=${startTimeSeconds}`);
+		args.push("--hls-start-offset", startTimeSeconds.toString());
 	}
 
-	return launchStream(url);
+	return new Promise<void | Error>((promiseResolve) => {
+		execFile(STREAMLINK_PATH, args, (error) => {
+			if (error) {
+				promiseResolve(new Error(error.message));
+				return;
+			}
+			promiseResolve();
+		});
+	});
 }
 
 export { launchLiveStream, launchVod };
