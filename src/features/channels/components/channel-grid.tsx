@@ -112,21 +112,17 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 		setDragOverId(null);
 	}
 
-	function getDragClassName(channelId: string) {
-		const isDragging = draggedId === channelId;
-		const isDropTarget = dragOverId === channelId && draggedId !== channelId;
-
-		let className = "cursor-grab active:cursor-grabbing transition-all duration-150";
-
-		if (isDragging) {
-			className += " opacity-50 scale-95";
-		}
-
-		if (isDropTarget) {
-			className += " ring-2 ring-twitch-purple ring-offset-2 ring-offset-surface-page";
-		}
-
-		return className;
+	function getDragHandlers(channelId: string) {
+		return {
+			onDragStart: (event: React.DragEvent) => handleDragStart(event, channelId),
+			onDragEnd: handleDragEnd,
+			onDragEnter: (event: React.DragEvent) => handleDragEnter(event, channelId),
+			onDragLeave: handleDragLeave,
+			onDragOver: handleDragOver,
+			onDrop: (event: React.DragEvent) => handleDrop(event, channelId),
+			isDragging: draggedId === channelId,
+			isDropTarget: dragOverId === channelId && draggedId !== channelId,
+		};
 	}
 
 	const hasVisibleChannels =
@@ -152,37 +148,16 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 	const sortedChannels = [...liveFavorites, ...offlineFavorites, ...liveNonFavorites];
 
 	return (
-		<div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">
-			{sortedChannels.map((channel) => {
-				const isDraggable = channel.isFavorite;
-
-				if (isDraggable) {
-					return (
-						<div
-							key={channel.id}
-							draggable
-							onDragStart={(event) => handleDragStart(event, channel.id)}
-							onDragEnd={handleDragEnd}
-							onDragEnter={(event) => handleDragEnter(event, channel.id)}
-							onDragLeave={handleDragLeave}
-							onDragOver={handleDragOver}
-							onDrop={(event) => handleDrop(event, channel.id)}
-							className={getDragClassName(channel.id)}
-						>
-							<ChannelCard channel={channel} variant="full" priority={priorityIds.has(channel.id)} />
-						</div>
-					);
-				}
-
-				return (
-					<ChannelCard
-						key={channel.id}
-						channel={channel}
-						variant="full"
-						priority={priorityIds.has(channel.id)}
-					/>
-				);
-			})}
+		<div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5 pt-4">
+			{sortedChannels.map((channel) => (
+				<ChannelCard
+					key={channel.id}
+					channel={channel}
+					variant="full"
+					priority={priorityIds.has(channel.id)}
+					dragHandlers={channel.isFavorite ? getDragHandlers(channel.id) : undefined}
+				/>
+			))}
 		</div>
 	);
 }

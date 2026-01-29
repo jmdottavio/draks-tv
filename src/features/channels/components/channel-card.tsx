@@ -1,6 +1,6 @@
 import { memo } from "react";
 
-import { ChatIcon, StarIcon } from "@/src/shared/components/icons";
+import { ChatIcon, GripIcon, StarIcon } from "@/src/shared/components/icons";
 import {
 	formatDate,
 	formatDuration,
@@ -13,10 +13,22 @@ import { useOpenChat, useWatchLive, useWatchVod } from "../hooks/use-launch";
 
 import type { Channel } from "../channels.types";
 
+type DragHandlers = {
+	onDragStart: (event: React.DragEvent) => void;
+	onDragEnd: () => void;
+	onDragEnter: (event: React.DragEvent) => void;
+	onDragLeave: () => void;
+	onDragOver: (event: React.DragEvent) => void;
+	onDrop: (event: React.DragEvent) => void;
+	isDragging: boolean;
+	isDropTarget: boolean;
+};
+
 type ChannelCardProps = {
 	channel: Channel;
 	variant?: "full" | "compact";
 	priority?: boolean;
+	dragHandlers?: DragHandlers;
 };
 
 function getWatchButtonClassName(isWatching: boolean) {
@@ -26,7 +38,7 @@ function getWatchButtonClassName(isWatching: boolean) {
 		return `${base} bg-twitch-purple border-twitch-purple text-white cursor-not-allowed`;
 	}
 
-	return `${base} bg-surface-elevated border-surface-border-muted text-text-primary hover:bg-twitch-purple hover:border-twitch-purple`;
+	return `${base} bg-surface-elevated border-surface-border-muted text-text-primary hover:bg-twitch-purple hover:border-twitch-purple cursor-pointer`;
 }
 
 function getWatchButtonText(isWatchingLive: boolean, isWatchingVod: boolean, isLive: boolean) {
@@ -43,10 +55,10 @@ function getChatButtonClassName(isOpeningChat: boolean) {
 		return `${base} bg-surface-elevated border-surface-border-muted opacity-50 cursor-not-allowed text-text-muted`;
 	}
 
-	return `${base} bg-surface-elevated border-surface-border-muted text-text-muted hover:text-text-primary hover:bg-twitch-purple hover:border-twitch-purple`;
+	return `${base} bg-surface-elevated border-surface-border-muted text-text-muted hover:text-text-primary hover:bg-twitch-purple hover:border-twitch-purple cursor-pointer`;
 }
 
-function ChannelCardComponent({ channel, variant = "full", priority = false }: ChannelCardProps) {
+function ChannelCardComponent({ channel, variant = "full", priority = false, dragHandlers }: ChannelCardProps) {
 	const toggleFavoriteMutation = useToggleFavorite();
 	const watchLiveMutation = useWatchLive();
 	const watchVodMutation = useWatchVod();
@@ -152,17 +164,35 @@ function ChannelCardComponent({ channel, variant = "full", priority = false }: C
 	// Full variant (default)
 	const thumbnailUrl = getThumbnailUrl(channel);
 	const hasContent = channel.isLive || channel.latestVod !== null;
+	const isDraggable = dragHandlers !== undefined;
+
+	const cardClassName = `bg-surface-card border rounded-lg overflow-hidden transition-all hover:-translate-y-0.5 ${
+		channel.isLive ? "border-live" : "border-surface-border-muted hover:border-surface-border"
+	} ${dragHandlers?.isDragging ? "opacity-50 scale-95" : ""} ${
+		dragHandlers?.isDropTarget ? "ring-2 ring-twitch-purple ring-offset-2 ring-offset-surface-page" : ""
+	}`;
 
 	return (
-		<div
-			className={`bg-surface-card border rounded-lg overflow-hidden transition-all hover:-translate-y-0.5 ${
-				channel.isLive
-					? "border-live"
-					: "border-surface-border-muted hover:border-surface-border"
-			}`}
-		>
-			{/* Thumbnail */}
-			<div className="relative aspect-video bg-surface-elevated">
+		<div className="relative">
+			{/* Drag Handle - overlaps top of card */}
+			{isDraggable && (
+				<div
+					draggable
+					onDragStart={dragHandlers.onDragStart}
+					onDragEnd={dragHandlers.onDragEnd}
+					onDragEnter={dragHandlers.onDragEnter}
+					onDragLeave={dragHandlers.onDragLeave}
+					onDragOver={dragHandlers.onDragOver}
+					onDrop={dragHandlers.onDrop}
+					className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 bg-surface-elevated border border-surface-border-muted rounded-md px-4 py-1 cursor-grab active:cursor-grabbing hover:bg-surface-card hover:border-twitch-purple transition-all"
+				>
+					<GripIcon className="w-4 h-4 text-text-dim rotate-90" />
+				</div>
+			)}
+
+			<div className={cardClassName}>
+				{/* Thumbnail */}
+				<div className="relative aspect-video bg-surface-elevated">
 				{thumbnailUrl !== null && (
 					<img
 						src={thumbnailUrl}
@@ -229,12 +259,12 @@ function ChannelCardComponent({ channel, variant = "full", priority = false }: C
 				{channel.isLive && channel.stream !== null && (
 					<>
 						<div
-							className="text-sm text-text-primary mb-2 line-clamp-2"
+							className="text-sm text-text-primary mb-2 line-clamp-2 min-h-[2.5rem]"
 							title={channel.stream.title}
 						>
 							{channel.stream.title}
 						</div>
-						<div className="flex items-center gap-3 text-sm text-text-muted mb-4">
+						<div className="flex items-center gap-3 text-sm text-text-muted">
 							<span>{channel.stream.gameName}</span>
 							<span className="text-live font-semibold">
 								{formatViewers(channel.stream.viewerCount)} viewers
@@ -246,12 +276,12 @@ function ChannelCardComponent({ channel, variant = "full", priority = false }: C
 				{!channel.isLive && channel.latestVod !== null && (
 					<>
 						<div
-							className="text-sm text-text-primary mb-2 line-clamp-2"
+							className="text-sm text-text-primary mb-2 line-clamp-2 min-h-[2.5rem]"
 							title={channel.latestVod.title}
 						>
 							{channel.latestVod.title}
 						</div>
-						<div className="flex items-center gap-3 text-sm text-text-muted mb-4">
+						<div className="flex items-center gap-3 text-sm text-text-muted">
 							<span className="text-text-dim">
 								{formatDuration(channel.latestVod.duration)}
 							</span>
@@ -261,7 +291,7 @@ function ChannelCardComponent({ channel, variant = "full", priority = false }: C
 				)}
 
 				{hasContent && (
-					<div className="flex gap-2">
+					<div className="flex gap-2 mt-4">
 						<button
 							type="button"
 							onClick={handleWatchClick}
@@ -284,6 +314,7 @@ function ChannelCardComponent({ channel, variant = "full", priority = false }: C
 						)}
 					</div>
 				)}
+			</div>
 			</div>
 		</div>
 	);
