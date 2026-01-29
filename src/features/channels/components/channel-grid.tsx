@@ -17,28 +17,34 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 
 	const reorderFavoritesMutation = useReorderFavorites();
 
-	const { liveFavorites, offlineFavorites, nonFavoriteChannels, allFavorites } = useMemo(() => {
-		const live: Array<Channel> = [];
-		const offline: Array<Channel> = [];
-		const nonFavorite: Array<Channel> = [];
+	const { liveFavorites, offlineFavorites, liveNonFavorites, allFavorites, priorityIds } = useMemo(() => {
+		const liveFavoriteChannels: Array<Channel> = [];
+		const offlineFavoriteChannels: Array<Channel> = [];
+		const liveNonFavoriteChannels: Array<Channel> = [];
 
 		for (const channel of channels) {
 			if (channel.isFavorite) {
 				if (channel.isLive) {
-					live.push(channel);
+					liveFavoriteChannels.push(channel);
 				} else {
-					offline.push(channel);
+					offlineFavoriteChannels.push(channel);
 				}
-			} else {
-				nonFavorite.push(channel);
+			} else if (channel.isLive) {
+				liveNonFavoriteChannels.push(channel);
 			}
 		}
 
+		// First 4 cards across all sections get priority loading
+		const allVisibleChannels = [...liveFavoriteChannels, ...offlineFavoriteChannels, ...liveNonFavoriteChannels];
+		const firstFourChannels = allVisibleChannels.slice(0, 4);
+		const priorityChannelIds = new Set(firstFourChannels.map((channel) => channel.id));
+
 		return {
-			liveFavorites: live,
-			offlineFavorites: offline,
-			nonFavoriteChannels: nonFavorite,
-			allFavorites: [...live, ...offline],
+			liveFavorites: liveFavoriteChannels,
+			offlineFavorites: offlineFavoriteChannels,
+			liveNonFavorites: liveNonFavoriteChannels,
+			allFavorites: [...liveFavoriteChannels, ...offlineFavoriteChannels],
+			priorityIds: priorityChannelIds,
 		};
 	}, [channels]);
 
@@ -123,17 +129,20 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 		return className;
 	}
 
-	if (channels.length === 0) {
+	const hasVisibleChannels =
+		liveFavorites.length > 0 || offlineFavorites.length > 0 || liveNonFavorites.length > 0;
+
+	if (!hasVisibleChannels) {
 		return (
 			<div className="flex flex-col items-center justify-center text-center py-20 text-text-dim">
-				<svg className="w-12 h-12 mb-4 opacity-30" viewBox="0 0 24 24" fill="currentColor">
+				<svg className="w-12 h-12 mb-4 opacity-30" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
 					<circle cx="12" cy="12" r="10" />
 				</svg>
 				<p className="text-base font-medium text-text-secondary mb-1">
 					No channels to show
 				</p>
 				<span className="text-sm">
-					Add some favorites or wait for followed channels to go live
+					Add some favorites to see their latest VODs, or wait for channels to go live
 				</span>
 			</div>
 		);
@@ -144,7 +153,7 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 			{/* Live Favorites - Full cards in grid */}
 			{liveFavorites.length > 0 && (
 				<div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">
-					{liveFavorites.map((channel, index) => (
+					{liveFavorites.map((channel) => (
 						<div
 							key={channel.id}
 							draggable
@@ -156,13 +165,13 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 							onDrop={(event) => handleDrop(event, channel.id)}
 							className={getDragClassName(channel.id)}
 						>
-							<ChannelCard channel={channel} variant="full" priority={index < 4} />
+							<ChannelCard channel={channel} variant="full" priority={priorityIds.has(channel.id)} />
 						</div>
 					))}
 				</div>
 			)}
 
-			{/* Offline Favorites - Compact cards in list */}
+			{/* Offline Favorites - Full cards in grid with VOD thumbnails */}
 			{offlineFavorites.length > 0 && (
 				<section>
 					{liveFavorites.length > 0 && (
@@ -170,7 +179,7 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 							Offline Favorites
 						</h3>
 					)}
-					<div className="space-y-3">
+					<div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">
 						{offlineFavorites.map((channel) => (
 							<div
 								key={channel.id}
@@ -183,15 +192,15 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 								onDrop={(event) => handleDrop(event, channel.id)}
 								className={getDragClassName(channel.id)}
 							>
-								<ChannelCard channel={channel} variant="compact" />
+								<ChannelCard channel={channel} variant="full" priority={priorityIds.has(channel.id)} />
 							</div>
 						))}
 					</div>
 				</section>
 			)}
 
-			{/* Non-favorites - Full cards in grid */}
-			{nonFavoriteChannels.length > 0 && (
+			{/* Following - Only live channels */}
+			{liveNonFavorites.length > 0 && (
 				<section>
 					{(liveFavorites.length > 0 || offlineFavorites.length > 0) && (
 						<h3 className="text-xs font-bold text-text-dim uppercase tracking-widest mb-4 mt-2">
@@ -199,12 +208,12 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 						</h3>
 					)}
 					<div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">
-						{nonFavoriteChannels.map((channel, index) => (
+						{liveNonFavorites.map((channel) => (
 							<ChannelCard
 								key={channel.id}
 								channel={channel}
 								variant="full"
-								priority={liveFavorites.length === 0 && index < 4}
+								priority={priorityIds.has(channel.id)}
 							/>
 						))}
 					</div>
