@@ -34,7 +34,14 @@ export const Route = createFileRoute("/api/channels/followed/")({
 					return createErrorResponse("Not authenticated", ErrorCode.UNAUTHORIZED, 401);
 				}
 
-				const followedResult = await getFollowedChannels(authResult.userId);
+				// Parallelize Twitch API calls and DB queries
+				const [followedResult, streamsResult, favoritesResult, lastSeenDates] =
+					await Promise.all([
+						getFollowedChannels(authResult.userId),
+						getFollowedStreams(authResult.userId),
+						Promise.resolve(getAllFavorites()),
+						Promise.resolve(getAllLastSeenDates()),
+					]);
 
 				if (followedResult instanceof Error) {
 					return createErrorResponse(
@@ -44,8 +51,6 @@ export const Route = createFileRoute("/api/channels/followed/")({
 					);
 				}
 
-				const streamsResult = await getFollowedStreams(authResult.userId);
-
 				if (streamsResult instanceof Error) {
 					return createErrorResponse(
 						streamsResult.message,
@@ -53,8 +58,6 @@ export const Route = createFileRoute("/api/channels/followed/")({
 						500,
 					);
 				}
-
-				const favoritesResult = getAllFavorites();
 
 				if (favoritesResult instanceof Error) {
 					return createErrorResponse(
@@ -64,7 +67,6 @@ export const Route = createFileRoute("/api/channels/followed/")({
 					);
 				}
 
-				const lastSeenDates = getAllLastSeenDates();
 				const lastSeenMap =
 					lastSeenDates instanceof Error ? new Map<string, string>() : lastSeenDates;
 
@@ -72,11 +74,17 @@ export const Route = createFileRoute("/api/channels/followed/")({
 				const userIds = followedResult.map((channel) => channel.broadcaster_id);
 				const profileImages = new Map<string, string>();
 
-				// Twitch API allows max 100 users per request
+				// Twitch API allows max 100 users per request - parallelize all batches
+				const userBatches: Array<Array<string>> = [];
 				for (let i = 0; i < userIds.length; i += 100) {
-					const batch = userIds.slice(i, i + 100);
-					const usersResult = await getUsers({ ids: batch });
+					userBatches.push(userIds.slice(i, i + 100));
+				}
 
+				const batchResults = await Promise.all(
+					userBatches.map((batch) => getUsers({ ids: batch })),
+				);
+
+				for (const usersResult of batchResults) {
 					if (!(usersResult instanceof Error)) {
 						for (const user of usersResult) {
 							profileImages.set(user.id, user.profile_image_url);

@@ -1,6 +1,6 @@
 import { memo } from "react";
 
-import { StarIcon } from "@/src/shared/components/icons";
+import { ChatIcon, StarIcon } from "@/src/shared/components/icons";
 import {
 	formatDate,
 	formatDuration,
@@ -8,9 +8,8 @@ import {
 	formatViewers,
 } from "@/src/shared/utils/format";
 
-import { watchVod } from "@/src/features/vods/api/vods-mutations";
-import { watchLive } from "../api/channels-mutations";
 import { useToggleFavorite } from "../hooks/use-channels";
+import { useOpenChat, useWatchLive, useWatchVod } from "../hooks/use-launch";
 
 import type { Channel } from "../channels.types";
 
@@ -20,24 +19,56 @@ type ChannelCardProps = {
 	priority?: boolean;
 };
 
+function getWatchButtonClassName(isWatching: boolean) {
+	const base = "py-2.5 px-4 rounded-md border text-sm font-semibold transition-all";
+
+	if (isWatching) {
+		return `${base} bg-twitch-purple border-twitch-purple text-white cursor-not-allowed`;
+	}
+
+	return `${base} bg-surface-elevated border-surface-border-muted text-text-primary hover:bg-twitch-purple hover:border-twitch-purple`;
+}
+
+function getWatchButtonText(isWatchingLive: boolean, isWatchingVod: boolean, isLive: boolean) {
+	if (isWatchingLive) return "Watching";
+	if (isWatchingVod) return "Playing";
+	if (isLive) return "Watch Live";
+	return "Watch VOD";
+}
+
+function getChatButtonClassName(isOpeningChat: boolean) {
+	const base = "py-2.5 px-3 rounded-md border transition-all";
+
+	if (isOpeningChat) {
+		return `${base} bg-surface-elevated border-surface-border-muted opacity-50 cursor-not-allowed text-text-muted`;
+	}
+
+	return `${base} bg-surface-elevated border-surface-border-muted text-text-muted hover:text-text-primary hover:bg-twitch-purple hover:border-twitch-purple`;
+}
+
 function ChannelCardComponent({ channel, variant = "full", priority = false }: ChannelCardProps) {
 	const toggleFavoriteMutation = useToggleFavorite();
+	const watchLiveMutation = useWatchLive();
+	const watchVodMutation = useWatchVod();
+	const openChatMutation = useOpenChat();
 
 	const isToggling =
 		toggleFavoriteMutation.isPending && toggleFavoriteMutation.variables === channel.id;
+	const isWatchingLive = watchLiveMutation.isPending;
+	const isWatchingVod = watchVodMutation.isPending;
+	const isWatching = isWatchingLive || isWatchingVod;
+	const isOpeningChat = openChatMutation.isPending;
 
 	function handleWatchClick() {
+		if (isWatching) return;
+
 		if (channel.isLive) {
-			watchLive(channel.login).catch((error: unknown) => {
-				console.error("Failed to launch live stream:", error);
-			});
+			watchLiveMutation.mutate(channel.login);
 			return;
 		}
 
 		if (channel.latestVod !== null) {
-			watchVod(channel.latestVod.id).catch((error: unknown) => {
-				console.error("Failed to launch VOD:", error);
-			});
+			watchVodMutation.mutate(channel.latestVod.id);
 		}
 	}
 
@@ -46,6 +77,11 @@ function ChannelCardComponent({ channel, variant = "full", priority = false }: C
 		if (!isToggling) {
 			toggleFavoriteMutation.mutate(channel.id);
 		}
+	}
+
+	function handleChatClick() {
+		if (isOpeningChat) return;
+		openChatMutation.mutate(channel.login);
 	}
 
 	const favoriteButtonLabel = channel.isFavorite
@@ -73,15 +109,15 @@ function ChannelCardComponent({ channel, variant = "full", priority = false }: C
 						{channel.displayName}
 					</span>
 					{channel.latestVod !== null && (
-						<span className="text-sm text-text-muted truncate block">
-							{channel.latestVod.title}
-						</span>
-					)}
-					{channel.latestVod !== null && (
-						<span className="text-sm text-text-dim">
-							{formatDuration(channel.latestVod.duration)} ·{" "}
-							{formatDate(channel.latestVod.createdAt)}
-						</span>
+						<>
+							<span className="text-sm text-text-muted truncate block">
+								{channel.latestVod.title}
+							</span>
+							<span className="text-sm text-text-dim">
+								{formatDuration(channel.latestVod.duration)} ·{" "}
+								{formatDate(channel.latestVod.createdAt)}
+							</span>
+						</>
 					)}
 				</div>
 
@@ -90,9 +126,10 @@ function ChannelCardComponent({ channel, variant = "full", priority = false }: C
 						<button
 							type="button"
 							onClick={handleWatchClick}
-							className="py-2 px-4 rounded-md bg-surface-elevated border border-surface-border-muted text-text-primary text-sm font-semibold hover:bg-twitch-purple hover:border-twitch-purple transition-all"
+							disabled={isWatching}
+							className={getWatchButtonClassName(isWatching)}
 						>
-							Watch VOD
+							{isWatchingVod ? "Playing" : "Watch VOD"}
 						</button>
 					)}
 					<button
@@ -224,20 +261,35 @@ function ChannelCardComponent({ channel, variant = "full", priority = false }: C
 				)}
 
 				{hasContent && (
-					<button
-						type="button"
-						onClick={handleWatchClick}
-						className="w-full py-2.5 px-4 rounded-md bg-surface-elevated border border-surface-border-muted text-text-primary text-sm font-semibold hover:bg-twitch-purple hover:border-twitch-purple transition-all"
-					>
-						{channel.isLive ? "Watch Live" : "Watch VOD"}
-					</button>
+					<div className="flex gap-2">
+						<button
+							type="button"
+							onClick={handleWatchClick}
+							disabled={isWatching}
+							className={`flex-1 ${getWatchButtonClassName(isWatching)}`}
+						>
+							{getWatchButtonText(isWatchingLive, isWatchingVod, channel.isLive)}
+						</button>
+						{channel.isLive && (
+							<button
+								type="button"
+								onClick={handleChatClick}
+								disabled={isOpeningChat}
+								aria-label={`Open chat for ${channel.displayName}`}
+								title={isOpeningChat ? "Opening..." : "Open Chat"}
+								className={getChatButtonClassName(isOpeningChat)}
+							>
+								<ChatIcon className="w-5 h-5" />
+							</button>
+						)}
+					</div>
 				)}
 			</div>
 		</div>
 	);
 }
 
-function getThumbnailUrl(channel: Channel): string | null {
+function getThumbnailUrl(channel: Channel) {
 	if (channel.isLive && channel.stream?.thumbnailUrl !== undefined) {
 		return formatThumbnail(channel.stream.thumbnailUrl, 440, 248);
 	}

@@ -1,47 +1,5 @@
 # draks-tv Roadmap
 
-## Completed
-
-- [x] Basic Twitch OAuth integration
-- [x] Show followed live streams
-- [x] VOD search by channel name
-- [x] One-click launch to VLC via Streamlink
-- [x] Favorites system with star toggle on cards
-- [x] Combined view: favorites (live/offline) + followed live streams
-- [x] Latest VOD shown for offline favorites
-- [x] Migrate to React + Vite + TanStack Query + Tailwind
-- [x] Switch to Bun package manager
-- [x] SQLite database for favorites and auth tokens
-- [x] Set up coding standards (CLAUDE.md + knowledge/)
-- [x] Remove legacy pre-migration files (public/app.js, server.js, etc.)
-- [x] Sidebar for all followed channels with live/offline status
-    - Collapsible sidebar with toggle in header
-    - Shows all followed channels (not just live)
-    - Live channels show viewer count and game
-    - Offline channels show "Last seen X ago" via VOD date
-    - State persisted to localStorage
-- [x] Sidebar improvements
-    - Collapsed mode shows icons with red/gray ring indicators for live/offline
-    - Expanded mode has favorite toggle star button
-    - Larger fonts, brighter live color (#ff4444) for better readability
-    - Custom ghost scrollbar that appears on hover
-    - Parallelized VOD fetches for faster loading
-- [x] Drag-and-drop reordering for favorites
-    - Drag favorites in main grid to reorder
-    - Order persisted in SQLite via sort_order column
-    - Optimistic UI updates with rollback on error
-- [x] Cache followed channels "last seen" time locally
-    - Don't re-fetch latest VOD for every channel on every reload
-    - Update last seen time only when we see someone new go live
-    - Significantly reduces API calls and load time
-    - Implemented with SQLite `channel_last_seen` table
-- [x] Total UI redesign
-    - Larger fonts for better readability (text-base throughout)
-    - Improved color contrast with semantic Tailwind tokens
-    - Lighter background (#18181b instead of #0e0e10)
-    - Compact horizontal layout for offline favorite cards
-    - Section headers for Live Favorites, Offline Favorites, Following
-
 ## Next Steps
 
 ### High Priority
@@ -50,10 +8,11 @@
 
 - [x] Order sidebar by favorites, then by last seen, then by name.
 - [x] Replace all uses of interface with types unless an interface is absolutely needed.
-- Parallelize all possible DB / API calls.
-- Add a means of integrating with twitch chat for any channel I'm watching.
-    - Chatterino integration - Launch Chatterino alongside VLC pointed at the right channel - see `docs/chatterino-integration-notes.md`
-    - Be sure a stream or VOD can be launched with or without chat. It'd be great if I can pop chat entirely separately, so I could be watching the stream, open chat for a bit, then close it again without closing the stream.
+- [x] Parallelize all possible DB / API calls.
+- [x] Add a means of integrating with twitch chat for any channel I'm watching.
+    - Chatterino integration - Launch Chatterino alongside VLC pointed at the right channel
+    - Chat button on live channel cards opens Chatterino for that channel
+    - Stream can be launched with or without chat (separate buttons)
 - VOD tracking
     - Overall VLC doesn't handle VODs well currently. I can't track through the whole video or go to a certain time or jump forward, etc. I can't even see the total duration of the video.
     - Remember playback position in VODs so you can continue where you left off
