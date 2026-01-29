@@ -8,7 +8,7 @@ type ChatterinoConfig = {
 	baseArguments: Array<string>;
 };
 
-function getChatterinoConfig(): ChatterinoConfig {
+function getChatterinoConfig() {
 	const envCommand = process.env.CHATTERINO_PATH;
 	const envEnabled = process.env.CHATTERINO_ENABLED !== "false";
 
@@ -48,8 +48,8 @@ function getChatterinoConfig(): ChatterinoConfig {
 
 const chatterinoConfig = getChatterinoConfig();
 
-function launchChatterino(channelName: string): Promise<void | Error> {
-	return new Promise((promiseResolve) => {
+function launchChatterino(channelName: string) {
+	return new Promise<void | Error>((promiseResolve) => {
 		if (!chatterinoConfig.enabled) {
 			promiseResolve(new Error("Chatterino integration is not available on this platform"));
 			return;
@@ -62,34 +62,22 @@ function launchChatterino(channelName: string): Promise<void | Error> {
 			return;
 		}
 
-		const args = [...chatterinoConfig.baseArguments, "-c", sanitizedChannel].join(" ");
+		const commandArguments = [...chatterinoConfig.baseArguments, "-c", sanitizedChannel].join(
+			" ",
+		);
 
-		if (platform() === "win32") {
-			// Use start command to launch detached on Windows
-			const command = `start "" "${chatterinoConfig.command}" ${args}`;
-			console.log("[Chatterino] Executing:", command);
+		const command =
+			platform() === "win32"
+				? `start "" "${chatterinoConfig.command}" ${commandArguments}`
+				: `${chatterinoConfig.command} ${commandArguments} &`;
 
-			exec(command, (error) => {
-				if (error) {
-					console.error("[Chatterino] Exec error:", error);
-					promiseResolve(new Error(`Failed to launch Chatterino: ${error.message}`));
-					return;
-				}
-				promiseResolve();
-			});
-		} else {
-			const command = `${chatterinoConfig.command} ${args} &`;
-			console.log("[Chatterino] Executing:", command);
-
-			exec(command, (error) => {
-				if (error) {
-					console.error("[Chatterino] Exec error:", error);
-					promiseResolve(new Error(`Failed to launch Chatterino: ${error.message}`));
-					return;
-				}
-				promiseResolve();
-			});
-		}
+		exec(command, (error) => {
+			if (error) {
+				promiseResolve(new Error(`Failed to launch Chatterino: ${error.message}`));
+				return;
+			}
+			promiseResolve();
+		});
 	});
 }
 

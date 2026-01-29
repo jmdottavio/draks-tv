@@ -69,7 +69,7 @@ function SearchIcon({ className }: IconProps) {
 	);
 }
 
-function StarIcon({ className, filled }: IconProps & { filled: boolean }) {
+function StarIcon({ className, filled }: IconProps & { filled?: boolean }) {
 	return (
 		<svg
 			className={className}
@@ -147,12 +147,12 @@ function MenuIcon({ className }: IconProps) {
 	);
 }
 
-function ChatIcon({ className }: IconProps) {
+function ChatIcon({ className, filled }: IconProps & { filled?: boolean }) {
 	return (
 		<svg
 			className={className}
 			viewBox="0 0 24 24"
-			fill="none"
+			fill={filled ? "currentColor" : "none"}
 			stroke="currentColor"
 			strokeWidth="2"
 		>
