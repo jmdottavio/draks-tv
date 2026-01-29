@@ -16,7 +16,7 @@ function createQueryClient() {
 		defaultOptions: {
 			queries: {
 				staleTime: 30_000,
-				refetchOnWindowFocus: false,
+				refetchOnWindowFocus: true,
 			},
 		},
 	});

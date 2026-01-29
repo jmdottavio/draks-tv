@@ -52,11 +52,17 @@ function formatDate(dateString: string): string {
 }
 
 function formatThumbnail(url: string, width: number, height: number): string {
-	return url
+	const formattedUrl = url
 		.replace("{width}", width.toString())
 		.replace("{height}", height.toString())
 		.replace("%{width}", width.toString())
 		.replace("%{height}", height.toString());
+
+	// Add cache-busting timestamp that changes every 30 seconds
+	const cacheBuster = Math.floor(Date.now() / 30_000);
+	const separator = formattedUrl.includes("?") ? "&" : "?";
+
+	return `${formattedUrl}${separator}t=${cacheBuster}`;
 }
 
 export { formatViewers, formatDuration, formatDate, formatThumbnail };
