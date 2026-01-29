@@ -1,13 +1,11 @@
 import { getAuth, setAuth, clearAuth } from "@/src/features/auth/auth.repository";
 import { FORM_HEADERS } from "@/src/shared/utils/http";
+import { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } from "@/src/shared/utils/twitch-config";
 import {
 	TWITCH_HELIX_BASE_URL,
 	TWITCH_OAUTH_REVOKE_URL,
 	TWITCH_OAUTH_TOKEN_URL,
 } from "@/src/shared/utils/twitch-urls";
-
-const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID ?? "";
-const TWITCH_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET ?? "";
 
 interface TwitchUser {
 	id: string;
@@ -222,7 +220,7 @@ async function getFollowedChannels(userId: string) {
 	return allChannels;
 }
 
-async function revokeToken(token: string): Promise<void | Error> {
+async function revokeToken(token: string) {
 	try {
 		const response = await fetch(TWITCH_OAUTH_REVOKE_URL, {
 			method: "POST",

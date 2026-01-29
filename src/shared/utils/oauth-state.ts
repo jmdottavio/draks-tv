@@ -2,12 +2,32 @@ import { randomBytes, createHmac, timingSafeEqual } from "node:crypto";
 
 const STATE_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
 
-function getStateSecret(): string {
-	// Use TOKEN_ENCRYPTION_KEY or a dedicated STATE_SECRET, fall back to a default for dev
-	return process.env.TOKEN_ENCRYPTION_KEY ?? process.env.STATE_SECRET ?? "draks-tv-state-secret";
+// Generate a random secret for development if no env var is set
+// This is secure because it's generated at startup and not hardcoded
+let generatedDevSecret: string | undefined;
+
+function getStateSecret() {
+	// Use TOKEN_ENCRYPTION_KEY or a dedicated STATE_SECRET
+	const envSecret = process.env.TOKEN_ENCRYPTION_KEY ?? process.env.STATE_SECRET;
+
+	if (envSecret !== undefined && envSecret.length > 0) {
+		return envSecret;
+	}
+
+	// For development: generate a random secret at startup
+	// This prevents using a hardcoded value that could be exploited
+	if (generatedDevSecret === undefined) {
+		generatedDevSecret = randomBytes(32).toString("hex");
+		console.warn(
+			"WARNING: No TOKEN_ENCRYPTION_KEY or STATE_SECRET set. Using auto-generated secret. " +
+				"Set TOKEN_ENCRYPTION_KEY in production.",
+		);
+	}
+
+	return generatedDevSecret;
 }
 
-function createStateToken(): string {
+function createStateToken() {
 	const timestamp = Date.now().toString(36);
 	const random = randomBytes(16).toString("hex");
 	const data = `${timestamp}.${random}`;
@@ -18,7 +38,7 @@ function createStateToken(): string {
 	return `${data}.${hmac}`;
 }
 
-function validateStateToken(token: string): boolean {
+function validateStateToken(token: string) {
 	const parts = token.split(".");
 
 	if (parts.length !== 3) {

@@ -5,6 +5,7 @@ import { validateStateToken } from "@/src/shared/utils/oauth-state";
 import { FORM_HEADERS, getClientIp } from "@/src/shared/utils/http";
 import { checkAuthRateLimit, createRateLimitResponse } from "@/src/shared/utils/rate-limiter";
 import { getAuthRedirectUri } from "@/src/shared/utils/server-config";
+import { getTwitchClientId, getTwitchClientSecret } from "@/src/shared/utils/twitch-config";
 import { TWITCH_HELIX_BASE_URL, TWITCH_OAUTH_TOKEN_URL } from "@/src/shared/utils/twitch-urls";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 
@@ -75,8 +76,8 @@ export const Route = createFileRoute("/api/auth/callback/")({
 					);
 				}
 
-				const clientId = process.env.TWITCH_CLIENT_ID;
-				const clientSecret = process.env.TWITCH_CLIENT_SECRET;
+				const clientId = getTwitchClientId();
+				const clientSecret = getTwitchClientSecret();
 
 				if (clientId === undefined || clientSecret === undefined) {
 					return createErrorResponse(
