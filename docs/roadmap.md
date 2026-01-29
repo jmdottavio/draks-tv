@@ -6,7 +6,7 @@
 
 ### Medium-High Priority
 
-- Fix incorrect last seen time on sidebar.
+- Fix incorrect last seen time on sidebar. It needs to update if a channel is seen live OR if a VOD with a newer date than the current last seen is found. It has nothing to do with me the user watching that channel.
 
 ### Medium Priority
 
