@@ -1,6 +1,6 @@
 import { getAuth, setAuth, clearAuth } from "@/src/features/auth/auth.repository";
 import { FORM_HEADERS } from "@/src/shared/utils/http";
-import { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } from "@/src/shared/utils/twitch-config";
+import { getTwitchClientId, getTwitchClientSecret } from "@/src/shared/utils/twitch-config";
 import {
 	TWITCH_HELIX_BASE_URL,
 	TWITCH_OAUTH_REVOKE_URL,
@@ -68,12 +68,19 @@ async function refreshAccessToken() {
 		return false;
 	}
 
+	const clientId = getTwitchClientId();
+	const clientSecret = getTwitchClientSecret();
+
+	if (clientId === undefined || clientSecret === undefined) {
+		return false;
+	}
+
 	const response = await fetch(TWITCH_OAUTH_TOKEN_URL, {
 		method: "POST",
 		headers: FORM_HEADERS,
 		body: new URLSearchParams({
-			client_id: TWITCH_CLIENT_ID,
-			client_secret: TWITCH_CLIENT_SECRET,
+			client_id: clientId,
+			client_secret: clientSecret,
 			grant_type: "refresh_token",
 			refresh_token: authResult.refreshToken,
 		}),
@@ -101,6 +108,12 @@ async function refreshAccessToken() {
 }
 
 async function twitchFetch<T>(endpoint: string, isRetry: boolean = false) {
+	const clientId = getTwitchClientId();
+
+	if (clientId === undefined) {
+		return new Error("Twitch client ID not configured");
+	}
+
 	let authResult = getAuth();
 
 	if (authResult instanceof Error) {
@@ -128,7 +141,7 @@ async function twitchFetch<T>(endpoint: string, isRetry: boolean = false) {
 
 	const response = await fetch(`${TWITCH_HELIX_BASE_URL}${endpoint}`, {
 		headers: {
-			"Client-ID": TWITCH_CLIENT_ID,
+			"Client-ID": clientId,
 			Authorization: `Bearer ${authResult.accessToken}`,
 		},
 	});
@@ -221,12 +234,18 @@ async function getFollowedChannels(userId: string) {
 }
 
 async function revokeToken(token: string) {
+	const clientId = getTwitchClientId();
+
+	if (clientId === undefined) {
+		return new Error("Twitch client ID not configured");
+	}
+
 	try {
 		const response = await fetch(TWITCH_OAUTH_REVOKE_URL, {
 			method: "POST",
 			headers: FORM_HEADERS,
 			body: new URLSearchParams({
-				client_id: TWITCH_CLIENT_ID,
+				client_id: clientId,
 				token,
 			}),
 		});
