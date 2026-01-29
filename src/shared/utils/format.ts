@@ -65,4 +65,61 @@ function formatThumbnail(url: string, width: number, height: number): string {
 	return `${formattedUrl}${separator}t=${cacheBuster}`;
 }
 
-export { formatViewers, formatDuration, formatDate, formatThumbnail };
+function formatSecondsToTime(totalSeconds: number): string {
+	const hours = Math.floor(totalSeconds / 3600);
+	const minutes = Math.floor((totalSeconds % 3600) / 60);
+	const seconds = totalSeconds % 60;
+
+	if (hours > 0) {
+		return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+	}
+
+	return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+function parseTimeToSeconds(timeString: string): number | null {
+	const splitParts = timeString.split(":");
+	const parts = splitParts.map((part) => parseInt(part, 10));
+
+	if (parts.some((part) => Number.isNaN(part) || part < 0)) {
+		return null;
+	}
+
+	if (parts.length === 3) {
+		return parts[0] * 3600 + parts[1] * 60 + parts[2];
+	}
+
+	if (parts.length === 2) {
+		return parts[0] * 60 + parts[1];
+	}
+
+	if (parts.length === 1) {
+		return parts[0];
+	}
+
+	return null;
+}
+
+function parseDurationToSeconds(duration: string): number | null {
+	const match = duration.match(/(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?/);
+
+	if (match === null) {
+		return null;
+	}
+
+	const hours = parseInt(match[1] ?? "0", 10);
+	const minutes = parseInt(match[2] ?? "0", 10);
+	const seconds = parseInt(match[3] ?? "0", 10);
+
+	return hours * 3600 + minutes * 60 + seconds;
+}
+
+export {
+	formatDate,
+	formatDuration,
+	formatSecondsToTime,
+	formatThumbnail,
+	formatViewers,
+	parseDurationToSeconds,
+	parseTimeToSeconds,
+};

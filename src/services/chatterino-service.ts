@@ -2,12 +2,6 @@ import { exec } from "child_process";
 import { platform } from "os";
 import { resolve } from "path";
 
-type ChatterinoConfig = {
-	enabled: boolean;
-	command: string;
-	baseArguments: Array<string>;
-};
-
 function getChatterinoConfig() {
 	const envCommand = process.env.CHATTERINO_PATH;
 	const envEnabled = process.env.CHATTERINO_ENABLED !== "false";

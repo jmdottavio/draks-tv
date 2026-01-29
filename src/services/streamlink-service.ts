@@ -16,14 +16,32 @@ function launchStream(url: string) {
 	});
 }
 
+function launchStreamWithPlayerArgs(url: string, playerArgs: string) {
+	return new Promise<void | Error>((promiseResolve) => {
+		execFile(STREAMLINK_PATH, [url, "best", "--player-args", playerArgs], (error) => {
+			if (error) {
+				promiseResolve(new Error(error.message));
+				return;
+			}
+			promiseResolve();
+		});
+	});
+}
+
 function launchLiveStream(channel: string) {
 	const sanitizedChannel = channel.replace(/[^a-zA-Z0-9_]/g, "");
 	return launchStream(`twitch.tv/${sanitizedChannel}`);
 }
 
-function launchVod(vodId: string) {
+function launchVod(vodId: string, startTimeSeconds?: number) {
 	const sanitizedId = vodId.replace(/[^0-9]/g, "");
-	return launchStream(`twitch.tv/videos/${sanitizedId}`);
+	const url = `twitch.tv/videos/${sanitizedId}`;
+
+	if (startTimeSeconds !== undefined && startTimeSeconds > 0) {
+		return launchStreamWithPlayerArgs(url, `--start-time=${startTimeSeconds}`);
+	}
+
+	return launchStream(url);
 }
 
 export { launchLiveStream, launchVod };
