@@ -1,4 +1,4 @@
-import { execFile } from "child_process";
+import { spawn } from "child_process";
 import { resolve } from "path";
 
 const LOCALAPPDATA = process.env.LOCALAPPDATA ?? "";
@@ -6,13 +6,17 @@ const STREAMLINK_PATH = resolve(LOCALAPPDATA, "Programs", "Streamlink", "bin", "
 
 function launchStream(url: string) {
 	return new Promise<void | Error>((promiseResolve) => {
-		execFile(STREAMLINK_PATH, [url, "best"], (error) => {
-			if (error) {
-				promiseResolve(new Error(error.message));
-				return;
-			}
-			promiseResolve();
+		const childProcess = spawn(STREAMLINK_PATH, [url, "best"], {
+			detached: true,
+			stdio: "ignore",
 		});
+
+		childProcess.on("error", (error) => {
+			promiseResolve(new Error(`Failed to launch stream: ${error.message}`));
+		});
+
+		childProcess.unref();
+		promiseResolve();
 	});
 }
 
