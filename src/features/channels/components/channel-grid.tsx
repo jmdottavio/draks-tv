@@ -148,12 +148,16 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 		);
 	}
 
+	// Combined list in order: live favorites, offline favorites, live non-favorites
+	const sortedChannels = [...liveFavorites, ...offlineFavorites, ...liveNonFavorites];
+
 	return (
-		<div className="space-y-8">
-			{/* Live Favorites - Full cards in grid */}
-			{liveFavorites.length > 0 && (
-				<div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">
-					{liveFavorites.map((channel) => (
+		<div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">
+			{sortedChannels.map((channel) => {
+				const isDraggable = channel.isFavorite;
+
+				if (isDraggable) {
+					return (
 						<div
 							key={channel.id}
 							draggable
@@ -167,58 +171,18 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 						>
 							<ChannelCard channel={channel} variant="full" priority={priorityIds.has(channel.id)} />
 						</div>
-					))}
-				</div>
-			)}
+					);
+				}
 
-			{/* Offline Favorites - Full cards in grid with VOD thumbnails */}
-			{offlineFavorites.length > 0 && (
-				<section>
-					{liveFavorites.length > 0 && (
-						<h3 className="text-xs font-bold text-text-dim uppercase tracking-widest mb-4 mt-2">
-							Offline Favorites
-						</h3>
-					)}
-					<div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">
-						{offlineFavorites.map((channel) => (
-							<div
-								key={channel.id}
-								draggable
-								onDragStart={(event) => handleDragStart(event, channel.id)}
-								onDragEnd={handleDragEnd}
-								onDragEnter={(event) => handleDragEnter(event, channel.id)}
-								onDragLeave={handleDragLeave}
-								onDragOver={handleDragOver}
-								onDrop={(event) => handleDrop(event, channel.id)}
-								className={getDragClassName(channel.id)}
-							>
-								<ChannelCard channel={channel} variant="full" priority={priorityIds.has(channel.id)} />
-							</div>
-						))}
-					</div>
-				</section>
-			)}
-
-			{/* Following - Only live channels */}
-			{liveNonFavorites.length > 0 && (
-				<section>
-					{(liveFavorites.length > 0 || offlineFavorites.length > 0) && (
-						<h3 className="text-xs font-bold text-text-dim uppercase tracking-widest mb-4 mt-2">
-							Following
-						</h3>
-					)}
-					<div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">
-						{liveNonFavorites.map((channel) => (
-							<ChannelCard
-								key={channel.id}
-								channel={channel}
-								variant="full"
-								priority={priorityIds.has(channel.id)}
-							/>
-						))}
-					</div>
-				</section>
-			)}
+				return (
+					<ChannelCard
+						key={channel.id}
+						channel={channel}
+						variant="full"
+						priority={priorityIds.has(channel.id)}
+					/>
+				);
+			})}
 		</div>
 	);
 }
