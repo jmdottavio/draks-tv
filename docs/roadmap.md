@@ -6,22 +6,11 @@
 
 ### Medium-High Priority
 
-- [x] Order sidebar by favorites, then by last seen, then by name.
-- [x] Replace all uses of interface with types unless an interface is absolutely needed.
-- [x] Parallelize all possible DB / API calls.
-- [x] Add a means of integrating with twitch chat for any channel I'm watching.
-    - Chatterino integration - Launch Chatterino alongside VLC pointed at the right channel
-    - Chat button on live channel cards opens Chatterino for that channel
-    - Stream can be launched with or without chat (separate buttons)
-- VOD tracking
-    - Overall VLC doesn't handle VODs well currently. I can't track through the whole video or go to a certain time or jump forward, etc. I can't even see the total duration of the video.
-    - Remember playback position in VODs so you can continue where you left off
-- VOD chapters/markers - Display and jump to Twitch's chapter markers when launching VODs
-- When launching a stream the request in the network tab shows the stream is live, but the UI doesn't give any indication of watching the stream.
+- Fix incorrect last seen time on sidebar.
 
 ### Medium Priority
 
-- Stream uptime display - Show how long the stream has been live on cards
+- Tooltip on sidebar icons showing channel name and status
 - Channel detail page when clicking a channel
     - Proper `/channels/:id` route with URL
     - Show latest 5 VODs with watch buttons
@@ -32,7 +21,6 @@
     - The favorite but offline channels is too wide, should be more of a 2 column layout at least.
     - If it is possible to show the preview image for the VODs whenever showing them
     - The live channel items (each individual channel in the live section) should be more compact. They are too tall and wide.
-- Tooltip on collapsed icons showing channel name and status
 - A means of following or unfollowing channels from the sidebar or main section.
 - Browse mode - I still want a way to search/browse channels that I don't have favorited or followed.
     - This should be both a separate page and small sections on the main page (that load more lazily down below).
@@ -48,7 +36,9 @@
 - Remove all explicit return types.
 - API endpoints - instead of inline anonymous functions, have descriptively named functions (if possible)
 - Abstract components like ones that use danger classes, buttons, etc.
+- Stream uptime display - Show how long the stream has been live on cards
 - Local watch history that includes total time watched
+- VOD chapters/markers - Display and jump to Twitch's chapter markers when launching VODs
 
 ### Low-Medium Priority
 
