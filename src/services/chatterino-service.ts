@@ -1,4 +1,4 @@
-import { spawn } from "child_process";
+import { exec } from "child_process";
 import { platform } from "os";
 import { resolve } from "path";
 
@@ -26,7 +26,7 @@ function getChatterinoConfig(): ChatterinoConfig {
 		const PROGRAMFILES = process.env.PROGRAMFILES ?? "C:\\Program Files";
 		return {
 			enabled: true,
-			command: resolve(PROGRAMFILES, "Chatterino2", "chatterino.exe"),
+			command: resolve(PROGRAMFILES, "Chatterino", "chatterino.exe"),
 			baseArguments: [],
 		};
 	}
@@ -62,22 +62,34 @@ function launchChatterino(channelName: string): Promise<void | Error> {
 			return;
 		}
 
-		const fullArguments = [...chatterinoConfig.baseArguments, "--channels", sanitizedChannel];
+		const args = [...chatterinoConfig.baseArguments, "-c", sanitizedChannel].join(" ");
 
-		const childProcess = spawn(chatterinoConfig.command, fullArguments, {
-			detached: true,
-			stdio: "ignore",
-			shell: platform() === "win32",
-		});
+		if (platform() === "win32") {
+			// Use start command to launch detached on Windows
+			const command = `start "" "${chatterinoConfig.command}" ${args}`;
+			console.log("[Chatterino] Executing:", command);
 
-		childProcess.on("error", (error) => {
-			promiseResolve(new Error(`Failed to launch Chatterino: ${error.message}`));
-		});
+			exec(command, (error) => {
+				if (error) {
+					console.error("[Chatterino] Exec error:", error);
+					promiseResolve(new Error(`Failed to launch Chatterino: ${error.message}`));
+					return;
+				}
+				promiseResolve();
+			});
+		} else {
+			const command = `${chatterinoConfig.command} ${args} &`;
+			console.log("[Chatterino] Executing:", command);
 
-		childProcess.unref();
-
-		// Chatterino launches asynchronously, resolve immediately after spawn
-		promiseResolve();
+			exec(command, (error) => {
+				if (error) {
+					console.error("[Chatterino] Exec error:", error);
+					promiseResolve(new Error(`Failed to launch Chatterino: ${error.message}`));
+					return;
+				}
+				promiseResolve();
+			});
+		}
 	});
 }
 
