@@ -4,6 +4,7 @@ import { createStateToken } from "@/src/shared/utils/oauth-state";
 import { getClientIp } from "@/src/shared/utils/http";
 import { checkAuthRateLimit, createRateLimitResponse } from "@/src/shared/utils/rate-limiter";
 import { getAuthRedirectUri } from "@/src/shared/utils/server-config";
+import { getTwitchClientId } from "@/src/shared/utils/twitch-config";
 import { TWITCH_OAUTH_AUTHORIZE_URL } from "@/src/shared/utils/twitch-urls";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/api/auth/url/")({
 				if (!rateLimit.allowed) {
 					return createRateLimitResponse(rateLimit.retryAfterMs);
 				}
-				const clientId = process.env.TWITCH_CLIENT_ID;
+				const clientId = getTwitchClientId();
 
 				if (clientId === undefined) {
 					return createErrorResponse(
