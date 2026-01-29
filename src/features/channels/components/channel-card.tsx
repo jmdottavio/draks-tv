@@ -19,18 +19,19 @@ type ChannelCardProps = {
 	priority?: boolean;
 };
 
-function getWatchButtonClassName(isLaunching: boolean) {
+function getWatchButtonClassName(isWatching: boolean) {
 	const base = "py-2.5 px-4 rounded-md border text-sm font-semibold transition-all";
 
-	if (isLaunching) {
-		return `${base} bg-surface-elevated border-surface-border-muted text-text-primary opacity-50 cursor-not-allowed`;
+	if (isWatching) {
+		return `${base} bg-twitch-purple border-twitch-purple text-white cursor-not-allowed`;
 	}
 
 	return `${base} bg-surface-elevated border-surface-border-muted text-text-primary hover:bg-twitch-purple hover:border-twitch-purple`;
 }
 
-function getWatchButtonText(isLaunching: boolean, isLive: boolean) {
-	if (isLaunching) return "Launching...";
+function getWatchButtonText(isWatchingLive: boolean, isWatchingVod: boolean, isLive: boolean) {
+	if (isWatchingLive) return "Watching";
+	if (isWatchingVod) return "Playing";
 	if (isLive) return "Watch Live";
 	return "Watch VOD";
 }
@@ -53,11 +54,13 @@ function ChannelCardComponent({ channel, variant = "full", priority = false }: C
 
 	const isToggling =
 		toggleFavoriteMutation.isPending && toggleFavoriteMutation.variables === channel.id;
-	const isLaunching = watchLiveMutation.isPending || watchVodMutation.isPending;
+	const isWatchingLive = watchLiveMutation.isPending;
+	const isWatchingVod = watchVodMutation.isPending;
+	const isWatching = isWatchingLive || isWatchingVod;
 	const isOpeningChat = openChatMutation.isPending;
 
 	function handleWatchClick() {
-		if (isLaunching) return;
+		if (isWatching) return;
 
 		if (channel.isLive) {
 			watchLiveMutation.mutate(channel.login);
@@ -123,10 +126,10 @@ function ChannelCardComponent({ channel, variant = "full", priority = false }: C
 						<button
 							type="button"
 							onClick={handleWatchClick}
-							disabled={isLaunching}
-							className={getWatchButtonClassName(isLaunching)}
+							disabled={isWatching}
+							className={getWatchButtonClassName(isWatching)}
 						>
-							{isLaunching ? "Launching..." : "Watch VOD"}
+							{isWatchingVod ? "Playing" : "Watch VOD"}
 						</button>
 					)}
 					<button
@@ -262,10 +265,10 @@ function ChannelCardComponent({ channel, variant = "full", priority = false }: C
 						<button
 							type="button"
 							onClick={handleWatchClick}
-							disabled={isLaunching}
-							className={`flex-1 ${getWatchButtonClassName(isLaunching)}`}
+							disabled={isWatching}
+							className={`flex-1 ${getWatchButtonClassName(isWatching)}`}
 						>
-							{getWatchButtonText(isLaunching, channel.isLive)}
+							{getWatchButtonText(isWatchingLive, isWatchingVod, channel.isLive)}
 						</button>
 						{channel.isLive && (
 							<button
