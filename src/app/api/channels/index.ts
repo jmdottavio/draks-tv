@@ -2,11 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { getAuth } from "@/src/features/auth/auth.repository";
 import { getAllFavorites } from "@/src/features/channels/favorites.repository";
-import {
-	getFollowedStreams,
-	getFollowedChannels,
-	getUsers,
-} from "@/src/services/twitch-service";
+import { getFollowedChannels, getFollowedStreams, getUsers } from "@/src/services/twitch-service";
 import {
 	getChannelsWithVideos,
 	processLiveStateChanges,
@@ -169,7 +165,10 @@ export const Route = createFileRoute("/api/channels/")({
 				if (!(cachedChannels instanceof Error)) {
 					for (const cached of cachedChannels) {
 						if (cached.latestVideo !== null) {
-							vodsByChannelId.set(cached.channelId, transformCachedVod(cached.latestVideo));
+							vodsByChannelId.set(
+								cached.channelId,
+								transformCachedVod(cached.latestVideo),
+							);
 						}
 					}
 				}

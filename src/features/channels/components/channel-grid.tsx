@@ -17,31 +17,30 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 
 	const reorderFavoritesMutation = useReorderFavorites();
 
-	const { liveFavorites, offlineFavorites, nonFavoriteChannels, allFavorites } =
-		useMemo(() => {
-			const live: Array<Channel> = [];
-			const offline: Array<Channel> = [];
-			const nonFavorite: Array<Channel> = [];
+	const { liveFavorites, offlineFavorites, nonFavoriteChannels, allFavorites } = useMemo(() => {
+		const live: Array<Channel> = [];
+		const offline: Array<Channel> = [];
+		const nonFavorite: Array<Channel> = [];
 
-			for (const channel of channels) {
-				if (channel.isFavorite) {
-					if (channel.isLive) {
-						live.push(channel);
-					} else {
-						offline.push(channel);
-					}
+		for (const channel of channels) {
+			if (channel.isFavorite) {
+				if (channel.isLive) {
+					live.push(channel);
 				} else {
-					nonFavorite.push(channel);
+					offline.push(channel);
 				}
+			} else {
+				nonFavorite.push(channel);
 			}
+		}
 
-			return {
-				liveFavorites: live,
-				offlineFavorites: offline,
-				nonFavoriteChannels: nonFavorite,
-				allFavorites: [...live, ...offline],
-			};
-		}, [channels]);
+		return {
+			liveFavorites: live,
+			offlineFavorites: offline,
+			nonFavoriteChannels: nonFavorite,
+			allFavorites: [...live, ...offline],
+		};
+	}, [channels]);
 
 	function handleDragStart(event: React.DragEvent, channelId: string) {
 		setDraggedId(channelId);
@@ -127,11 +126,7 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 	if (channels.length === 0) {
 		return (
 			<div className="flex flex-col items-center justify-center text-center py-20 text-text-dim">
-				<svg
-					className="w-12 h-12 mb-4 opacity-30"
-					viewBox="0 0 24 24"
-					fill="currentColor"
-				>
+				<svg className="w-12 h-12 mb-4 opacity-30" viewBox="0 0 24 24" fill="currentColor">
 					<circle cx="12" cy="12" r="10" />
 				</svg>
 				<p className="text-base font-medium text-text-secondary mb-1">

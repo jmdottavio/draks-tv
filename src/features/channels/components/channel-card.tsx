@@ -2,15 +2,15 @@ import { memo } from "react";
 
 import { StarIcon } from "@/src/shared/components/icons";
 import {
-	formatViewers,
-	formatDuration,
 	formatDate,
+	formatDuration,
 	formatThumbnail,
+	formatViewers,
 } from "@/src/shared/utils/format";
 
+import { watchVod } from "@/src/features/vods/api/vods-mutations";
 import { watchLive } from "../api/channels-mutations";
 import { useToggleFavorite } from "../hooks/use-channels";
-import { watchVod } from "@/src/features/vods/api/vods-mutations";
 
 import type { Channel } from "../channels.types";
 
@@ -24,8 +24,7 @@ function ChannelCardComponent({ channel, variant = "full", priority = false }: C
 	const toggleFavoriteMutation = useToggleFavorite();
 
 	const isToggling =
-		toggleFavoriteMutation.isPending &&
-		toggleFavoriteMutation.variables === channel.id;
+		toggleFavoriteMutation.isPending && toggleFavoriteMutation.variables === channel.id;
 
 	function handleWatchClick() {
 		if (channel.isLive) {

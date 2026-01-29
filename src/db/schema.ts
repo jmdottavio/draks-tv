@@ -44,12 +44,14 @@ export const cachedVods = sqliteTable(
 		duration: text("duration").notNull(),
 		createdAt: text("created_at").notNull(),
 		thumbnailUrl: text("thumbnail_url").notNull(),
-		fetchedAt: text("fetched_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+		fetchedAt: text("fetched_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
 	},
 	(table) => [
 		// Single composite index covers both channelId-only and channelId+createdAt queries
 		index("cached_vods_channel_created_idx").on(table.channelId, table.createdAt),
-	]
+	],
 );
 
 export const channelCache = sqliteTable(
@@ -61,11 +63,12 @@ export const channelCache = sqliteTable(
 		latestVideoId: integer("latest_video_id").references(() => cachedVods.id, {
 			onDelete: "set null",
 		}),
-		updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+		updatedAt: text("updated_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
 	},
 	(table) => [
 		index("channel_cache_latest_video_id_idx").on(table.latestVideoId),
 		index("channel_cache_is_live_idx").on(table.isLive),
-	]
+	],
 );
-

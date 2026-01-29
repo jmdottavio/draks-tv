@@ -20,10 +20,7 @@ const MAX_BACKOFF_MS = 60 * 60 * 1000; // 1 hour
 
 // Track background refresh state
 let refreshIntervalId: ReturnType<typeof setTimeout> | null = null;
-const channelBackoffState = new Map<
-	string,
-	{ failureCount: number; nextAttemptAt: number }
->();
+const channelBackoffState = new Map<string, { failureCount: number; nextAttemptAt: number }>();
 
 // Cleanup interval for stale backoff entries
 let cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
@@ -56,10 +53,7 @@ async function refreshVideosForChannel(channelId: string) {
 	const videosResult = await getVideos(channelId, VIDEOS_PER_CHANNEL_LIMIT);
 
 	if (videosResult instanceof Error) {
-		console.error(
-			"[video-cache] Failed to fetch videos from Twitch:",
-			videosResult.message
-		);
+		console.error("[video-cache] Failed to fetch videos from Twitch:", videosResult.message);
 		return videosResult;
 	}
 
@@ -143,8 +137,8 @@ async function refreshVideosForChannel(channelId: string) {
 					.where(
 						and(
 							eq(cachedVods.channelId, channelId),
-							notInArray(cachedVods.id, idsToKeep)
-						)
+							notInArray(cachedVods.id, idsToKeep),
+						),
 					)
 					.run();
 			}
@@ -180,7 +174,7 @@ async function refreshVideosForChannelSafe(channelId: string) {
 
 		if (state.failureCount >= 3) {
 			console.warn(
-				`[video-cache] Channel ${channelId} failed ${state.failureCount} times, backoff: ${Math.round(backoffMs / 1000)}s`
+				`[video-cache] Channel ${channelId} failed ${state.failureCount} times, backoff: ${Math.round(backoffMs / 1000)}s`,
 			);
 		}
 
@@ -218,7 +212,7 @@ async function populateInitialCache() {
 		const batch = favorites.slice(batchStartIndex, batchStartIndex + BATCH_SIZE);
 
 		const results = await Promise.allSettled(
-			batch.map((favorite) => refreshVideosForChannel(favorite.id))
+			batch.map((favorite) => refreshVideosForChannel(favorite.id)),
 		);
 
 		for (const result of results) {
@@ -235,7 +229,7 @@ async function populateInitialCache() {
 	}
 
 	console.log(
-		`[video-cache] Initial cache population complete: ${successCount} succeeded, ${errorCount} failed`
+		`[video-cache] Initial cache population complete: ${successCount} succeeded, ${errorCount} failed`,
 	);
 
 	return null;
@@ -255,7 +249,7 @@ function startBackgroundRefresh() {
 		if (favorites instanceof Error) {
 			console.error(
 				"[video-cache] Background refresh failed to get favorites:",
-				favorites.message
+				favorites.message,
 			);
 			refreshIntervalId = setTimeout(scheduleNextRefresh, currentIntervalMs);
 			return;
@@ -279,15 +273,12 @@ function startBackgroundRefresh() {
 						console.error(
 							"[video-cache] Background refresh failed for:",
 							favorite.id,
-							result.message
+							result.message,
 						);
 					}
 				})
 				.catch((error) => {
-					console.error(
-						"[video-cache] Unexpected error in background refresh:",
-						error
-					);
+					console.error("[video-cache] Unexpected error in background refresh:", error);
 				});
 		}
 
@@ -296,20 +287,23 @@ function startBackgroundRefresh() {
 	}
 
 	// Start cleanup interval for stale backoff entries
-	cleanupIntervalId = setInterval(() => {
-		const favorites = getAllFavorites();
-		if (favorites instanceof Error) return;
+	cleanupIntervalId = setInterval(
+		() => {
+			const favorites = getAllFavorites();
+			if (favorites instanceof Error) return;
 
-		const favoriteIds = new Set(favorites.map((favorite) => favorite.id));
-		const now = Date.now();
+			const favoriteIds = new Set(favorites.map((favorite) => favorite.id));
+			const now = Date.now();
 
-		for (const [channelId, state] of channelBackoffState) {
-			const expiredLongAgo = now > state.nextAttemptAt + 24 * 60 * 60 * 1000;
-			if (!favoriteIds.has(channelId) || expiredLongAgo) {
-				channelBackoffState.delete(channelId);
+			for (const [channelId, state] of channelBackoffState) {
+				const expiredLongAgo = now > state.nextAttemptAt + 24 * 60 * 60 * 1000;
+				if (!favoriteIds.has(channelId) || expiredLongAgo) {
+					channelBackoffState.delete(channelId);
+				}
 			}
-		}
-	}, 60 * 60 * 1000); // Cleanup every hour
+		},
+		60 * 60 * 1000,
+	); // Cleanup every hour
 
 	scheduleNextRefresh();
 	console.log("[video-cache] Background refresh started");
@@ -345,9 +339,7 @@ async function refreshOfflineChannelsBatched(channelIds: Array<string>) {
 	) {
 		const batch = channelIds.slice(batchStartIndex, batchStartIndex + BATCH_SIZE);
 
-		await Promise.allSettled(
-			batch.map((channelId) => refreshVideosForChannelSafe(channelId))
-		);
+		await Promise.allSettled(batch.map((channelId) => refreshVideosForChannelSafe(channelId)));
 
 		if (batchStartIndex + BATCH_SIZE < channelIds.length) {
 			await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));

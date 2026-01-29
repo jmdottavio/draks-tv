@@ -5,8 +5,8 @@ import { QUERY_KEYS } from "@/src/shared/query-keys";
 import { reorderFavoritesApi, toggleFavorite } from "../api/channels-mutations";
 import { fetchChannels } from "../api/channels-queries";
 
-import type { Channel } from "../channels.types";
 import type { SidebarChannel } from "@/src/features/sidebar/sidebar.types";
+import type { Channel } from "../channels.types";
 
 function useChannels() {
 	const { data, isLoading, isFetching, error, refetch } = useQuery({
@@ -43,10 +43,9 @@ function useToggleFavorite() {
 				queryClient.cancelQueries({ queryKey: QUERY_KEYS.followedChannels }),
 			]);
 
-			const previousChannels =
-				queryClient.getQueryData<Array<Channel>>(QUERY_KEYS.channels);
+			const previousChannels = queryClient.getQueryData<Array<Channel>>(QUERY_KEYS.channels);
 			const previousFollowedChannels = queryClient.getQueryData<Array<SidebarChannel>>(
-				QUERY_KEYS.followedChannels
+				QUERY_KEYS.followedChannels,
 			);
 
 			if (previousChannels !== undefined) {
@@ -57,7 +56,7 @@ function useToggleFavorite() {
 							return { ...channel, isFavorite: !channel.isFavorite };
 						}
 						return channel;
-					})
+					}),
 				);
 			}
 
@@ -69,7 +68,7 @@ function useToggleFavorite() {
 							return { ...channel, isFavorite: !channel.isFavorite };
 						}
 						return channel;
-					})
+					}),
 				);
 			}
 
@@ -87,7 +86,7 @@ function useToggleFavorite() {
 			if (context?.previousFollowedChannels !== undefined) {
 				queryClient.setQueryData(
 					QUERY_KEYS.followedChannels,
-					context.previousFollowedChannels
+					context.previousFollowedChannels,
 				);
 			}
 		},
@@ -108,8 +107,7 @@ function useReorderFavorites() {
 		onMutate: async (orderedIds: Array<string>) => {
 			await queryClient.cancelQueries({ queryKey: QUERY_KEYS.channels });
 
-			const previousChannels =
-				queryClient.getQueryData<Array<Channel>>(QUERY_KEYS.channels);
+			const previousChannels = queryClient.getQueryData<Array<Channel>>(QUERY_KEYS.channels);
 
 			if (previousChannels !== undefined) {
 				const favoriteChannels: Array<Channel> = [];
@@ -127,7 +125,7 @@ function useReorderFavorites() {
 
 				for (const id of orderedIds) {
 					const channel = favoriteChannels.find(
-						(favoriteChannel) => favoriteChannel.id === id
+						(favoriteChannel) => favoriteChannel.id === id,
 					);
 
 					if (channel !== undefined) {

@@ -44,9 +44,7 @@ function getChannelCache(channelId: string) {
 			latestVideoId: row.latestVideoId,
 			updatedAt: row.updatedAt,
 			latestVideo:
-				row.latestVideo?.id !== null
-					? (row.latestVideo as CachedVideoSelect)
-					: null,
+				row.latestVideo?.id !== null ? (row.latestVideo as CachedVideoSelect) : null,
 		};
 
 		return result;
@@ -94,9 +92,7 @@ function getChannelCacheBulk(channelIds: Array<string>) {
 			latestVideoId: row.latestVideoId,
 			updatedAt: row.updatedAt,
 			latestVideo:
-				row.latestVideo?.id !== null
-					? (row.latestVideo as CachedVideoSelect)
-					: null,
+				row.latestVideo?.id !== null ? (row.latestVideo as CachedVideoSelect) : null,
 		}));
 
 		return results;
@@ -228,7 +224,7 @@ function processLiveStateChangesAtomic(currentlyLiveChannelIds: Array<string>) {
 			if (currentlyLiveChannelIds.length > 0) {
 				notInLiveChannelsCondition = notInArray(
 					channelCache.channelId,
-					currentlyLiveChannelIds
+					currentlyLiveChannelIds,
 				);
 			}
 
@@ -259,10 +255,7 @@ function processLiveStateChangesAtomic(currentlyLiveChannelIds: Array<string>) {
 			return wentOffline.map((row) => row.channelId);
 		});
 	} catch (error) {
-		console.error(
-			"[channel-cache.repository] processLiveStateChangesAtomic failed:",
-			error
-		);
+		console.error("[channel-cache.repository] processLiveStateChangesAtomic failed:", error);
 		return new Error("Failed to process live state changes");
 	}
 }

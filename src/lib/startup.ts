@@ -1,7 +1,4 @@
-import {
-	populateInitialCache,
-	startBackgroundRefresh,
-} from "@/src/services/video-cache-service";
+import { populateInitialCache, startBackgroundRefresh } from "@/src/services/video-cache-service";
 
 async function initializeVideoCache() {
 	console.log("[startup] Starting video cache initialization...");
