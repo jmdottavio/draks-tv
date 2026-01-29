@@ -48,7 +48,7 @@
 
 ### Medium-High Priority
 
-- Order sidebar by favorites, then by last seen, then by name.
+- [x] Order sidebar by favorites, then by last seen, then by name.
 - Replace all uses of interface with types unless an interface is absolutely needed.
 - Parallelize all possible DB / API calls.
 - Add a means of integrating with twitch chat for any channel I'm watching.

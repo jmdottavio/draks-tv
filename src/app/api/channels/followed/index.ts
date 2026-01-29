@@ -115,6 +115,33 @@ export const Route = createFileRoute("/api/channels/followed/")({
 					});
 				}
 
+				// Sort channels: favorites first, then by last seen (most recent first), then by name
+				channels.sort((a, b) => {
+					// 1. Favorites come first
+					if (a.isFavorite && !b.isFavorite) {
+						return -1;
+					}
+					if (!a.isFavorite && b.isFavorite) {
+						return 1;
+					}
+
+					// 2. Sort by last seen date (most recent first, nulls last)
+					if (a.lastVodDate !== null && b.lastVodDate !== null) {
+						const dateComparison =
+							new Date(b.lastVodDate).getTime() - new Date(a.lastVodDate).getTime();
+						if (dateComparison !== 0) {
+							return dateComparison;
+						}
+					} else if (a.lastVodDate !== null && b.lastVodDate === null) {
+						return -1;
+					} else if (a.lastVodDate === null && b.lastVodDate !== null) {
+						return 1;
+					}
+
+					// 3. Sort by display name alphabetically
+					return a.displayName.localeCompare(b.displayName);
+				});
+
 				return Response.json(channels);
 			},
 		},
