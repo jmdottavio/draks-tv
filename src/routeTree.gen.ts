@@ -8,422 +8,426 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from "./app/__root";
-import { Route as VodsRouteImport } from "./app/vods";
-import { Route as IndexRouteImport } from "./app/index";
-import { Route as ApiVodProgressIndexRouteImport } from "./app/api/vod-progress/index";
-import { Route as ApiVideosIndexRouteImport } from "./app/api/videos/index";
-import { Route as ApiUsersIndexRouteImport } from "./app/api/users/index";
-import { Route as ApiFavoritesIndexRouteImport } from "./app/api/favorites/index";
-import { Route as ApiChannelsIndexRouteImport } from "./app/api/channels/index";
-import { Route as ApiVodProgressIdIndexRouteImport } from "./app/api/vod-progress/$id/index";
-import { Route as ApiFavoritesReorderIndexRouteImport } from "./app/api/favorites/reorder/index";
-import { Route as ApiChatChannelIndexRouteImport } from "./app/api/chat/$channel/index";
-import { Route as ApiChannelsFollowedIndexRouteImport } from "./app/api/channels/followed/index";
-import { Route as ApiAuthUrlIndexRouteImport } from "./app/api/auth/url/index";
-import { Route as ApiAuthStatusIndexRouteImport } from "./app/api/auth/status/index";
-import { Route as ApiAuthLogoutIndexRouteImport } from "./app/api/auth/logout/index";
-import { Route as ApiAuthCallbackIndexRouteImport } from "./app/api/auth/callback/index";
-import { Route as ApiWatchVodIdIndexRouteImport } from "./app/api/watch/vod/$id/index";
-import { Route as ApiWatchLiveChannelIndexRouteImport } from "./app/api/watch/live/$channel/index";
-import { Route as ApiFavoritesToggleIdIndexRouteImport } from "./app/api/favorites/toggle/$id/index";
+import { Route as rootRouteImport } from './app/__root'
+import { Route as VodsRouteImport } from './app/vods'
+import { Route as IndexRouteImport } from './app/index'
+import { Route as ApiVodProgressIndexRouteImport } from './app/api/vod-progress/index'
+import { Route as ApiVideosIndexRouteImport } from './app/api/videos/index'
+import { Route as ApiUsersIndexRouteImport } from './app/api/users/index'
+import { Route as ApiFavoritesIndexRouteImport } from './app/api/favorites/index'
+import { Route as ApiChannelsIndexRouteImport } from './app/api/channels/index'
+import { Route as ApiVodProgressIdIndexRouteImport } from './app/api/vod-progress/$id/index'
+import { Route as ApiFavoritesReorderIndexRouteImport } from './app/api/favorites/reorder/index'
+import { Route as ApiChatChannelIndexRouteImport } from './app/api/chat/$channel/index'
+import { Route as ApiChannelsFollowedIndexRouteImport } from './app/api/channels/followed/index'
+import { Route as ApiAuthUrlIndexRouteImport } from './app/api/auth/url/index'
+import { Route as ApiAuthStatusIndexRouteImport } from './app/api/auth/status/index'
+import { Route as ApiAuthLogoutIndexRouteImport } from './app/api/auth/logout/index'
+import { Route as ApiAuthCallbackIndexRouteImport } from './app/api/auth/callback/index'
+import { Route as ApiWatchVodIdIndexRouteImport } from './app/api/watch/vod/$id/index'
+import { Route as ApiWatchLiveChannelIndexRouteImport } from './app/api/watch/live/$channel/index'
+import { Route as ApiFavoritesToggleIdIndexRouteImport } from './app/api/favorites/toggle/$id/index'
 
 const VodsRoute = VodsRouteImport.update({
-	id: "/vods",
-	path: "/vods",
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/vods',
+  path: '/vods',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
-	id: "/",
-	path: "/",
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiVodProgressIndexRoute = ApiVodProgressIndexRouteImport.update({
-	id: "/api/vod-progress/",
-	path: "/api/vod-progress/",
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/api/vod-progress/',
+  path: '/api/vod-progress/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiVideosIndexRoute = ApiVideosIndexRouteImport.update({
-	id: "/api/videos/",
-	path: "/api/videos/",
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/api/videos/',
+  path: '/api/videos/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiUsersIndexRoute = ApiUsersIndexRouteImport.update({
-	id: "/api/users/",
-	path: "/api/users/",
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/api/users/',
+  path: '/api/users/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiFavoritesIndexRoute = ApiFavoritesIndexRouteImport.update({
-	id: "/api/favorites/",
-	path: "/api/favorites/",
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/api/favorites/',
+  path: '/api/favorites/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChannelsIndexRoute = ApiChannelsIndexRouteImport.update({
-	id: "/api/channels/",
-	path: "/api/channels/",
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/api/channels/',
+  path: '/api/channels/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiVodProgressIdIndexRoute = ApiVodProgressIdIndexRouteImport.update({
-	id: "/api/vod-progress/$id/",
-	path: "/api/vod-progress/$id/",
-	getParentRoute: () => rootRouteImport,
-} as any);
-const ApiFavoritesReorderIndexRoute = ApiFavoritesReorderIndexRouteImport.update({
-	id: "/api/favorites/reorder/",
-	path: "/api/favorites/reorder/",
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/api/vod-progress/$id/',
+  path: '/api/vod-progress/$id/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFavoritesReorderIndexRoute =
+  ApiFavoritesReorderIndexRouteImport.update({
+    id: '/api/favorites/reorder/',
+    path: '/api/favorites/reorder/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiChatChannelIndexRoute = ApiChatChannelIndexRouteImport.update({
-	id: "/api/chat/$channel/",
-	path: "/api/chat/$channel/",
-	getParentRoute: () => rootRouteImport,
-} as any);
-const ApiChannelsFollowedIndexRoute = ApiChannelsFollowedIndexRouteImport.update({
-	id: "/api/channels/followed/",
-	path: "/api/channels/followed/",
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/api/chat/$channel/',
+  path: '/api/chat/$channel/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChannelsFollowedIndexRoute =
+  ApiChannelsFollowedIndexRouteImport.update({
+    id: '/api/channels/followed/',
+    path: '/api/channels/followed/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAuthUrlIndexRoute = ApiAuthUrlIndexRouteImport.update({
-	id: "/api/auth/url/",
-	path: "/api/auth/url/",
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/api/auth/url/',
+  path: '/api/auth/url/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthStatusIndexRoute = ApiAuthStatusIndexRouteImport.update({
-	id: "/api/auth/status/",
-	path: "/api/auth/status/",
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/api/auth/status/',
+  path: '/api/auth/status/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthLogoutIndexRoute = ApiAuthLogoutIndexRouteImport.update({
-	id: "/api/auth/logout/",
-	path: "/api/auth/logout/",
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/api/auth/logout/',
+  path: '/api/auth/logout/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthCallbackIndexRoute = ApiAuthCallbackIndexRouteImport.update({
-	id: "/api/auth/callback/",
-	path: "/api/auth/callback/",
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/api/auth/callback/',
+  path: '/api/auth/callback/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiWatchVodIdIndexRoute = ApiWatchVodIdIndexRouteImport.update({
-	id: "/api/watch/vod/$id/",
-	path: "/api/watch/vod/$id/",
-	getParentRoute: () => rootRouteImport,
-} as any);
-const ApiWatchLiveChannelIndexRoute = ApiWatchLiveChannelIndexRouteImport.update({
-	id: "/api/watch/live/$channel/",
-	path: "/api/watch/live/$channel/",
-	getParentRoute: () => rootRouteImport,
-} as any);
-const ApiFavoritesToggleIdIndexRoute = ApiFavoritesToggleIdIndexRouteImport.update({
-	id: "/api/favorites/toggle/$id/",
-	path: "/api/favorites/toggle/$id/",
-	getParentRoute: () => rootRouteImport,
-} as any);
+  id: '/api/watch/vod/$id/',
+  path: '/api/watch/vod/$id/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiWatchLiveChannelIndexRoute =
+  ApiWatchLiveChannelIndexRouteImport.update({
+    id: '/api/watch/live/$channel/',
+    path: '/api/watch/live/$channel/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiFavoritesToggleIdIndexRoute =
+  ApiFavoritesToggleIdIndexRouteImport.update({
+    id: '/api/favorites/toggle/$id/',
+    path: '/api/favorites/toggle/$id/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
-	"/": typeof IndexRoute;
-	"/vods": typeof VodsRoute;
-	"/api/channels/": typeof ApiChannelsIndexRoute;
-	"/api/favorites/": typeof ApiFavoritesIndexRoute;
-	"/api/users/": typeof ApiUsersIndexRoute;
-	"/api/videos/": typeof ApiVideosIndexRoute;
-	"/api/vod-progress/": typeof ApiVodProgressIndexRoute;
-	"/api/auth/callback/": typeof ApiAuthCallbackIndexRoute;
-	"/api/auth/logout/": typeof ApiAuthLogoutIndexRoute;
-	"/api/auth/status/": typeof ApiAuthStatusIndexRoute;
-	"/api/auth/url/": typeof ApiAuthUrlIndexRoute;
-	"/api/channels/followed/": typeof ApiChannelsFollowedIndexRoute;
-	"/api/chat/$channel/": typeof ApiChatChannelIndexRoute;
-	"/api/favorites/reorder/": typeof ApiFavoritesReorderIndexRoute;
-	"/api/vod-progress/$id/": typeof ApiVodProgressIdIndexRoute;
-	"/api/favorites/toggle/$id/": typeof ApiFavoritesToggleIdIndexRoute;
-	"/api/watch/live/$channel/": typeof ApiWatchLiveChannelIndexRoute;
-	"/api/watch/vod/$id/": typeof ApiWatchVodIdIndexRoute;
+  '/': typeof IndexRoute
+  '/vods': typeof VodsRoute
+  '/api/channels/': typeof ApiChannelsIndexRoute
+  '/api/favorites/': typeof ApiFavoritesIndexRoute
+  '/api/users/': typeof ApiUsersIndexRoute
+  '/api/videos/': typeof ApiVideosIndexRoute
+  '/api/vod-progress/': typeof ApiVodProgressIndexRoute
+  '/api/auth/callback/': typeof ApiAuthCallbackIndexRoute
+  '/api/auth/logout/': typeof ApiAuthLogoutIndexRoute
+  '/api/auth/status/': typeof ApiAuthStatusIndexRoute
+  '/api/auth/url/': typeof ApiAuthUrlIndexRoute
+  '/api/channels/followed/': typeof ApiChannelsFollowedIndexRoute
+  '/api/chat/$channel/': typeof ApiChatChannelIndexRoute
+  '/api/favorites/reorder/': typeof ApiFavoritesReorderIndexRoute
+  '/api/vod-progress/$id/': typeof ApiVodProgressIdIndexRoute
+  '/api/favorites/toggle/$id/': typeof ApiFavoritesToggleIdIndexRoute
+  '/api/watch/live/$channel/': typeof ApiWatchLiveChannelIndexRoute
+  '/api/watch/vod/$id/': typeof ApiWatchVodIdIndexRoute
 }
 export interface FileRoutesByTo {
-	"/": typeof IndexRoute;
-	"/vods": typeof VodsRoute;
-	"/api/channels": typeof ApiChannelsIndexRoute;
-	"/api/favorites": typeof ApiFavoritesIndexRoute;
-	"/api/users": typeof ApiUsersIndexRoute;
-	"/api/videos": typeof ApiVideosIndexRoute;
-	"/api/vod-progress": typeof ApiVodProgressIndexRoute;
-	"/api/auth/callback": typeof ApiAuthCallbackIndexRoute;
-	"/api/auth/logout": typeof ApiAuthLogoutIndexRoute;
-	"/api/auth/status": typeof ApiAuthStatusIndexRoute;
-	"/api/auth/url": typeof ApiAuthUrlIndexRoute;
-	"/api/channels/followed": typeof ApiChannelsFollowedIndexRoute;
-	"/api/chat/$channel": typeof ApiChatChannelIndexRoute;
-	"/api/favorites/reorder": typeof ApiFavoritesReorderIndexRoute;
-	"/api/vod-progress/$id": typeof ApiVodProgressIdIndexRoute;
-	"/api/favorites/toggle/$id": typeof ApiFavoritesToggleIdIndexRoute;
-	"/api/watch/live/$channel": typeof ApiWatchLiveChannelIndexRoute;
-	"/api/watch/vod/$id": typeof ApiWatchVodIdIndexRoute;
+  '/': typeof IndexRoute
+  '/vods': typeof VodsRoute
+  '/api/channels': typeof ApiChannelsIndexRoute
+  '/api/favorites': typeof ApiFavoritesIndexRoute
+  '/api/users': typeof ApiUsersIndexRoute
+  '/api/videos': typeof ApiVideosIndexRoute
+  '/api/vod-progress': typeof ApiVodProgressIndexRoute
+  '/api/auth/callback': typeof ApiAuthCallbackIndexRoute
+  '/api/auth/logout': typeof ApiAuthLogoutIndexRoute
+  '/api/auth/status': typeof ApiAuthStatusIndexRoute
+  '/api/auth/url': typeof ApiAuthUrlIndexRoute
+  '/api/channels/followed': typeof ApiChannelsFollowedIndexRoute
+  '/api/chat/$channel': typeof ApiChatChannelIndexRoute
+  '/api/favorites/reorder': typeof ApiFavoritesReorderIndexRoute
+  '/api/vod-progress/$id': typeof ApiVodProgressIdIndexRoute
+  '/api/favorites/toggle/$id': typeof ApiFavoritesToggleIdIndexRoute
+  '/api/watch/live/$channel': typeof ApiWatchLiveChannelIndexRoute
+  '/api/watch/vod/$id': typeof ApiWatchVodIdIndexRoute
 }
 export interface FileRoutesById {
-	__root__: typeof rootRouteImport;
-	"/": typeof IndexRoute;
-	"/vods": typeof VodsRoute;
-	"/api/channels/": typeof ApiChannelsIndexRoute;
-	"/api/favorites/": typeof ApiFavoritesIndexRoute;
-	"/api/users/": typeof ApiUsersIndexRoute;
-	"/api/videos/": typeof ApiVideosIndexRoute;
-	"/api/vod-progress/": typeof ApiVodProgressIndexRoute;
-	"/api/auth/callback/": typeof ApiAuthCallbackIndexRoute;
-	"/api/auth/logout/": typeof ApiAuthLogoutIndexRoute;
-	"/api/auth/status/": typeof ApiAuthStatusIndexRoute;
-	"/api/auth/url/": typeof ApiAuthUrlIndexRoute;
-	"/api/channels/followed/": typeof ApiChannelsFollowedIndexRoute;
-	"/api/chat/$channel/": typeof ApiChatChannelIndexRoute;
-	"/api/favorites/reorder/": typeof ApiFavoritesReorderIndexRoute;
-	"/api/vod-progress/$id/": typeof ApiVodProgressIdIndexRoute;
-	"/api/favorites/toggle/$id/": typeof ApiFavoritesToggleIdIndexRoute;
-	"/api/watch/live/$channel/": typeof ApiWatchLiveChannelIndexRoute;
-	"/api/watch/vod/$id/": typeof ApiWatchVodIdIndexRoute;
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/vods': typeof VodsRoute
+  '/api/channels/': typeof ApiChannelsIndexRoute
+  '/api/favorites/': typeof ApiFavoritesIndexRoute
+  '/api/users/': typeof ApiUsersIndexRoute
+  '/api/videos/': typeof ApiVideosIndexRoute
+  '/api/vod-progress/': typeof ApiVodProgressIndexRoute
+  '/api/auth/callback/': typeof ApiAuthCallbackIndexRoute
+  '/api/auth/logout/': typeof ApiAuthLogoutIndexRoute
+  '/api/auth/status/': typeof ApiAuthStatusIndexRoute
+  '/api/auth/url/': typeof ApiAuthUrlIndexRoute
+  '/api/channels/followed/': typeof ApiChannelsFollowedIndexRoute
+  '/api/chat/$channel/': typeof ApiChatChannelIndexRoute
+  '/api/favorites/reorder/': typeof ApiFavoritesReorderIndexRoute
+  '/api/vod-progress/$id/': typeof ApiVodProgressIdIndexRoute
+  '/api/favorites/toggle/$id/': typeof ApiFavoritesToggleIdIndexRoute
+  '/api/watch/live/$channel/': typeof ApiWatchLiveChannelIndexRoute
+  '/api/watch/vod/$id/': typeof ApiWatchVodIdIndexRoute
 }
 export interface FileRouteTypes {
-	fileRoutesByFullPath: FileRoutesByFullPath;
-	fullPaths:
-		| "/"
-		| "/vods"
-		| "/api/channels/"
-		| "/api/favorites/"
-		| "/api/users/"
-		| "/api/videos/"
-		| "/api/vod-progress/"
-		| "/api/auth/callback/"
-		| "/api/auth/logout/"
-		| "/api/auth/status/"
-		| "/api/auth/url/"
-		| "/api/channels/followed/"
-		| "/api/chat/$channel/"
-		| "/api/favorites/reorder/"
-		| "/api/vod-progress/$id/"
-		| "/api/favorites/toggle/$id/"
-		| "/api/watch/live/$channel/"
-		| "/api/watch/vod/$id/";
-	fileRoutesByTo: FileRoutesByTo;
-	to:
-		| "/"
-		| "/vods"
-		| "/api/channels"
-		| "/api/favorites"
-		| "/api/users"
-		| "/api/videos"
-		| "/api/vod-progress"
-		| "/api/auth/callback"
-		| "/api/auth/logout"
-		| "/api/auth/status"
-		| "/api/auth/url"
-		| "/api/channels/followed"
-		| "/api/chat/$channel"
-		| "/api/favorites/reorder"
-		| "/api/vod-progress/$id"
-		| "/api/favorites/toggle/$id"
-		| "/api/watch/live/$channel"
-		| "/api/watch/vod/$id";
-	id:
-		| "__root__"
-		| "/"
-		| "/vods"
-		| "/api/channels/"
-		| "/api/favorites/"
-		| "/api/users/"
-		| "/api/videos/"
-		| "/api/vod-progress/"
-		| "/api/auth/callback/"
-		| "/api/auth/logout/"
-		| "/api/auth/status/"
-		| "/api/auth/url/"
-		| "/api/channels/followed/"
-		| "/api/chat/$channel/"
-		| "/api/favorites/reorder/"
-		| "/api/vod-progress/$id/"
-		| "/api/favorites/toggle/$id/"
-		| "/api/watch/live/$channel/"
-		| "/api/watch/vod/$id/";
-	fileRoutesById: FileRoutesById;
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths:
+    | '/'
+    | '/vods'
+    | '/api/channels/'
+    | '/api/favorites/'
+    | '/api/users/'
+    | '/api/videos/'
+    | '/api/vod-progress/'
+    | '/api/auth/callback/'
+    | '/api/auth/logout/'
+    | '/api/auth/status/'
+    | '/api/auth/url/'
+    | '/api/channels/followed/'
+    | '/api/chat/$channel/'
+    | '/api/favorites/reorder/'
+    | '/api/vod-progress/$id/'
+    | '/api/favorites/toggle/$id/'
+    | '/api/watch/live/$channel/'
+    | '/api/watch/vod/$id/'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/vods'
+    | '/api/channels'
+    | '/api/favorites'
+    | '/api/users'
+    | '/api/videos'
+    | '/api/vod-progress'
+    | '/api/auth/callback'
+    | '/api/auth/logout'
+    | '/api/auth/status'
+    | '/api/auth/url'
+    | '/api/channels/followed'
+    | '/api/chat/$channel'
+    | '/api/favorites/reorder'
+    | '/api/vod-progress/$id'
+    | '/api/favorites/toggle/$id'
+    | '/api/watch/live/$channel'
+    | '/api/watch/vod/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/vods'
+    | '/api/channels/'
+    | '/api/favorites/'
+    | '/api/users/'
+    | '/api/videos/'
+    | '/api/vod-progress/'
+    | '/api/auth/callback/'
+    | '/api/auth/logout/'
+    | '/api/auth/status/'
+    | '/api/auth/url/'
+    | '/api/channels/followed/'
+    | '/api/chat/$channel/'
+    | '/api/favorites/reorder/'
+    | '/api/vod-progress/$id/'
+    | '/api/favorites/toggle/$id/'
+    | '/api/watch/live/$channel/'
+    | '/api/watch/vod/$id/'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-	IndexRoute: typeof IndexRoute;
-	VodsRoute: typeof VodsRoute;
-	ApiChannelsIndexRoute: typeof ApiChannelsIndexRoute;
-	ApiFavoritesIndexRoute: typeof ApiFavoritesIndexRoute;
-	ApiUsersIndexRoute: typeof ApiUsersIndexRoute;
-	ApiVideosIndexRoute: typeof ApiVideosIndexRoute;
-	ApiVodProgressIndexRoute: typeof ApiVodProgressIndexRoute;
-	ApiAuthCallbackIndexRoute: typeof ApiAuthCallbackIndexRoute;
-	ApiAuthLogoutIndexRoute: typeof ApiAuthLogoutIndexRoute;
-	ApiAuthStatusIndexRoute: typeof ApiAuthStatusIndexRoute;
-	ApiAuthUrlIndexRoute: typeof ApiAuthUrlIndexRoute;
-	ApiChannelsFollowedIndexRoute: typeof ApiChannelsFollowedIndexRoute;
-	ApiChatChannelIndexRoute: typeof ApiChatChannelIndexRoute;
-	ApiFavoritesReorderIndexRoute: typeof ApiFavoritesReorderIndexRoute;
-	ApiVodProgressIdIndexRoute: typeof ApiVodProgressIdIndexRoute;
-	ApiFavoritesToggleIdIndexRoute: typeof ApiFavoritesToggleIdIndexRoute;
-	ApiWatchLiveChannelIndexRoute: typeof ApiWatchLiveChannelIndexRoute;
-	ApiWatchVodIdIndexRoute: typeof ApiWatchVodIdIndexRoute;
+  IndexRoute: typeof IndexRoute
+  VodsRoute: typeof VodsRoute
+  ApiChannelsIndexRoute: typeof ApiChannelsIndexRoute
+  ApiFavoritesIndexRoute: typeof ApiFavoritesIndexRoute
+  ApiUsersIndexRoute: typeof ApiUsersIndexRoute
+  ApiVideosIndexRoute: typeof ApiVideosIndexRoute
+  ApiVodProgressIndexRoute: typeof ApiVodProgressIndexRoute
+  ApiAuthCallbackIndexRoute: typeof ApiAuthCallbackIndexRoute
+  ApiAuthLogoutIndexRoute: typeof ApiAuthLogoutIndexRoute
+  ApiAuthStatusIndexRoute: typeof ApiAuthStatusIndexRoute
+  ApiAuthUrlIndexRoute: typeof ApiAuthUrlIndexRoute
+  ApiChannelsFollowedIndexRoute: typeof ApiChannelsFollowedIndexRoute
+  ApiChatChannelIndexRoute: typeof ApiChatChannelIndexRoute
+  ApiFavoritesReorderIndexRoute: typeof ApiFavoritesReorderIndexRoute
+  ApiVodProgressIdIndexRoute: typeof ApiVodProgressIdIndexRoute
+  ApiFavoritesToggleIdIndexRoute: typeof ApiFavoritesToggleIdIndexRoute
+  ApiWatchLiveChannelIndexRoute: typeof ApiWatchLiveChannelIndexRoute
+  ApiWatchVodIdIndexRoute: typeof ApiWatchVodIdIndexRoute
 }
 
-declare module "@tanstack/react-router" {
-	interface FileRoutesByPath {
-		"/vods": {
-			id: "/vods";
-			path: "/vods";
-			fullPath: "/vods";
-			preLoaderRoute: typeof VodsRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		"/": {
-			id: "/";
-			path: "/";
-			fullPath: "/";
-			preLoaderRoute: typeof IndexRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		"/api/vod-progress/": {
-			id: "/api/vod-progress/";
-			path: "/api/vod-progress";
-			fullPath: "/api/vod-progress/";
-			preLoaderRoute: typeof ApiVodProgressIndexRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		"/api/videos/": {
-			id: "/api/videos/";
-			path: "/api/videos";
-			fullPath: "/api/videos/";
-			preLoaderRoute: typeof ApiVideosIndexRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		"/api/users/": {
-			id: "/api/users/";
-			path: "/api/users";
-			fullPath: "/api/users/";
-			preLoaderRoute: typeof ApiUsersIndexRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		"/api/favorites/": {
-			id: "/api/favorites/";
-			path: "/api/favorites";
-			fullPath: "/api/favorites/";
-			preLoaderRoute: typeof ApiFavoritesIndexRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		"/api/channels/": {
-			id: "/api/channels/";
-			path: "/api/channels";
-			fullPath: "/api/channels/";
-			preLoaderRoute: typeof ApiChannelsIndexRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		"/api/vod-progress/$id/": {
-			id: "/api/vod-progress/$id/";
-			path: "/api/vod-progress/$id";
-			fullPath: "/api/vod-progress/$id/";
-			preLoaderRoute: typeof ApiVodProgressIdIndexRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		"/api/favorites/reorder/": {
-			id: "/api/favorites/reorder/";
-			path: "/api/favorites/reorder";
-			fullPath: "/api/favorites/reorder/";
-			preLoaderRoute: typeof ApiFavoritesReorderIndexRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		"/api/chat/$channel/": {
-			id: "/api/chat/$channel/";
-			path: "/api/chat/$channel";
-			fullPath: "/api/chat/$channel/";
-			preLoaderRoute: typeof ApiChatChannelIndexRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		"/api/channels/followed/": {
-			id: "/api/channels/followed/";
-			path: "/api/channels/followed";
-			fullPath: "/api/channels/followed/";
-			preLoaderRoute: typeof ApiChannelsFollowedIndexRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		"/api/auth/url/": {
-			id: "/api/auth/url/";
-			path: "/api/auth/url";
-			fullPath: "/api/auth/url/";
-			preLoaderRoute: typeof ApiAuthUrlIndexRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		"/api/auth/status/": {
-			id: "/api/auth/status/";
-			path: "/api/auth/status";
-			fullPath: "/api/auth/status/";
-			preLoaderRoute: typeof ApiAuthStatusIndexRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		"/api/auth/logout/": {
-			id: "/api/auth/logout/";
-			path: "/api/auth/logout";
-			fullPath: "/api/auth/logout/";
-			preLoaderRoute: typeof ApiAuthLogoutIndexRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		"/api/auth/callback/": {
-			id: "/api/auth/callback/";
-			path: "/api/auth/callback";
-			fullPath: "/api/auth/callback/";
-			preLoaderRoute: typeof ApiAuthCallbackIndexRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		"/api/watch/vod/$id/": {
-			id: "/api/watch/vod/$id/";
-			path: "/api/watch/vod/$id";
-			fullPath: "/api/watch/vod/$id/";
-			preLoaderRoute: typeof ApiWatchVodIdIndexRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		"/api/watch/live/$channel/": {
-			id: "/api/watch/live/$channel/";
-			path: "/api/watch/live/$channel";
-			fullPath: "/api/watch/live/$channel/";
-			preLoaderRoute: typeof ApiWatchLiveChannelIndexRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-		"/api/favorites/toggle/$id/": {
-			id: "/api/favorites/toggle/$id/";
-			path: "/api/favorites/toggle/$id";
-			fullPath: "/api/favorites/toggle/$id/";
-			preLoaderRoute: typeof ApiFavoritesToggleIdIndexRouteImport;
-			parentRoute: typeof rootRouteImport;
-		};
-	}
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/vods': {
+      id: '/vods'
+      path: '/vods'
+      fullPath: '/vods'
+      preLoaderRoute: typeof VodsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/vod-progress/': {
+      id: '/api/vod-progress/'
+      path: '/api/vod-progress'
+      fullPath: '/api/vod-progress/'
+      preLoaderRoute: typeof ApiVodProgressIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/videos/': {
+      id: '/api/videos/'
+      path: '/api/videos'
+      fullPath: '/api/videos/'
+      preLoaderRoute: typeof ApiVideosIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/users/': {
+      id: '/api/users/'
+      path: '/api/users'
+      fullPath: '/api/users/'
+      preLoaderRoute: typeof ApiUsersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/favorites/': {
+      id: '/api/favorites/'
+      path: '/api/favorites'
+      fullPath: '/api/favorites/'
+      preLoaderRoute: typeof ApiFavoritesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/channels/': {
+      id: '/api/channels/'
+      path: '/api/channels'
+      fullPath: '/api/channels/'
+      preLoaderRoute: typeof ApiChannelsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/vod-progress/$id/': {
+      id: '/api/vod-progress/$id/'
+      path: '/api/vod-progress/$id'
+      fullPath: '/api/vod-progress/$id/'
+      preLoaderRoute: typeof ApiVodProgressIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/favorites/reorder/': {
+      id: '/api/favorites/reorder/'
+      path: '/api/favorites/reorder'
+      fullPath: '/api/favorites/reorder/'
+      preLoaderRoute: typeof ApiFavoritesReorderIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/chat/$channel/': {
+      id: '/api/chat/$channel/'
+      path: '/api/chat/$channel'
+      fullPath: '/api/chat/$channel/'
+      preLoaderRoute: typeof ApiChatChannelIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/channels/followed/': {
+      id: '/api/channels/followed/'
+      path: '/api/channels/followed'
+      fullPath: '/api/channels/followed/'
+      preLoaderRoute: typeof ApiChannelsFollowedIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/url/': {
+      id: '/api/auth/url/'
+      path: '/api/auth/url'
+      fullPath: '/api/auth/url/'
+      preLoaderRoute: typeof ApiAuthUrlIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/status/': {
+      id: '/api/auth/status/'
+      path: '/api/auth/status'
+      fullPath: '/api/auth/status/'
+      preLoaderRoute: typeof ApiAuthStatusIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/logout/': {
+      id: '/api/auth/logout/'
+      path: '/api/auth/logout'
+      fullPath: '/api/auth/logout/'
+      preLoaderRoute: typeof ApiAuthLogoutIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/callback/': {
+      id: '/api/auth/callback/'
+      path: '/api/auth/callback'
+      fullPath: '/api/auth/callback/'
+      preLoaderRoute: typeof ApiAuthCallbackIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/watch/vod/$id/': {
+      id: '/api/watch/vod/$id/'
+      path: '/api/watch/vod/$id'
+      fullPath: '/api/watch/vod/$id/'
+      preLoaderRoute: typeof ApiWatchVodIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/watch/live/$channel/': {
+      id: '/api/watch/live/$channel/'
+      path: '/api/watch/live/$channel'
+      fullPath: '/api/watch/live/$channel/'
+      preLoaderRoute: typeof ApiWatchLiveChannelIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/favorites/toggle/$id/': {
+      id: '/api/favorites/toggle/$id/'
+      path: '/api/favorites/toggle/$id'
+      fullPath: '/api/favorites/toggle/$id/'
+      preLoaderRoute: typeof ApiFavoritesToggleIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+  }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-	IndexRoute: IndexRoute,
-	VodsRoute: VodsRoute,
-	ApiChannelsIndexRoute: ApiChannelsIndexRoute,
-	ApiFavoritesIndexRoute: ApiFavoritesIndexRoute,
-	ApiUsersIndexRoute: ApiUsersIndexRoute,
-	ApiVideosIndexRoute: ApiVideosIndexRoute,
-	ApiVodProgressIndexRoute: ApiVodProgressIndexRoute,
-	ApiAuthCallbackIndexRoute: ApiAuthCallbackIndexRoute,
-	ApiAuthLogoutIndexRoute: ApiAuthLogoutIndexRoute,
-	ApiAuthStatusIndexRoute: ApiAuthStatusIndexRoute,
-	ApiAuthUrlIndexRoute: ApiAuthUrlIndexRoute,
-	ApiChannelsFollowedIndexRoute: ApiChannelsFollowedIndexRoute,
-	ApiChatChannelIndexRoute: ApiChatChannelIndexRoute,
-	ApiFavoritesReorderIndexRoute: ApiFavoritesReorderIndexRoute,
-	ApiVodProgressIdIndexRoute: ApiVodProgressIdIndexRoute,
-	ApiFavoritesToggleIdIndexRoute: ApiFavoritesToggleIdIndexRoute,
-	ApiWatchLiveChannelIndexRoute: ApiWatchLiveChannelIndexRoute,
-	ApiWatchVodIdIndexRoute: ApiWatchVodIdIndexRoute,
-};
+  IndexRoute: IndexRoute,
+  VodsRoute: VodsRoute,
+  ApiChannelsIndexRoute: ApiChannelsIndexRoute,
+  ApiFavoritesIndexRoute: ApiFavoritesIndexRoute,
+  ApiUsersIndexRoute: ApiUsersIndexRoute,
+  ApiVideosIndexRoute: ApiVideosIndexRoute,
+  ApiVodProgressIndexRoute: ApiVodProgressIndexRoute,
+  ApiAuthCallbackIndexRoute: ApiAuthCallbackIndexRoute,
+  ApiAuthLogoutIndexRoute: ApiAuthLogoutIndexRoute,
+  ApiAuthStatusIndexRoute: ApiAuthStatusIndexRoute,
+  ApiAuthUrlIndexRoute: ApiAuthUrlIndexRoute,
+  ApiChannelsFollowedIndexRoute: ApiChannelsFollowedIndexRoute,
+  ApiChatChannelIndexRoute: ApiChatChannelIndexRoute,
+  ApiFavoritesReorderIndexRoute: ApiFavoritesReorderIndexRoute,
+  ApiVodProgressIdIndexRoute: ApiVodProgressIdIndexRoute,
+  ApiFavoritesToggleIdIndexRoute: ApiFavoritesToggleIdIndexRoute,
+  ApiWatchLiveChannelIndexRoute: ApiWatchLiveChannelIndexRoute,
+  ApiWatchVodIdIndexRoute: ApiWatchVodIdIndexRoute,
+}
 export const routeTree = rootRouteImport
-	._addFileChildren(rootRouteChildren)
-	._addFileTypes<FileRouteTypes>();
+  ._addFileChildren(rootRouteChildren)
+  ._addFileTypes<FileRouteTypes>()
 
-import type { getRouter } from "./router.tsx";
-import type { createStart } from "@tanstack/react-start";
-declare module "@tanstack/react-start" {
-	interface Register {
-		ssr: true;
-		router: Awaited<ReturnType<typeof getRouter>>;
-	}
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
 }
