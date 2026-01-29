@@ -18,4 +18,4 @@ function getTwitchClientSecret() {
 	return TWITCH_CLIENT_SECRET;
 }
 
-export { getTwitchClientId, getTwitchClientSecret, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET };
+export { getTwitchClientId, getTwitchClientSecret };
