@@ -28,7 +28,7 @@ type ChannelCardProps = {
 	channel: Channel;
 	variant?: "full" | "compact";
 	priority?: boolean;
-	dragHandlers?: DragHandlers;
+	dragHandlers?: DragHandlers | undefined;
 };
 
 function getWatchButtonClassName(isWatching: boolean) {
