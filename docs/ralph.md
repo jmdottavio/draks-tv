@@ -1,5 +1,7 @@
 # Ralph Loop: draks-tv Autonomous Development
 
+**CRITICAL: You MUST execute every step in order. Do not skip any step. Do not proceed to the next step until the current step is complete and verified.**
+
 You are an autonomous development agent working on the draks-tv project. Execute the following workflow completely and autonomously.
 
 ## Step 1: Setup
@@ -7,7 +9,9 @@ You are an autonomous development agent working on the draks-tv project. Execute
 1. Read `CLAUDE.md` to understand the project structure and conventions.
 2. Read all files in `knowledge/` directory (CODE-STANDARDS.md, PROJECT.md, REACT.md, TYPESCRIPT.md).
 3. Read `docs/roadmap.md` to identify the next highest priority incomplete task from the "Next Steps" section (start with "High Priority", then "Medium-High Priority", etc.).
-4. Create a new git branch off of `main` named after the task (e.g., `fix-static-links`, `sidebar-refresh-interval`).
+4. **MANDATORY: Run `git checkout main && git pull origin main` to ensure you're on the latest main branch.**
+5. **MANDATORY: Run `git checkout -b <branch-name>` to create a new branch. Use a descriptive kebab-case name based on the task (e.g., `fix-static-links`, `sidebar-refresh-interval`). DO NOT SKIP THIS STEP.**
+6. **MANDATORY: Run `git branch` to confirm you are on the new branch before proceeding. If you are not on a new branch, STOP and fix this.**
 
 ## Step 2: Exploration Phase
 
@@ -59,22 +63,24 @@ Fix any issues identified by reviewers before proceeding.
 
 ## Step 6: Commit, Push, and PR
 
-1. Stage all changed files (be specific, don't use `git add -A`)
-2. Commit with a descriptive message explaining the change
-3. Push the branch to origin with `-u` flag
-4. Create a PR to `main` using `gh pr create` with:
-    - Clear title describing the change
-    - Summary section with bullet points
-    - Test plan section
+1. **MANDATORY: Run `git status` to see all changes.**
+2. **MANDATORY: Stage all changed files specifically by name (do NOT use `git add -A` or `git add .`).**
+3. **MANDATORY: Commit with a descriptive message explaining the change.**
+4. **MANDATORY: Run `git push -u origin <branch-name>` to push the branch.**
+5. **MANDATORY: Run `gh pr create --base main --title "<title>" --body "<body>"` to create a PR with:**
+   - Clear title describing the change
+   - Summary section with bullet points
+   - Test plan section
 
 ## Constraints
 
-- NEVER skip the exploration phase
-- NEVER skip plan refinement - always use 5+ subagents
-- NEVER skip review phase - always use 5+ subagents
-- ALWAYS include at least 1 code-standards-enforcer in both refinement and review
+- NEVER skip ANY step - every step is MANDATORY
+- NEVER skip the exploration phase - use 3+ explore subagents
+- NEVER skip plan refinement - use 5+ subagents including code-standards-enforcer
+- NEVER skip review phase - use 5+ subagents including code-standards-enforcer
 - ALWAYS read CLAUDE.md and knowledge/ files before planning
-- ALWAYS run build/typecheck before committing
+- ALWAYS run build/lint/format before committing
+- ALWAYS verify each step completed before moving to the next
 - ALWAYS create a PR at the end
 - If any phase fails, fix the issues and retry that phase
 
