@@ -140,11 +140,17 @@ export const Route = createFileRoute("/api/channels/")({
 
 				const profileImages = new Map<string, string>();
 
-				// Twitch API allows max 100 users per request
+				// Twitch API allows max 100 users per request - parallelize all batches
+				const userBatches: Array<Array<string>> = [];
 				for (let i = 0; i < nonFavoriteUserIds.length; i += 100) {
-					const batch = nonFavoriteUserIds.slice(i, i + 100);
-					const usersResult = await getUsers({ ids: batch });
+					userBatches.push(nonFavoriteUserIds.slice(i, i + 100));
+				}
 
+				const batchResults = await Promise.all(
+					userBatches.map((batch) => getUsers({ ids: batch })),
+				);
+
+				for (const usersResult of batchResults) {
 					if (!(usersResult instanceof Error)) {
 						for (const user of usersResult) {
 							profileImages.set(user.id, user.profile_image_url);

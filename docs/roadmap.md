@@ -50,7 +50,7 @@
 
 - [x] Order sidebar by favorites, then by last seen, then by name.
 - [x] Replace all uses of interface with types unless an interface is absolutely needed.
-- Parallelize all possible DB / API calls.
+- [x] Parallelize all possible DB / API calls.
 - Add a means of integrating with twitch chat for any channel I'm watching.
     - Chatterino integration - Launch Chatterino alongside VLC pointed at the right channel - see `docs/chatterino-integration-notes.md`
     - Be sure a stream or VOD can be launched with or without chat. It'd be great if I can pop chat entirely separately, so I could be watching the stream, open chat for a bit, then close it again without closing the stream.
