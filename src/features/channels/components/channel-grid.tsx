@@ -34,10 +34,9 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 			}
 		}
 
-		// First 4 cards across all sections get priority loading
+		// First 6 cards get priority loading (typically first row)
 		const allVisibleChannels = [...liveFavoriteChannels, ...offlineFavoriteChannels, ...liveNonFavoriteChannels];
-		const firstFourChannels = allVisibleChannels.slice(0, 4);
-		const priorityChannelIds = new Set(firstFourChannels.map((channel) => channel.id));
+		const priorityChannelIds = new Set(allVisibleChannels.slice(0, 6).map((channel) => channel.id));
 
 		return {
 			liveFavorites: liveFavoriteChannels,
