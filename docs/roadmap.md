@@ -60,6 +60,7 @@
     - Overall VLC doesn't handle VODs well currently. I can't track through the whole video or go to a certain time or jump forward, etc. I can't even see the total duration of the video.
     - Remember playback position in VODs so you can continue where you left off
 - VOD chapters/markers - Display and jump to Twitch's chapter markers when launching VODs
+- When launching a stream the request in the network tab shows the stream is live, but the UI doesn't give any indication of watching the stream.
 
 ### Medium Priority
 
@@ -97,9 +98,9 @@
 - Search/filter channels in sidebar
 - Multi-stream launcher - Open 2-4 streams simultaneously in separate VLC windows with predefined layouts
 - Clips browser - Browse and launch clips for any channel, not just VODs
+- Design more than just a follow and/or favorite system. I want at least 4 "ranks" of channels. Favorites being the highest rank, then followed, then just regular channels, then hidden channels.
 - Drag-and-drop reordering in sidebar (currently only in main grid)
 - Similar channels - Based on category overlap or Twitch's recommendation data
-- Add a logout button.
 
 ### Low Priority
 
@@ -108,6 +109,7 @@
 - Audio-only mode - Streamlink flag for low-bandwidth listening while working
 - Remember scroll position when returning from VODs view
 - Stream quality selector before launching (always want highest anyway)
+- Add a logout button.
 
 ### Future Considerations
 
