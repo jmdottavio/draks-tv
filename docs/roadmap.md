@@ -46,8 +46,6 @@
 
 ### High Priority
 
-- Fix all static links and be sure to use the `env` variables for the API URL. Example: "http://localhost:9442/api/auth/callback". Extract the constants to proper const SOME_URL = "http://localhost:9442/api/auth/callback"; etc
-
 ### Medium-High Priority
 
 - Sidebar for live and offline doesn't refresh very often / when I refocus the tab. It should refresh every 30 seconds or so. Check the react query implementation for this. Same for them section that shows live channels. It MUST refresh when I refocus the tab, I can't sit there waiting forever to see who is live now.
@@ -58,18 +56,19 @@
 - Add a means of integrating with twitch chat for any channel I'm watching.
     - Chatterino integration - Launch Chatterino alongside VLC pointed at the right channel - see `docs/chatterino-integration-notes.md`
     - Be sure a stream or VOD can be launched with or without chat. It'd be great if I can pop chat entirely separately, so I could be watching the stream, open chat for a bit, then close it again without closing the stream.
-- VOD resume tracking - Remember playback position in VODs so you can continue where you left off
+- VOD tracking
     - Overall VLC doesn't handle VODs well currently. I can't track through the whole video or go to a certain time or jump forward, etc. I can't even see the total duration of the video.
+    - Remember playback position in VODs so you can continue where you left off
 - VOD chapters/markers - Display and jump to Twitch's chapter markers when launching VODs
 
 ### Medium Priority
 
 - Stream uptime display - Show how long the stream has been live on cards
-- Channel detail page when clicking a channel (after TanStack Start migration)
+- Channel detail page when clicking a channel
     - Proper `/channels/:id` route with URL
     - Show latest 5 VODs with watch buttons
     - "View All VODs" link to VODs search
-- Another overall UI refresh.
+- Overall UI refresh.
     - The sidebar's header is not aligned with the page header (it's slightly smaller / higher up)
     - The sidebar has a left/right chevron but the main section has a hamburger icon and they both do the same thing
     - The favorite but offline channels is too wide, should be more of a 2 column layout at least.
