@@ -48,8 +48,6 @@
 
 ### Medium-High Priority
 
-- Sidebar for live and offline doesn't refresh very often / when I refocus the tab. It should refresh every 30 seconds or so. Check the react query implementation for this. Same for them section that shows live channels. It MUST refresh when I refocus the tab, I can't sit there waiting forever to see who is live now.
-    - Be sure thumbnails refresh regularly as well, seems like even if i refresh and the correct channels are shown live, the thumbnails are not updated.
 - Order sidebar by favorites, then by last seen, then by name.
 - Replace all uses of interface with types unless an interface is absolutely needed.
 - Parallelize all possible DB / API calls.
