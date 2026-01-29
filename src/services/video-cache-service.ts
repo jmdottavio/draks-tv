@@ -1,4 +1,4 @@
-import { and, desc, eq, notInArray, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 import { database } from "@/src/db";
 import { cachedVods, channelCache } from "@/src/db/schema";
@@ -12,7 +12,7 @@ import { getVideos } from "@/src/services/twitch-service";
 import type { TwitchStream } from "@/src/services/twitch-service";
 
 const VIDEO_CACHE_TTL_MS = 30 * 60 * 1000;
-const VIDEOS_PER_CHANNEL_LIMIT = 5;
+const VIDEOS_FETCH_LIMIT = 5;
 const BATCH_SIZE = 3;
 const BATCH_DELAY_MS = 500;
 const BASE_BACKOFF_MS = 60 * 1000; // 1 minute
@@ -50,7 +50,7 @@ function getRefreshIntervalMs(favoriteCount: number) {
 
 async function refreshVideosForChannel(channelId: string) {
 	// Fetch from Twitch API OUTSIDE the transaction to avoid holding DB lock during network call
-	const videosResult = await getVideos(channelId, VIDEOS_PER_CHANNEL_LIMIT);
+	const videosResult = await getVideos(channelId, VIDEOS_FETCH_LIMIT);
 
 	if (videosResult instanceof Error) {
 		console.error("[video-cache] Failed to fetch videos from Twitch:", videosResult.message);
@@ -61,54 +61,62 @@ async function refreshVideosForChannel(channelId: string) {
 		return null;
 	}
 
-	const latestVideo = videosResult[0];
-	if (latestVideo === undefined) {
-		return null;
-	}
-
 	// Perform synchronous database transaction (no async operations inside)
 	try {
-		const videoRowId = database.transaction((transaction) => {
-			// Upsert the latest video
-			const videoResult = transaction
-				.insert(cachedVods)
-				.values({
-					videoId: latestVideo.id,
-					channelId: channelId,
-					title: latestVideo.title,
-					duration: latestVideo.duration,
-					createdAt: latestVideo.created_at,
-					thumbnailUrl: latestVideo.thumbnail_url,
-				})
-				.onConflictDoUpdate({
-					target: cachedVods.videoId,
-					set: {
-						title: latestVideo.title,
-						duration: latestVideo.duration,
-						createdAt: latestVideo.created_at,
-						thumbnailUrl: latestVideo.thumbnail_url,
-						fetchedAt: sql`CURRENT_TIMESTAMP`,
-					},
-				})
-				.returning({ id: cachedVods.id })
-				.get();
+		const latestVideoRowId = database.transaction((transaction) => {
+			let firstVideoRowId: number | undefined;
 
-			if (videoResult === undefined) {
-				throw new Error("Video upsert did not return a row");
+			// Upsert all fetched videos
+			for (const video of videosResult) {
+				const result = transaction
+					.insert(cachedVods)
+					.values({
+						videoId: video.id,
+						channelId: channelId,
+						title: video.title,
+						duration: video.duration,
+						createdAt: video.created_at,
+						thumbnailUrl: video.thumbnail_url,
+					})
+					.onConflictDoUpdate({
+						target: cachedVods.videoId,
+						set: {
+							title: video.title,
+							duration: video.duration,
+							createdAt: video.created_at,
+							thumbnailUrl: video.thumbnail_url,
+							fetchedAt: sql`CURRENT_TIMESTAMP`,
+						},
+					})
+					.returning({ id: cachedVods.id })
+					.get();
+
+				if (result === undefined) {
+					throw new Error("Video upsert did not return a row");
+				}
+
+				// First result is the latest (Twitch returns newest first)
+				if (firstVideoRowId === undefined) {
+					firstVideoRowId = result.id;
+				}
 			}
 
-			// Upsert channel cache with foreign key - verify with returning()
+			if (firstVideoRowId === undefined) {
+				throw new Error("No videos were upserted");
+			}
+
+			// Upsert channel cache with latest video FK
 			const cacheResult = transaction
 				.insert(channelCache)
 				.values({
 					channelId: channelId,
 					isLive: false,
-					latestVideoId: videoResult.id,
+					latestVideoId: firstVideoRowId,
 				})
 				.onConflictDoUpdate({
 					target: channelCache.channelId,
 					set: {
-						latestVideoId: videoResult.id,
+						latestVideoId: firstVideoRowId,
 						updatedAt: sql`CURRENT_TIMESTAMP`,
 					},
 				})
@@ -119,34 +127,21 @@ async function refreshVideosForChannel(channelId: string) {
 				throw new Error("Channel cache upsert did not return a row");
 			}
 
-			// Clean up old videos (keep only VIDEOS_PER_CHANNEL_LIMIT)
-			// Use notInArray instead of sql.raw for type safety
-			const videosToKeep = transaction
-				.select({ id: cachedVods.id })
-				.from(cachedVods)
-				.where(eq(cachedVods.channelId, channelId))
-				.orderBy(desc(cachedVods.createdAt))
-				.limit(VIDEOS_PER_CHANNEL_LIMIT)
-				.all();
+			// Delete videos older than 2 months
+			transaction
+				.delete(cachedVods)
+				.where(
+					and(
+						eq(cachedVods.channelId, channelId),
+						sql`${cachedVods.createdAt} < datetime('now', '-2 months')`,
+					),
+				)
+				.run();
 
-			const idsToKeep = videosToKeep.map((video) => video.id);
-
-			if (idsToKeep.length > 0) {
-				transaction
-					.delete(cachedVods)
-					.where(
-						and(
-							eq(cachedVods.channelId, channelId),
-							notInArray(cachedVods.id, idsToKeep),
-						),
-					)
-					.run();
-			}
-
-			return videoResult.id;
+			return firstVideoRowId;
 		});
 
-		return videoRowId;
+		return latestVideoRowId;
 	} catch (error) {
 		console.error("[video-cache] Database transaction failed:", error);
 		return error instanceof Error ? error : new Error("Database transaction failed");
