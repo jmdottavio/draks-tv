@@ -93,6 +93,9 @@ function getDatabase() {
 
 		const sqlite = new Database(dbPath);
 
+		// Enable foreign key constraint enforcement (SQLite has this off by default)
+		sqlite.exec("PRAGMA foreign_keys = ON");
+
 		// Seed migration history for pre-existing databases before running migrations
 		seedMigrationHistoryIfNeeded(sqlite);
 

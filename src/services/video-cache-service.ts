@@ -17,6 +17,8 @@ const BATCH_SIZE = 3;
 const BATCH_DELAY_MS = 500;
 const BASE_BACKOFF_MS = 60 * 1000; // 1 minute
 const MAX_BACKOFF_MS = 60 * 60 * 1000; // 1 hour
+const MIN_REFRESH_INTERVAL_MS = 5000;
+const MAX_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 
 // Track background refresh state
 let refreshIntervalId: ReturnType<typeof setTimeout> | null = null;
@@ -41,11 +43,7 @@ function getRefreshIntervalMs(favoriteCount: number) {
 	const targetRefreshWindow = VIDEO_CACHE_TTL_MS * 0.8;
 	const intervalMs = Math.floor(targetRefreshWindow / favoriteCount);
 
-	// Clamp between reasonable bounds
-	const MIN_INTERVAL_MS = 5000;
-	const MAX_INTERVAL_MS = 5 * 60 * 1000;
-
-	return Math.max(MIN_INTERVAL_MS, Math.min(intervalMs, MAX_INTERVAL_MS));
+	return Math.max(MIN_REFRESH_INTERVAL_MS, Math.min(intervalMs, MAX_REFRESH_INTERVAL_MS));
 }
 
 async function refreshVideosForChannel(channelId: string) {
@@ -66,7 +64,6 @@ async function refreshVideosForChannel(channelId: string) {
 		const latestVideoRowId = database.transaction((transaction) => {
 			let firstVideoRowId: number | undefined;
 
-			// Upsert all fetched videos
 			for (const video of videosResult) {
 				const result = transaction
 					.insert(cachedVods)
@@ -105,7 +102,6 @@ async function refreshVideosForChannel(channelId: string) {
 				throw new Error("No videos were upserted");
 			}
 
-			// Upsert channel cache with latest video FK
 			const cacheResult = transaction
 				.insert(channelCache)
 				.values({
@@ -127,7 +123,6 @@ async function refreshVideosForChannel(channelId: string) {
 				throw new Error("Channel cache upsert did not return a row");
 			}
 
-			// Delete videos older than 2 months
 			transaction
 				.delete(cachedVods)
 				.where(
@@ -291,8 +286,8 @@ function startBackgroundRefresh() {
 			const now = Date.now();
 
 			for (const [channelId, state] of channelBackoffState) {
-				const expiredLongAgo = now > state.nextAttemptAt + 24 * 60 * 60 * 1000;
-				if (!favoriteIds.has(channelId) || expiredLongAgo) {
+				const isExpiredLongAgo = now > state.nextAttemptAt + 24 * 60 * 60 * 1000;
+				if (!favoriteIds.has(channelId) || isExpiredLongAgo) {
 					channelBackoffState.delete(channelId);
 				}
 			}
