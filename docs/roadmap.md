@@ -46,25 +46,21 @@
 
 ### High Priority
 
-- Migrate to TanStack Start (see `docs/tanstack-start-migration.md`)
-    - Replace Vite + Express with unified TanStack Start server
-    - File-based routing for pages and API endpoints
-    - Enables proper URL navigation and browser history
-    - Reference: homeschool project structure
-    - Note: NO SSR needed, client side only queries, etc.
-- Fix all queries and mutations to follow patterns outlined in the `../../github/homeschool` project. Make sure to have constant query keys and/or functions to retrieve the key if parameters are needed.
 - Fix all static links and be sure to use the `env` variables for the API URL. Example: "http://localhost:9442/api/auth/callback". Extract the constants to proper const SOME_URL = "http://localhost:9442/api/auth/callback"; etc
-- Parallelize all possible DB / API calls.
 
 ### Medium-High Priority
 
-- Sidebar for live and offline doesn't refresh very often / when I refocus the tab. It should refresh every 30 seconds or so. Check the react query implementation for this. Same for them section that shows live channels.
+- Sidebar for live and offline doesn't refresh very often / when I refocus the tab. It should refresh every 30 seconds or so. Check the react query implementation for this. Same for them section that shows live channels. It MUST refresh when I refocus the tab, I can't sit there waiting forever to see who is live now.
     - Be sure thumbnails refresh regularly as well, seems like even if i refresh and the correct channels are shown live, the thumbnails are not updated.
 - Order sidebar by favorites, then by last seen, then by name.
 - Replace all uses of interface with types unless an interface is absolutely needed.
+- Parallelize all possible DB / API calls.
 - Add a means of integrating with twitch chat for any channel I'm watching.
     - Chatterino integration - Launch Chatterino alongside VLC pointed at the right channel - see `docs/chatterino-integration-notes.md`
     - Be sure a stream or VOD can be launched with or without chat. It'd be great if I can pop chat entirely separately, so I could be watching the stream, open chat for a bit, then close it again without closing the stream.
+- VOD resume tracking - Remember playback position in VODs so you can continue where you left off
+    - Overall VLC doesn't handle VODs well currently. I can't track through the whole video or go to a certain time or jump forward, etc. I can't even see the total duration of the video.
+- VOD chapters/markers - Display and jump to Twitch's chapter markers when launching VODs
 
 ### Medium Priority
 
@@ -101,8 +97,6 @@
 
 - Search/filter channels in sidebar
 - Multi-stream launcher - Open 2-4 streams simultaneously in separate VLC windows with predefined layouts
-- VOD resume tracking - Remember playback position in VODs so you can continue where you left off
-- VOD chapters/markers - Display and jump to Twitch's chapter markers when launching VODs
 - Clips browser - Browse and launch clips for any channel, not just VODs
 - Drag-and-drop reordering in sidebar (currently only in main grid)
 - Similar channels - Based on category overlap or Twitch's recommendation data
