@@ -52,11 +52,16 @@ function formatDate(dateString: string): string {
 }
 
 function formatThumbnail(url: string, width: number, height: number): string {
+	// Handle various Twitch thumbnail URL formats:
+	// - Streams: {width}x{height}
+	// - VODs: %{width}x%{height}
+	// IMPORTANT: Replace longer patterns first (%{width} before {width})
+	// otherwise {width} gets replaced and leaves the % behind
 	const formattedUrl = url
-		.replace("{width}", width.toString())
-		.replace("{height}", height.toString())
-		.replace("%{width}", width.toString())
-		.replace("%{height}", height.toString());
+		.replace(/%{width}/gi, width.toString())
+		.replace(/%{height}/gi, height.toString())
+		.replace(/{width}/gi, width.toString())
+		.replace(/{height}/gi, height.toString());
 
 	// Add cache-busting timestamp that changes every 30 seconds
 	const cacheBuster = Math.floor(Date.now() / 30_000);

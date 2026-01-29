@@ -16,18 +16,6 @@ function launchStream(url: string) {
 	});
 }
 
-function launchStreamWithPlayerArgs(url: string, playerArgs: string) {
-	return new Promise<void | Error>((promiseResolve) => {
-		execFile(STREAMLINK_PATH, [url, "best", "--player-args", playerArgs], (error) => {
-			if (error) {
-				promiseResolve(new Error(error.message));
-				return;
-			}
-			promiseResolve();
-		});
-	});
-}
-
 function launchLiveStream(channel: string) {
 	const sanitizedChannel = channel.replace(/[^a-zA-Z0-9_]/g, "");
 	return launchStream(`twitch.tv/${sanitizedChannel}`);

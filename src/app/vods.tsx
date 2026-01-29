@@ -206,7 +206,15 @@ const VodCard = memo(function VodCard({
 	return (
 		<div className="overflow-hidden rounded-lg border border-surface-border-muted bg-surface-card transition-all hover:-translate-y-0.5 hover:border-surface-border">
 			<div className="relative aspect-video bg-surface-elevated">
-				<img src={thumbnailUrl} alt={vod.title} className="h-full w-full object-cover" />
+				<img
+					src={thumbnailUrl}
+					alt={vod.title}
+					className="h-full w-full object-cover"
+					onError={(event) => {
+						const img = event.currentTarget;
+						img.style.display = "none";
+					}}
+				/>
 				<span className="absolute bottom-2 right-2 rounded bg-black/80 px-2 py-1 text-sm font-medium text-white">
 					{formatDuration(vod.duration)}
 				</span>
