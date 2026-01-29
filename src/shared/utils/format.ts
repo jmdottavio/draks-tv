@@ -91,15 +91,30 @@ function parseTimeToSeconds(timeString: string): number | null {
 	}
 
 	if (parts.length === 3) {
-		return parts[0] * 3600 + parts[1] * 60 + parts[2];
+		const hours = parts[0];
+		const minutes = parts[1];
+		const seconds = parts[2];
+		if (hours === undefined || minutes === undefined || seconds === undefined) {
+			return null;
+		}
+		return hours * 3600 + minutes * 60 + seconds;
 	}
 
 	if (parts.length === 2) {
-		return parts[0] * 60 + parts[1];
+		const minutes = parts[0];
+		const seconds = parts[1];
+		if (minutes === undefined || seconds === undefined) {
+			return null;
+		}
+		return minutes * 60 + seconds;
 	}
 
 	if (parts.length === 1) {
-		return parts[0];
+		const seconds = parts[0];
+		if (seconds === undefined) {
+			return null;
+		}
+		return seconds;
 	}
 
 	return null;

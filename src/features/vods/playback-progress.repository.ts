@@ -9,7 +9,7 @@ type SaveProgressInput = {
 	channelName: string;
 	vodTitle: string;
 	positionSeconds: number;
-	durationSeconds?: number;
+	durationSeconds?: number | undefined;
 };
 
 function getPlaybackProgress(vodId: string) {

@@ -2,7 +2,13 @@ import { extractApiErrorMessage } from "@/src/shared/utils/api-errors";
 
 import type { SaveProgressInput } from "../playback-progress.repository";
 
-async function watchVod(id: string, startTimeSeconds?: number): Promise<void> {
+async function watchVod({
+	id,
+	startTimeSeconds,
+}: {
+	id: string;
+	startTimeSeconds?: number;
+}): Promise<void> {
 	const options: RequestInit = { method: "POST" };
 
 	if (startTimeSeconds !== undefined && startTimeSeconds > 0) {

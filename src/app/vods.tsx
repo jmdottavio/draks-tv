@@ -52,7 +52,7 @@ function VodsPage() {
 	}
 
 	const handleWatchVod = useCallback((vodId: string, startTimeSeconds?: number) => {
-		watchVod(vodId, startTimeSeconds).catch((watchError: unknown) => {
+		watchVod({ id: vodId, startTimeSeconds }).catch((watchError: unknown) => {
 			console.error("Failed to launch VOD:", watchError);
 		});
 	}, []);

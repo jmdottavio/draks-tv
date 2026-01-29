@@ -80,7 +80,7 @@ function ChannelCardComponent({ channel, variant = "full", priority = false, dra
 		}
 
 		if (channel.latestVod !== null) {
-			watchVodMutation.mutate(channel.latestVod.id);
+			watchVodMutation.mutate({ id: channel.latestVod.id });
 		}
 	}
 
