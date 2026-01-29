@@ -2,12 +2,12 @@ import { Link } from "@tanstack/react-router";
 
 import { PlusIcon, FilmIcon, ArrowPathIcon, MenuIcon } from "./icons";
 
-interface HeaderProps {
+type HeaderProps = {
 	onAddChannel: () => void;
 	onRefresh: () => void;
 	onToggleSidebar: () => void;
 	isRefreshing: boolean;
-}
+};
 
 function Header({ onAddChannel, onRefresh, onToggleSidebar, isRefreshing }: HeaderProps) {
 	return (

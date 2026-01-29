@@ -9,22 +9,22 @@ import { getTwitchClientId, getTwitchClientSecret } from "@/src/shared/utils/twi
 import { TWITCH_HELIX_BASE_URL, TWITCH_OAUTH_TOKEN_URL } from "@/src/shared/utils/twitch-urls";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 
-interface TwitchTokenResponse {
+type TwitchTokenResponse = {
 	access_token: string;
 	refresh_token: string;
 	expires_in: number;
 	scope: Array<string>;
 	token_type: string;
-}
+};
 
-interface TwitchUserResponse {
+type TwitchUserResponse = {
 	data: Array<{
 		id: string;
 		login: string;
 		display_name: string;
 		profile_image_url: string;
 	}>;
-}
+};
 
 export const Route = createFileRoute("/api/auth/callback/")({
 	server: {

@@ -2,10 +2,10 @@ import { createContext, useContext, useState, useEffect } from "react";
 
 import type { ReactNode } from "react";
 
-interface LayoutContextValue {
+type LayoutContextValue = {
 	isSidebarOpen: boolean;
 	toggleSidebar: () => void;
-}
+};
 
 const LayoutContext = createContext<LayoutContextValue | null>(null);
 
@@ -16,9 +16,9 @@ function getSavedSidebarState(): boolean {
 	return localStorage.getItem("sidebar-open") === "true";
 }
 
-interface LayoutProviderProps {
+type LayoutProviderProps = {
 	children: ReactNode;
-}
+};
 
 function LayoutProvider({ children }: LayoutProviderProps) {
 	const [isSidebarOpen, setIsSidebarOpen] = useState(getSavedSidebarState);

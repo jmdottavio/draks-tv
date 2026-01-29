@@ -13,21 +13,21 @@ import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 import type { CachedVideoSelect } from "@/src/features/vods/vods.types";
 import type { TwitchStream } from "@/src/services/twitch-service";
 
-interface StreamData {
+type StreamData = {
 	title: string;
 	gameName: string;
 	viewerCount: number;
 	thumbnailUrl: string;
 	startedAt: string;
-}
+};
 
-interface VodData {
+type VodData = {
 	id: string;
 	title: string;
 	duration: string;
 	createdAt: string;
 	thumbnailUrl: string;
-}
+};
 
 function transformCachedVod(vod: CachedVideoSelect): VodData {
 	return {
@@ -39,7 +39,7 @@ function transformCachedVod(vod: CachedVideoSelect): VodData {
 	};
 }
 
-interface ChannelData {
+type ChannelData = {
 	id: string;
 	login: string;
 	displayName: string;
@@ -48,7 +48,7 @@ interface ChannelData {
 	isFavorite: boolean;
 	stream: StreamData | null;
 	latestVod: VodData | null;
-}
+};
 
 function transformStream(stream: TwitchStream): StreamData {
 	return {

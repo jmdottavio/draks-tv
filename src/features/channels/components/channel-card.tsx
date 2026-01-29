@@ -14,11 +14,11 @@ import { useToggleFavorite } from "../hooks/use-channels";
 
 import type { Channel } from "../channels.types";
 
-interface ChannelCardProps {
+type ChannelCardProps = {
 	channel: Channel;
 	variant?: "full" | "compact";
 	priority?: boolean;
-}
+};
 
 function ChannelCardComponent({ channel, variant = "full", priority = false }: ChannelCardProps) {
 	const toggleFavoriteMutation = useToggleFavorite();

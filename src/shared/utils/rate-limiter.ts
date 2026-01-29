@@ -1,13 +1,13 @@
 import { JSON_HEADERS } from "./http";
 
-interface RateLimitConfig {
+type RateLimitConfig = {
 	windowMs: number; // Time window in milliseconds
 	maxRequests: number; // Max requests per window
-}
+};
 
-interface RequestRecord {
+type RequestRecord = {
 	timestamps: Array<number>;
-}
+};
 
 const requestRecords = new Map<string, RequestRecord>();
 

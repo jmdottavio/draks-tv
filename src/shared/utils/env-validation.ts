@@ -1,8 +1,8 @@
-interface EnvValidationResult {
+type EnvValidationResult = {
 	valid: boolean;
 	errors: Array<string>;
 	warnings: Array<string>;
-}
+};
 
 function validateEnvironment(): EnvValidationResult {
 	const errors: Array<string> = [];

@@ -1,6 +1,6 @@
-interface IconProps {
+type IconProps = {
 	className?: string;
-}
+};
 
 function PlusIcon({ className }: IconProps) {
 	return (

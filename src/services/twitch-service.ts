@@ -7,14 +7,14 @@ import {
 	TWITCH_OAUTH_TOKEN_URL,
 } from "@/src/shared/utils/twitch-urls";
 
-interface TwitchUser {
+type TwitchUser = {
 	id: string;
 	login: string;
 	display_name: string;
 	profile_image_url: string;
-}
+};
 
-interface TwitchStream {
+type TwitchStream = {
 	user_id: string;
 	user_login: string;
 	user_name: string;
@@ -23,9 +23,9 @@ interface TwitchStream {
 	viewer_count: number;
 	thumbnail_url: string;
 	started_at: string;
-}
+};
 
-interface TwitchVideo {
+type TwitchVideo = {
 	id: string;
 	user_id: string;
 	user_name: string;
@@ -33,27 +33,27 @@ interface TwitchVideo {
 	duration: string;
 	created_at: string;
 	thumbnail_url: string;
-}
+};
 
-interface TwitchFollowedChannel {
+type TwitchFollowedChannel = {
 	broadcaster_id: string;
 	broadcaster_login: string;
 	broadcaster_name: string;
 	followed_at: string;
-}
+};
 
-interface TwitchResponse<T> {
+type TwitchResponse<T> = {
 	data: Array<T>;
 	pagination?: {
 		cursor?: string;
 	};
-}
+};
 
-interface TwitchTokenResponse {
+type TwitchTokenResponse = {
 	access_token?: string;
 	refresh_token?: string;
 	expires_in?: number;
-}
+};
 
 const REFRESH_BUFFER_SECONDS = 5 * 60; // Refresh 5 minutes before expiry
 

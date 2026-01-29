@@ -1,20 +1,20 @@
-interface Stream {
+type Stream = {
 	title: string;
 	gameName: string;
 	viewerCount: number;
 	thumbnailUrl: string;
 	startedAt: string;
-}
+};
 
-interface Vod {
+type Vod = {
 	id: string;
 	title: string;
 	duration: string;
 	createdAt: string;
 	thumbnailUrl: string;
-}
+};
 
-interface Channel {
+type Channel = {
 	id: string;
 	login: string;
 	displayName: string;
@@ -23,20 +23,20 @@ interface Channel {
 	isLive: boolean;
 	stream: Stream | null;
 	latestVod: Vod | null;
-}
+};
 
-interface FavoriteInput {
+type FavoriteInput = {
 	id: string;
 	login: string;
 	displayName: string;
 	profileImage: string;
-}
+};
 
-interface FavoriteOutput {
+type FavoriteOutput = {
 	id: string;
 	login: string;
 	displayName: string;
 	profileImage: string;
-}
+};
 
 export type { Channel, Stream, Vod, FavoriteInput, FavoriteOutput };

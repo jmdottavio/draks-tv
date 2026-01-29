@@ -6,9 +6,9 @@ import { ChannelCard } from "./channel-card";
 
 import type { Channel } from "../channels.types";
 
-interface ChannelGridProps {
+type ChannelGridProps = {
 	channels: Array<Channel>;
-}
+};
 
 function ChannelGrid({ channels }: ChannelGridProps) {
 	const [draggedId, setDraggedId] = useState<string | null>(null);

@@ -1,10 +1,10 @@
-interface AuthStatus {
+type AuthStatus = {
 	authenticated: boolean;
 	userId: string | null;
-}
+};
 
-interface AuthUrl {
+type AuthUrl = {
 	url: string;
-}
+};
 
 export type { AuthStatus, AuthUrl };

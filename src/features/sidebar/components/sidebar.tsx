@@ -9,16 +9,16 @@ import { useFollowedChannels } from "../hooks/use-followed-channels";
 
 import type { SidebarChannel } from "../sidebar.types";
 
-interface SidebarProps {
+type SidebarProps = {
 	isExpanded: boolean;
 	onToggle: () => void;
-}
+};
 
-interface ChannelItemProps {
+type ChannelItemProps = {
 	channel: SidebarChannel;
 	isExpanded: boolean;
 	onFavoriteToggle: (id: string) => void;
-}
+};
 
 function getOfflineStatusText(lastVodDate: string | null): string {
 	if (lastVodDate !== null) {
@@ -45,10 +45,10 @@ function categorizeChannels(channels: Array<SidebarChannel>): {
 	return { live, offline };
 }
 
-interface ChannelAvatarProps {
+type ChannelAvatarProps = {
 	channel: SidebarChannel;
 	isExpanded: boolean;
-}
+};
 
 function ChannelAvatar({ channel, isExpanded }: ChannelAvatarProps) {
 	const ringColor = channel.isLive ? "ring-live" : "ring-sidebar-text-dim";
@@ -160,10 +160,10 @@ function SidebarLoading({ isExpanded }: { isExpanded: boolean }) {
 	);
 }
 
-interface SidebarErrorProps {
+type SidebarErrorProps = {
 	isExpanded: boolean;
 	message: string;
-}
+};
 
 function SidebarError({ isExpanded, message }: SidebarErrorProps) {
 	if (!isExpanded) {
@@ -177,11 +177,11 @@ function SidebarError({ isExpanded, message }: SidebarErrorProps) {
 	return <div className="px-3 py-8 text-center text-sm text-live">{message}</div>;
 }
 
-interface SectionHeaderProps {
+type SectionHeaderProps = {
 	title: string;
 	count: number;
 	isExpanded: boolean;
-}
+};
 
 function SectionHeader({ title, count, isExpanded }: SectionHeaderProps) {
 	if (!isExpanded) {
@@ -208,11 +208,11 @@ function SectionHeader({ title, count, isExpanded }: SectionHeaderProps) {
 	);
 }
 
-interface ChannelListProps {
+type ChannelListProps = {
 	channels: Array<SidebarChannel>;
 	isExpanded: boolean;
 	onFavoriteToggle: (id: string) => void;
-}
+};
 
 function ChannelList({ channels, isExpanded, onFavoriteToggle }: ChannelListProps) {
 	const { live: liveChannels, offline: offlineChannels } = categorizeChannels(channels);

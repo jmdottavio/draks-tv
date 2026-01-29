@@ -8,7 +8,7 @@ import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 
 import type { TwitchStream } from "@/src/services/twitch-service";
 
-interface SidebarChannelData {
+type SidebarChannelData = {
 	id: string;
 	login: string;
 	displayName: string;
@@ -18,7 +18,7 @@ interface SidebarChannelData {
 	viewerCount: number | null;
 	lastVodDate: string | null;
 	gameName: string | null;
-}
+};
 
 export const Route = createFileRoute("/api/channels/followed/")({
 	server: {

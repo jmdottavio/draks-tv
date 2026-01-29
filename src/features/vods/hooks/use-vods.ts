@@ -6,10 +6,10 @@ import { fetchUsers, fetchVideos } from "../api/vods-queries";
 
 import type { TwitchUser, TwitchVideo } from "../vods.types";
 
-interface VodSearchData {
+type VodSearchData = {
 	user: TwitchUser;
 	videos: Array<TwitchVideo>;
-}
+};
 
 function useVodSearch(channelLogin: string | null) {
 	const { data, isLoading, error } = useQuery({

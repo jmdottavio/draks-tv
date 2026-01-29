@@ -4,16 +4,16 @@ const MAX_DISPLAY_NAME_LENGTH = 100;
 const MAX_PROFILE_IMAGE_LENGTH = 500;
 const MAX_ORDERED_IDS_COUNT = 1000;
 
-interface AddFavoriteRequest {
+type AddFavoriteRequest = {
 	id: string;
 	login: string;
 	displayName: string;
 	profileImage: string;
-}
+};
 
-interface ReorderFavoritesRequest {
+type ReorderFavoritesRequest = {
 	orderedIds: Array<string>;
-}
+};
 
 function validateAddFavoriteRequest(body: unknown): AddFavoriteRequest | Error {
 	if (typeof body !== "object" || body === null) {

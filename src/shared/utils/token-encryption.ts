@@ -29,10 +29,10 @@ let cachedKey: Buffer | null = null;
 let cachedSalt: Buffer | null = null;
 let cachedSecret: string | null = null;
 
-interface KeyConfig {
+type KeyConfig = {
 	secret: string;
 	salt: Buffer;
-}
+};
 
 function getOrCreateKeyConfig(): KeyConfig {
 	// Check environment variable first

@@ -92,10 +92,10 @@ function VodsPage() {
 	);
 }
 
-interface VodCardProps {
+type VodCardProps = {
 	vod: TwitchVideo;
 	onWatch: (id: string) => void;
-}
+};
 
 function VodCard({ vod, onWatch }: VodCardProps) {
 	const thumbnailUrl = formatThumbnail(vod.thumbnail_url, 440, 248);

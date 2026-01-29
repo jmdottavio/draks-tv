@@ -1,4 +1,4 @@
-interface SidebarChannel {
+type SidebarChannel = {
 	id: string;
 	login: string;
 	displayName: string;
@@ -8,6 +8,6 @@ interface SidebarChannel {
 	viewerCount: number | null;
 	lastVodDate: string | null;
 	gameName: string | null;
-}
+};
 
 export type { SidebarChannel };

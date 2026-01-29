@@ -1,11 +1,11 @@
 import { getAuth } from "@/src/features/auth/auth.repository";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 
-interface AuthContext {
+type AuthContext = {
 	userId: string;
 	accessToken: string;
 	refreshToken: string;
-}
+};
 
 type AuthResult =
 	| { authenticated: true; context: AuthContext }
