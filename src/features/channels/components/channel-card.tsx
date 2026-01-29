@@ -8,10 +8,8 @@ import {
 	formatViewers,
 } from "@/src/shared/utils/format";
 
-import { watchVod } from "@/src/features/vods/api/vods-mutations";
-import { openChat } from "../api/chat-mutations";
-import { watchLive } from "../api/channels-mutations";
 import { useToggleFavorite } from "../hooks/use-channels";
+import { useOpenChat, useWatchLive, useWatchVod } from "../hooks/use-launch";
 
 import type { Channel } from "../channels.types";
 
@@ -23,22 +21,25 @@ type ChannelCardProps = {
 
 function ChannelCardComponent({ channel, variant = "full", priority = false }: ChannelCardProps) {
 	const toggleFavoriteMutation = useToggleFavorite();
+	const watchLiveMutation = useWatchLive();
+	const watchVodMutation = useWatchVod();
+	const openChatMutation = useOpenChat();
 
 	const isToggling =
 		toggleFavoriteMutation.isPending && toggleFavoriteMutation.variables === channel.id;
+	const isLaunching = watchLiveMutation.isPending || watchVodMutation.isPending;
+	const isOpeningChat = openChatMutation.isPending;
 
 	function handleWatchClick() {
+		if (isLaunching) return;
+
 		if (channel.isLive) {
-			watchLive(channel.login).catch((error: unknown) => {
-				console.error("Failed to launch live stream:", error);
-			});
+			watchLiveMutation.mutate(channel.login);
 			return;
 		}
 
 		if (channel.latestVod !== null) {
-			watchVod(channel.latestVod.id).catch((error: unknown) => {
-				console.error("Failed to launch VOD:", error);
-			});
+			watchVodMutation.mutate(channel.latestVod.id);
 		}
 	}
 
@@ -50,9 +51,8 @@ function ChannelCardComponent({ channel, variant = "full", priority = false }: C
 	}
 
 	function handleChatClick() {
-		openChat(channel.login).catch((error: unknown) => {
-			console.error("Failed to open chat:", error);
-		});
+		if (isOpeningChat) return;
+		openChatMutation.mutate(channel.login);
 	}
 
 	const favoriteButtonLabel = channel.isFavorite
@@ -97,9 +97,14 @@ function ChannelCardComponent({ channel, variant = "full", priority = false }: C
 						<button
 							type="button"
 							onClick={handleWatchClick}
-							className="py-2 px-4 rounded-md bg-surface-elevated border border-surface-border-muted text-text-primary text-sm font-semibold hover:bg-twitch-purple hover:border-twitch-purple transition-all"
+							disabled={isLaunching}
+							className={`py-2 px-4 rounded-md bg-surface-elevated border border-surface-border-muted text-text-primary text-sm font-semibold transition-all ${
+								isLaunching
+									? "opacity-50 cursor-not-allowed"
+									: "hover:bg-twitch-purple hover:border-twitch-purple"
+							}`}
 						>
-							Watch VOD
+							{isLaunching ? "Launching..." : "Watch VOD"}
 						</button>
 					)}
 					<button
@@ -235,17 +240,31 @@ function ChannelCardComponent({ channel, variant = "full", priority = false }: C
 						<button
 							type="button"
 							onClick={handleWatchClick}
-							className="flex-1 py-2.5 px-4 rounded-md bg-surface-elevated border border-surface-border-muted text-text-primary text-sm font-semibold hover:bg-twitch-purple hover:border-twitch-purple transition-all"
+							disabled={isLaunching}
+							className={`flex-1 py-2.5 px-4 rounded-md bg-surface-elevated border border-surface-border-muted text-text-primary text-sm font-semibold transition-all ${
+								isLaunching
+									? "opacity-50 cursor-not-allowed"
+									: "hover:bg-twitch-purple hover:border-twitch-purple"
+							}`}
 						>
-							{channel.isLive ? "Watch Live" : "Watch VOD"}
+							{isLaunching
+								? "Launching..."
+								: channel.isLive
+									? "Watch Live"
+									: "Watch VOD"}
 						</button>
 						{channel.isLive && (
 							<button
 								type="button"
 								onClick={handleChatClick}
+								disabled={isOpeningChat}
 								aria-label={`Open chat for ${channel.displayName}`}
-								title="Open Chat"
-								className="py-2.5 px-3 rounded-md bg-surface-elevated border border-surface-border-muted text-text-muted hover:text-text-primary hover:bg-twitch-purple hover:border-twitch-purple transition-all"
+								title={isOpeningChat ? "Opening..." : "Open Chat"}
+								className={`py-2.5 px-3 rounded-md bg-surface-elevated border border-surface-border-muted transition-all ${
+									isOpeningChat
+										? "opacity-50 cursor-not-allowed text-text-muted"
+										: "text-text-muted hover:text-text-primary hover:bg-twitch-purple hover:border-twitch-purple"
+								}`}
 							>
 								<ChatIcon className="w-5 h-5" />
 							</button>
