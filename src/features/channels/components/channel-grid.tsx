@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { memo, useCallback, useMemo } from "react";
 
 import {
 	DndContext,
@@ -28,7 +28,10 @@ type SortableChannelCardProps = {
 	priority: boolean;
 };
 
-function SortableChannelCard({ channel, priority }: SortableChannelCardProps) {
+const SortableChannelCard = memo(function SortableChannelCard({
+	channel,
+	priority,
+}: SortableChannelCardProps) {
 	const {
 		attributes,
 		listeners,
@@ -42,10 +45,13 @@ function SortableChannelCard({ channel, priority }: SortableChannelCardProps) {
 		disabled: !channel.isFavorite,
 	});
 
-	const style = {
-		transform: CSS.Transform.toString(transform),
-		transition,
-	};
+	const style = useMemo(
+		() => ({
+			transform: CSS.Transform.toString(transform),
+			transition,
+		}),
+		[transform, transition],
+	);
 
 	return (
 		<div ref={setNodeRef} style={style} className="relative">
@@ -62,7 +68,7 @@ function SortableChannelCard({ channel, priority }: SortableChannelCardProps) {
 			<ChannelCard channel={channel} priority={priority} isDragging={isDragging} />
 		</div>
 	);
-}
+});
 
 function ChannelGrid({ channels }: ChannelGridProps) {
 	const sensors = useSensors(
@@ -107,24 +113,33 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 		};
 	}, [channels]);
 
-	function handleDragEnd(event: DragEndEvent) {
-		const { active, over } = event;
+	const handleDragEnd = useCallback(
+		(event: DragEndEvent) => {
+			const { active, over } = event;
 
-		if (over === null || active.id === over.id) {
-			return;
-		}
+			if (over === null || active.id === over.id) {
+				return;
+			}
 
-		const oldIndex = allFavorites.findIndex((channel) => channel.id === active.id);
-		const newIndex = allFavorites.findIndex((channel) => channel.id === over.id);
+			const oldIndex = allFavorites.findIndex((channel) => channel.id === active.id);
+			const newIndex = allFavorites.findIndex((channel) => channel.id === over.id);
 
-		if (oldIndex === -1 || newIndex === -1) {
-			return;
-		}
+			if (oldIndex === -1 || newIndex === -1) {
+				return;
+			}
 
-		const currentOrder = allFavorites.map((channel) => channel.id);
-		const newOrder = arrayMove(currentOrder, oldIndex, newIndex);
-		reorderFavoritesMutation.mutate(newOrder);
-	}
+			const currentOrder = allFavorites.map((channel) => channel.id);
+			const newOrder = arrayMove(currentOrder, oldIndex, newIndex);
+			reorderFavoritesMutation.mutate(newOrder);
+		},
+		[allFavorites, reorderFavoritesMutation],
+	);
+
+	// Memoize the sortable items array to prevent unnecessary SortableContext re-renders
+	const sortableItems = useMemo(
+		() => allVisibleChannels.map((channel) => channel.id),
+		[allVisibleChannels],
+	);
 
 	const hasVisibleChannels = allVisibleChannels.length > 0;
 
@@ -151,10 +166,7 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 
 	return (
 		<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-			<SortableContext
-				items={allVisibleChannels.map((channel) => channel.id)}
-				strategy={rectSortingStrategy}
-			>
+			<SortableContext items={sortableItems} strategy={rectSortingStrategy}>
 				<div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5 pt-4">
 					{allVisibleChannels.map((channel) => (
 						<SortableChannelCard

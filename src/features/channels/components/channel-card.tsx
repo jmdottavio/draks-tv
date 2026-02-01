@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useCallback } from "react";
 
 import { ChatIcon, StarIcon } from "@/src/shared/components/icons";
 import {
@@ -19,6 +19,7 @@ type ChannelCardProps = {
 	isDragging?: boolean;
 };
 
+// Static helper functions defined outside component to prevent recreation
 function getWatchButtonClassName(isWatching: boolean) {
 	const base = "py-2.5 px-4 rounded-md border text-sm font-semibold transition-all";
 
@@ -46,7 +47,78 @@ function getChatButtonClassName(isOpeningChat: boolean) {
 	return `${base} bg-surface-elevated border-surface-border-muted text-text-muted hover:text-text-primary hover:bg-twitch-purple hover:border-twitch-purple cursor-pointer`;
 }
 
-function ChannelCardComponent({ channel, priority = false, isDragging = false }: ChannelCardProps) {
+function getThumbnailUrl(channel: Channel) {
+	if (channel.isLive && channel.stream?.thumbnailUrl !== undefined) {
+		return formatThumbnail(channel.stream.thumbnailUrl, 440, 248);
+	}
+
+	if (channel.latestVod?.thumbnailUrl !== undefined) {
+		return formatThumbnail(channel.latestVod.thumbnailUrl, 440, 248);
+	}
+
+	return null;
+}
+
+/**
+ * Custom comparison function for memo() that performs deep equality check
+ * on the channel object. This is necessary because mutations may create
+ * new channel objects with the same values.
+ */
+function arePropsEqual(prevProps: ChannelCardProps, nextProps: ChannelCardProps): boolean {
+	// Fast path: same reference means definitely equal
+	if (prevProps.channel === nextProps.channel) {
+		return prevProps.priority === nextProps.priority && prevProps.isDragging === nextProps.isDragging;
+	}
+
+	// Check primitive props first (fast)
+	if (prevProps.priority !== nextProps.priority) return false;
+	if (prevProps.isDragging !== nextProps.isDragging) return false;
+
+	const prev = prevProps.channel;
+	const next = nextProps.channel;
+
+	// Check channel primitive fields
+	if (prev.id !== next.id) return false;
+	if (prev.login !== next.login) return false;
+	if (prev.displayName !== next.displayName) return false;
+	if (prev.profileImage !== next.profileImage) return false;
+	if (prev.isFavorite !== next.isFavorite) return false;
+	if (prev.isLive !== next.isLive) return false;
+
+	// Check stream (can be null)
+	if (prev.stream === null && next.stream === null) {
+		// Both null, continue
+	} else if (prev.stream === null || next.stream === null) {
+		return false;
+	} else {
+		if (prev.stream.title !== next.stream.title) return false;
+		if (prev.stream.gameName !== next.stream.gameName) return false;
+		if (prev.stream.viewerCount !== next.stream.viewerCount) return false;
+		if (prev.stream.thumbnailUrl !== next.stream.thumbnailUrl) return false;
+		if (prev.stream.startedAt !== next.stream.startedAt) return false;
+	}
+
+	// Check latestVod (can be null)
+	if (prev.latestVod === null && next.latestVod === null) {
+		// Both null, continue
+	} else if (prev.latestVod === null || next.latestVod === null) {
+		return false;
+	} else {
+		if (prev.latestVod.id !== next.latestVod.id) return false;
+		if (prev.latestVod.title !== next.latestVod.title) return false;
+		if (prev.latestVod.duration !== next.latestVod.duration) return false;
+		if (prev.latestVod.createdAt !== next.latestVod.createdAt) return false;
+		if (prev.latestVod.thumbnailUrl !== next.latestVod.thumbnailUrl) return false;
+	}
+
+	return true;
+}
+
+const ChannelCard = memo(function ChannelCard({
+	channel,
+	priority = false,
+	isDragging = false,
+}: ChannelCardProps) {
 	const toggleFavoriteMutation = useToggleFavorite();
 	const watchLiveMutation = useWatchLive();
 	const watchVodMutation = useWatchVod();
@@ -59,7 +131,7 @@ function ChannelCardComponent({ channel, priority = false, isDragging = false }:
 	const isWatching = isWatchingLive || isWatchingVod;
 	const isOpeningChat = openChatMutation.isPending;
 
-	function handleWatchClick() {
+	const handleWatchClick = useCallback(() => {
 		if (isWatching) return;
 
 		if (channel.isLive) {
@@ -70,19 +142,22 @@ function ChannelCardComponent({ channel, priority = false, isDragging = false }:
 		if (channel.latestVod !== null) {
 			watchVodMutation.mutate({ id: channel.latestVod.id });
 		}
-	}
+	}, [isWatching, channel.isLive, channel.login, channel.latestVod, watchLiveMutation, watchVodMutation]);
 
-	function handleFavoriteClick(event: React.MouseEvent) {
-		event.stopPropagation();
-		if (!isToggling) {
-			toggleFavoriteMutation.mutate(channel.id);
-		}
-	}
+	const handleFavoriteClick = useCallback(
+		(event: React.MouseEvent) => {
+			event.stopPropagation();
+			if (!isToggling) {
+				toggleFavoriteMutation.mutate(channel.id);
+			}
+		},
+		[isToggling, toggleFavoriteMutation, channel.id],
+	);
 
-	function handleChatClick() {
+	const handleChatClick = useCallback(() => {
 		if (isOpeningChat) return;
 		openChatMutation.mutate(channel.login);
-	}
+	}, [isOpeningChat, openChatMutation, channel.login]);
 
 	const favoriteButtonLabel = channel.isFavorite
 		? `Remove ${channel.displayName} from favorites`
@@ -223,20 +298,6 @@ function ChannelCardComponent({ channel, priority = false, isDragging = false }:
 			</div>
 		</div>
 	);
-}
-
-function getThumbnailUrl(channel: Channel) {
-	if (channel.isLive && channel.stream?.thumbnailUrl !== undefined) {
-		return formatThumbnail(channel.stream.thumbnailUrl, 440, 248);
-	}
-
-	if (channel.latestVod?.thumbnailUrl !== undefined) {
-		return formatThumbnail(channel.latestVod.thumbnailUrl, 440, 248);
-	}
-
-	return null;
-}
-
-const ChannelCard = memo(ChannelCardComponent);
+}, arePropsEqual);
 
 export { ChannelCard };
