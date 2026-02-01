@@ -23,6 +23,11 @@ function launchLiveStream(channel: string) {
 
 function launchVod(vodId: string, startTimeSeconds?: number) {
 	const sanitizedId = vodId.replace(/[^0-9]/g, "");
+
+	if (!sanitizedId) {
+		return Promise.resolve(new Error("Invalid VOD ID"));
+	}
+
 	const url = `twitch.tv/videos/${sanitizedId}`;
 
 	// Use --player-passthrough hls to pass the HLS stream directly to VLC
