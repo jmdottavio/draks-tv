@@ -32,5 +32,5 @@
 		"unicorn/filename-case": "off",
 		"unicorn/consistent-function-scoping": "off"
 	},
-	"ignorePatterns": ["dist/**", "node_modules/**", "*.min.js"]
+	"ignorePatterns": ["dist/**", "node_modules/**", "*.min.js", "**/routeTree.gen.ts"]
 }

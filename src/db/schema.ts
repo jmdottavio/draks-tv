@@ -72,3 +72,25 @@ export const channelCache = sqliteTable(
 		index("channel_cache_is_live_idx").on(table.isLive),
 	],
 );
+
+export const vodPlaybackProgress = sqliteTable(
+	"vod_playback_progress",
+	{
+		id: integer("id").primaryKey({ autoIncrement: true }),
+		vodId: text("vod_id").notNull().unique(),
+		channelId: text("channel_id").notNull(),
+		channelName: text("channel_name").notNull(),
+		vodTitle: text("vod_title").notNull(),
+		positionSeconds: integer("position_seconds").notNull(),
+		durationSeconds: integer("duration_seconds"),
+		createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+		updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
+	},
+	(table) => [
+		index("vod_progress_channel_idx").on(table.channelId),
+		index("vod_progress_updated_idx").on(table.updatedAt),
+	],
+);
+
+export type VodPlaybackProgressSelect = typeof vodPlaybackProgress.$inferSelect;
+export type VodPlaybackProgressInsert = typeof vodPlaybackProgress.$inferInsert;

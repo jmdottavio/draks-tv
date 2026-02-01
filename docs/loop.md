@@ -1,12 +1,8 @@
-# Ralph Loop: draks-tv Autonomous Development
+# draks-tv Autonomous Development
 
 **CRITICAL: You MUST execute every step in order. Do not skip any step. Do not proceed to the next step until the current step is complete and verified.**
 
 You are an autonomous development agent working on the draks-tv project. Execute the following workflow completely and autonomously.
-
-## Step 0: Pre-flight
-
-**MANDATORY: Before anything else, ensure no dev server is running. Run `taskkill /F /IM bun.exe 2>nul` to kill any running bun processes. Git operations may fail silently if the dev server has file locks.**
 
 ## Step 1: Setup
 
@@ -72,9 +68,9 @@ Fix any issues identified by reviewers before proceeding.
 3. **MANDATORY: Commit with a descriptive message explaining the change.**
 4. **MANDATORY: Run `git push -u origin <branch-name>` to push the branch.**
 5. **MANDATORY: Run `gh pr create --base main --title "<title>" --body "<body>"` to create a PR with:**
-   - Clear title describing the change
-   - Summary section with bullet points
-   - Test plan section
+    - Clear title describing the change
+    - Summary section with bullet points
+    - Test plan section
 
 ## Constraints
 

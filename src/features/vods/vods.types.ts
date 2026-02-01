@@ -1,6 +1,7 @@
-import type { cachedVods } from "@/src/db/schema";
+import type { cachedVods, vodPlaybackProgress } from "@/src/db/schema";
 
 type CachedVideoSelect = typeof cachedVods.$inferSelect;
+type VodPlaybackProgressSelect = typeof vodPlaybackProgress.$inferSelect;
 
 type TwitchUser = {
 	id: string;
@@ -41,4 +42,5 @@ export type {
 	ChannelCacheWithVideo,
 	TwitchUser,
 	TwitchVideo,
+	VodPlaybackProgressSelect,
 };

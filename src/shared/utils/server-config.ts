@@ -1,5 +1,5 @@
 // Default port (used as fallback when PORT env var is not set)
-const DEFAULT_PORT = 9442;
+const DEFAULT_PORT = 9447;
 
 // Valid protocols for app configuration
 const ALLOWED_PROTOCOLS = ["http", "https"];
@@ -57,11 +57,11 @@ function getAuthRedirectUri() {
 }
 
 export {
-	DEFAULT_PORT,
-	APP_PORT,
 	APP_HOST,
+	APP_PORT,
 	APP_PROTOCOL,
 	AUTH_CALLBACK_PATH,
+	DEFAULT_PORT,
 	getAppBaseUrl,
 	getAuthRedirectUri,
 };

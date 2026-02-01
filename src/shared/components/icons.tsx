@@ -161,6 +161,19 @@ function ChatIcon({ className, filled }: IconProps & { filled?: boolean }) {
 	);
 }
 
+function GripIcon({ className }: IconProps) {
+	return (
+		<svg className={className} viewBox="0 0 24 24" fill="currentColor">
+			<circle cx="8" cy="6" r="2" />
+			<circle cx="16" cy="6" r="2" />
+			<circle cx="8" cy="12" r="2" />
+			<circle cx="16" cy="12" r="2" />
+			<circle cx="8" cy="18" r="2" />
+			<circle cx="16" cy="18" r="2" />
+		</svg>
+	);
+}
+
 export {
 	PlusIcon,
 	FilmIcon,
@@ -174,4 +187,5 @@ export {
 	ChevronRightIcon,
 	MenuIcon,
 	ChatIcon,
+	GripIcon,
 };
