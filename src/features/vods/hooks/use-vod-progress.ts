@@ -38,7 +38,7 @@ function useVodRecentProgress() {
 	});
 }
 
-function useSaveProgress() {
+function useSaveVodProgress() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
@@ -51,7 +51,7 @@ function useSaveProgress() {
 	});
 }
 
-function useDeleteProgress() {
+function useDeleteVodProgress() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
@@ -65,8 +65,8 @@ function useDeleteProgress() {
 }
 
 export {
-	useDeleteProgress,
-	useSaveProgress,
+	useDeleteVodProgress,
+	useSaveVodProgress,
 	useVodProgress,
 	useVodProgressBulk,
 	useVodRecentProgress,

@@ -2,7 +2,7 @@ import { memo, useCallback, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { watchVod } from "@/src/features/vods/api/vods-mutations";
-import { useSaveProgress, useVodProgressBulk } from "@/src/features/vods/hooks/use-vod-progress";
+import { useSaveVodProgress, useVodProgressBulk } from "@/src/features/vods/hooks/use-vod-progress";
 import { useVodSearch } from "@/src/features/vods/hooks/use-vods";
 import { ArrowLeftIcon, SearchIcon } from "@/src/shared/components/icons";
 import {
@@ -40,7 +40,7 @@ function VodsPage() {
 		return map;
 	}, [progressData]);
 
-	const saveProgressMutation = useSaveProgress();
+	const saveProgressMutation = useSaveVodProgress();
 
 	function handleSearch(event: React.FormEvent) {
 		event.preventDefault();
