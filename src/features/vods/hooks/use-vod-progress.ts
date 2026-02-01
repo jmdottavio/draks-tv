@@ -29,7 +29,7 @@ function useVodProgressBulk(vodIds: Array<string>) {
 	});
 }
 
-function useRecentProgress() {
+function useVodRecentProgress() {
 	return useQuery({
 		queryKey: QUERY_KEYS.vodProgressRecent,
 		queryFn: fetchRecentProgress,
@@ -64,8 +64,8 @@ function useDeleteProgress() {
 
 export {
 	useDeleteProgress,
-	useRecentProgress,
 	useSaveProgress,
 	useVodProgress,
 	useVodProgressBulk,
+	useVodRecentProgress,
 };
