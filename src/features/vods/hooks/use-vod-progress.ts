@@ -46,6 +46,7 @@ function useSaveProgress() {
 		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({ queryKey: getVodProgressQueryKey(variables.vodId) });
 			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.vodProgress });
+			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.vodProgressRecent });
 		},
 	});
 }
@@ -58,6 +59,7 @@ function useDeleteProgress() {
 		onSuccess: (_, vodId) => {
 			queryClient.invalidateQueries({ queryKey: getVodProgressQueryKey(vodId) });
 			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.vodProgress });
+			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.vodProgressRecent });
 		},
 	});
 }
