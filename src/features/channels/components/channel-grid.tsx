@@ -1,4 +1,17 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
+
+import {
+	DndContext,
+	PointerSensor,
+	closestCenter,
+	useSensor,
+	useSensors,
+	type DragEndEvent,
+} from "@dnd-kit/core";
+import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+import { GripIcon } from "@/src/shared/components/icons";
 
 import { useReorderFavorites } from "../hooks/use-channels";
 
@@ -10,14 +23,57 @@ type ChannelGridProps = {
 	channels: Array<Channel>;
 };
 
+type SortableChannelCardProps = {
+	channel: Channel;
+	priority: boolean;
+};
+
+function SortableChannelCard({ channel, priority }: SortableChannelCardProps) {
+	const {
+		attributes,
+		listeners,
+		setNodeRef,
+		setActivatorNodeRef,
+		transform,
+		transition,
+		isDragging,
+	} = useSortable({
+		id: channel.id,
+		disabled: !channel.isFavorite,
+	});
+
+	const style = {
+		transform: CSS.Transform.toString(transform),
+		transition,
+	};
+
+	return (
+		<div ref={setNodeRef} style={style} className="relative">
+			{channel.isFavorite && (
+				<div
+					ref={setActivatorNodeRef}
+					{...attributes}
+					{...listeners}
+					className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 bg-surface-elevated border border-surface-border-muted rounded-md px-4 py-1 cursor-grab active:cursor-grabbing hover:bg-surface-card hover:border-twitch-purple transition-all"
+				>
+					<GripIcon className="w-4 h-4 text-text-dim rotate-90" />
+				</div>
+			)}
+			<ChannelCard channel={channel} priority={priority} isDragging={isDragging} />
+		</div>
+	);
+}
+
 function ChannelGrid({ channels }: ChannelGridProps) {
-	const [draggedId, setDraggedId] = useState<string | null>(null);
-	const [dragOverId, setDragOverId] = useState<string | null>(null);
-	const dragCounter = useRef(0);
+	const sensors = useSensors(
+		useSensor(PointerSensor, {
+			activationConstraint: { distance: 8 },
+		}),
+	);
 
 	const reorderFavoritesMutation = useReorderFavorites();
 
-	const { liveFavorites, offlineFavorites, liveNonFavorites, allFavorites, priorityIds } = useMemo(() => {
+	const { allFavorites, allVisibleChannels, priorityIds } = useMemo(() => {
 		const liveFavoriteChannels: Array<Channel> = [];
 		const offlineFavoriteChannels: Array<Channel> = [];
 		const liveNonFavoriteChannels: Array<Channel> = [];
@@ -35,102 +91,52 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 		}
 
 		// First 6 cards get priority loading (typically first row)
-		const allVisibleChannels = [...liveFavoriteChannels, ...offlineFavoriteChannels, ...liveNonFavoriteChannels];
-		const priorityChannelIds = new Set(allVisibleChannels.slice(0, 6).map((channel) => channel.id));
+		const allVisibleChannels = [
+			...liveFavoriteChannels,
+			...offlineFavoriteChannels,
+			...liveNonFavoriteChannels,
+		];
+		const priorityChannelIds = new Set(
+			allVisibleChannels.slice(0, 6).map((channel) => channel.id),
+		);
 
 		return {
-			liveFavorites: liveFavoriteChannels,
-			offlineFavorites: offlineFavoriteChannels,
-			liveNonFavorites: liveNonFavoriteChannels,
 			allFavorites: [...liveFavoriteChannels, ...offlineFavoriteChannels],
+			allVisibleChannels,
 			priorityIds: priorityChannelIds,
 		};
 	}, [channels]);
 
-	function handleDragStart(event: React.DragEvent, channelId: string) {
-		setDraggedId(channelId);
-		event.dataTransfer.effectAllowed = "move";
-		event.dataTransfer.setData("text/plain", channelId);
-	}
+	function handleDragEnd(event: DragEndEvent) {
+		const { active, over } = event;
 
-	function handleDragEnd() {
-		setDraggedId(null);
-		setDragOverId(null);
-		dragCounter.current = 0;
-	}
-
-	function handleDragEnter(event: React.DragEvent, channelId: string) {
-		event.preventDefault();
-		dragCounter.current++;
-
-		if (channelId !== draggedId) {
-			setDragOverId(channelId);
+		if (over === null || active.id === over.id) {
+			return;
 		}
-	}
 
-	function handleDragLeave() {
-		dragCounter.current--;
+		const oldIndex = allFavorites.findIndex((channel) => channel.id === active.id);
+		const newIndex = allFavorites.findIndex((channel) => channel.id === over.id);
 
-		if (dragCounter.current === 0) {
-			setDragOverId(null);
-		}
-	}
-
-	function handleDragOver(event: React.DragEvent) {
-		event.preventDefault();
-		event.dataTransfer.dropEffect = "move";
-	}
-
-	function handleDrop(event: React.DragEvent, targetId: string) {
-		event.preventDefault();
-		dragCounter.current = 0;
-
-		if (draggedId === null || draggedId === targetId) {
-			setDraggedId(null);
-			setDragOverId(null);
+		if (oldIndex === -1 || newIndex === -1) {
 			return;
 		}
 
 		const currentOrder = allFavorites.map((channel) => channel.id);
-		const draggedIndex = currentOrder.indexOf(draggedId);
-		const targetIndex = currentOrder.indexOf(targetId);
-
-		if (draggedIndex === -1 || targetIndex === -1) {
-			setDraggedId(null);
-			setDragOverId(null);
-			return;
-		}
-
-		const newOrder = [...currentOrder];
-		newOrder.splice(draggedIndex, 1);
-		newOrder.splice(targetIndex, 0, draggedId);
-
+		const newOrder = arrayMove(currentOrder, oldIndex, newIndex);
 		reorderFavoritesMutation.mutate(newOrder);
-
-		setDraggedId(null);
-		setDragOverId(null);
 	}
 
-	function getDragHandlers(channelId: string) {
-		return {
-			onDragStart: (event: React.DragEvent) => handleDragStart(event, channelId),
-			onDragEnd: handleDragEnd,
-			onDragEnter: (event: React.DragEvent) => handleDragEnter(event, channelId),
-			onDragLeave: handleDragLeave,
-			onDragOver: handleDragOver,
-			onDrop: (event: React.DragEvent) => handleDrop(event, channelId),
-			isDragging: draggedId === channelId,
-			isDropTarget: dragOverId === channelId && draggedId !== channelId,
-		};
-	}
-
-	const hasVisibleChannels =
-		liveFavorites.length > 0 || offlineFavorites.length > 0 || liveNonFavorites.length > 0;
+	const hasVisibleChannels = allVisibleChannels.length > 0;
 
 	if (!hasVisibleChannels) {
 		return (
 			<div className="flex flex-col items-center justify-center text-center py-20 text-text-dim">
-				<svg className="w-12 h-12 mb-4 opacity-30" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+				<svg
+					className="w-12 h-12 mb-4 opacity-30"
+					viewBox="0 0 24 24"
+					fill="currentColor"
+					aria-hidden="true"
+				>
 					<circle cx="12" cy="12" r="10" />
 				</svg>
 				<p className="text-base font-medium text-text-secondary mb-1">
@@ -143,21 +149,23 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 		);
 	}
 
-	// Combined list in order: live favorites, offline favorites, live non-favorites
-	const sortedChannels = [...liveFavorites, ...offlineFavorites, ...liveNonFavorites];
-
 	return (
-		<div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5 pt-4">
-			{sortedChannels.map((channel) => (
-				<ChannelCard
-					key={channel.id}
-					channel={channel}
-					variant="full"
-					priority={priorityIds.has(channel.id)}
-					dragHandlers={channel.isFavorite ? getDragHandlers(channel.id) : undefined}
-				/>
-			))}
-		</div>
+		<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+			<SortableContext
+				items={allVisibleChannels.map((channel) => channel.id)}
+				strategy={rectSortingStrategy}
+			>
+				<div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5 pt-4">
+					{allVisibleChannels.map((channel) => (
+						<SortableChannelCard
+							key={channel.id}
+							channel={channel}
+							priority={priorityIds.has(channel.id)}
+						/>
+					))}
+				</div>
+			</SortableContext>
+		</DndContext>
 	);
 }
 

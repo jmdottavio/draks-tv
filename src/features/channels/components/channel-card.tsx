@@ -1,6 +1,6 @@
 import { memo } from "react";
 
-import { ChatIcon, GripIcon, StarIcon } from "@/src/shared/components/icons";
+import { ChatIcon, StarIcon } from "@/src/shared/components/icons";
 import {
 	formatDate,
 	formatDuration,
@@ -11,13 +11,12 @@ import {
 import { useToggleFavorite } from "../hooks/use-channels";
 import { useOpenChat, useWatchLive, useWatchVod } from "../hooks/use-launch";
 
-import type { Channel, DragHandlers } from "../channels.types";
+import type { Channel } from "../channels.types";
 
 type ChannelCardProps = {
 	channel: Channel;
-	variant?: "full" | "compact";
 	priority?: boolean;
-	dragHandlers?: DragHandlers | undefined;
+	isDragging?: boolean;
 };
 
 function getWatchButtonClassName(isWatching: boolean) {
@@ -47,7 +46,7 @@ function getChatButtonClassName(isOpeningChat: boolean) {
 	return `${base} bg-surface-elevated border-surface-border-muted text-text-muted hover:text-text-primary hover:bg-twitch-purple hover:border-twitch-purple cursor-pointer`;
 }
 
-function ChannelCardComponent({ channel, variant = "full", priority = false, dragHandlers }: ChannelCardProps) {
+function ChannelCardComponent({ channel, priority = false, isDragging = false }: ChannelCardProps) {
 	const toggleFavoriteMutation = useToggleFavorite();
 	const watchLiveMutation = useWatchLive();
 	const watchVodMutation = useWatchVod();
@@ -89,99 +88,17 @@ function ChannelCardComponent({ channel, variant = "full", priority = false, dra
 		? `Remove ${channel.displayName} from favorites`
 		: `Add ${channel.displayName} to favorites`;
 
-	// Compact variant for offline favorites
-	if (variant === "compact") {
-		return (
-			<div className="flex items-center gap-4 bg-surface-card border border-surface-border-muted rounded-lg px-5 py-4 transition-all hover:border-surface-border">
-				{channel.profileImage ? (
-					<img
-						src={channel.profileImage}
-						alt={channel.displayName}
-						className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-					/>
-				) : (
-					<div className="w-12 h-12 rounded-full bg-surface-elevated flex items-center justify-center text-text-muted text-lg font-semibold flex-shrink-0">
-						{channel.displayName.charAt(0).toUpperCase()}
-					</div>
-				)}
-
-				<div className="flex-1 min-w-0">
-					<span className="font-semibold text-base text-twitch-purple-light truncate block">
-						{channel.displayName}
-					</span>
-					{channel.latestVod !== null && (
-						<>
-							<span className="text-sm text-text-muted truncate block">
-								{channel.latestVod.title}
-							</span>
-							<span className="text-sm text-text-dim">
-								{formatDuration(channel.latestVod.duration)} ·{" "}
-								{formatDate(channel.latestVod.createdAt)}
-							</span>
-						</>
-					)}
-				</div>
-
-				<div className="flex items-center gap-2 flex-shrink-0">
-					{channel.latestVod !== null && (
-						<button
-							type="button"
-							onClick={handleWatchClick}
-							disabled={isWatching}
-							className={getWatchButtonClassName(isWatching)}
-						>
-							{isWatchingVod ? "Playing" : "Watch VOD"}
-						</button>
-					)}
-					<button
-						type="button"
-						onClick={handleFavoriteClick}
-						disabled={isToggling}
-						aria-label={favoriteButtonLabel}
-						aria-pressed={channel.isFavorite}
-						className={`p-2 rounded-full transition-all hover:scale-110 ${
-							channel.isFavorite ? "text-favorite" : "text-text-dim"
-						} ${isToggling ? "opacity-50 cursor-not-allowed" : ""}`}
-					>
-						<StarIcon className="w-5 h-5" filled={channel.isFavorite} />
-					</button>
-				</div>
-			</div>
-		);
-	}
-
-	// Full variant (default)
 	const thumbnailUrl = getThumbnailUrl(channel);
 	const hasContent = channel.isLive || channel.latestVod !== null;
-	const isDraggable = dragHandlers !== undefined;
 
 	const cardClassName = `bg-surface-card border rounded-lg overflow-hidden transition-all hover:-translate-y-0.5 ${
 		channel.isLive ? "border-live" : "border-surface-border-muted hover:border-surface-border"
-	} ${dragHandlers?.isDragging ? "opacity-50 scale-95" : ""} ${
-		dragHandlers?.isDropTarget ? "ring-2 ring-twitch-purple ring-offset-2 ring-offset-surface-page" : ""
-	}`;
+	} ${isDragging ? "opacity-50 scale-95" : ""}`;
 
 	return (
-		<div className="relative">
-			{/* Drag Handle - overlaps top of card */}
-			{isDraggable && (
-				<div
-					draggable
-					onDragStart={dragHandlers.onDragStart}
-					onDragEnd={dragHandlers.onDragEnd}
-					onDragEnter={dragHandlers.onDragEnter}
-					onDragLeave={dragHandlers.onDragLeave}
-					onDragOver={dragHandlers.onDragOver}
-					onDrop={dragHandlers.onDrop}
-					className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 bg-surface-elevated border border-surface-border-muted rounded-md px-4 py-1 cursor-grab active:cursor-grabbing hover:bg-surface-card hover:border-twitch-purple transition-all"
-				>
-					<GripIcon className="w-4 h-4 text-text-dim rotate-90" />
-				</div>
-			)}
-
-			<div className={cardClassName}>
-				{/* Thumbnail */}
-				<div className="relative aspect-video bg-surface-elevated">
+		<div className={cardClassName}>
+			{/* Thumbnail */}
+			<div className="relative aspect-video bg-surface-elevated">
 				{thumbnailUrl !== null && (
 					<img
 						src={thumbnailUrl}
@@ -303,7 +220,6 @@ function ChannelCardComponent({ channel, variant = "full", priority = false, dra
 						)}
 					</div>
 				)}
-			</div>
 			</div>
 		</div>
 	);
