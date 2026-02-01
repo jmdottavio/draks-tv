@@ -11,16 +11,16 @@
 ### Medium Priority
 
 - Tooltip on sidebar icons showing channel name and status
-- Channel detail page when clicking a channel
-    - Proper `/channels/:id` route with URL
-    - Show latest 5 VODs with watch buttons
-    - "View All VODs" link to VODs search
 - Overall UI refresh.
     - The sidebar's header is not aligned with the page header (it's slightly smaller / higher up)
     - The sidebar has a left/right chevron but the main section has a hamburger icon and they both do the same thing
     - The favorite but offline channels is too wide, should be more of a 2 column layout at least.
     - If it is possible to show the preview image for the VODs whenever showing them
     - The live channel items (each individual channel in the live section) should be more compact. They are too tall and wide.
+- Channel detail page when clicking a channel
+    - Proper `/channels/:id` route with URL
+    - Show latest 5 VODs with watch buttons
+    - "View All VODs" link to VODs search
 - A means of following or unfollowing channels from the sidebar or main section.
 - Browse mode - I still want a way to search/browse channels that I don't have favorited or followed.
     - This should be both a separate page and small sections on the main page (that load more lazily down below).
