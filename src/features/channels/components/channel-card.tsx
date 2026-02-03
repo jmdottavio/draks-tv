@@ -3,7 +3,7 @@ import { memo, useCallback } from "react";
 import { ChatIcon, StarIcon } from "@/src/shared/components/icons";
 import {
 	formatDate,
-	formatDuration,
+	formatDurationSeconds,
 	formatThumbnail,
 	formatViewers,
 } from "@/src/shared/utils/format";
@@ -82,8 +82,7 @@ function arePropsEqual(prevProps: ChannelCardProps, nextProps: ChannelCardProps)
 
 	// Check channel primitive fields
 	if (prev.id !== next.id) return false;
-	if (prev.login !== next.login) return false;
-	if (prev.displayName !== next.displayName) return false;
+	if (prev.channelName !== next.channelName) return false;
 	if (prev.profileImage !== next.profileImage) return false;
 	if (prev.isFavorite !== next.isFavorite) return false;
 	if (prev.isLive !== next.isLive) return false;
@@ -109,7 +108,7 @@ function arePropsEqual(prevProps: ChannelCardProps, nextProps: ChannelCardProps)
 	} else {
 		if (prev.latestVod.id !== next.latestVod.id) return false;
 		if (prev.latestVod.title !== next.latestVod.title) return false;
-		if (prev.latestVod.duration !== next.latestVod.duration) return false;
+		if (prev.latestVod.durationSeconds !== next.latestVod.durationSeconds) return false;
 		if (prev.latestVod.createdAt !== next.latestVod.createdAt) return false;
 		if (prev.latestVod.thumbnailUrl !== next.latestVod.thumbnailUrl) return false;
 	}
@@ -138,17 +137,17 @@ const ChannelCard = memo(function ChannelCard({
 		if (isWatching) return;
 
 		if (channel.isLive) {
-			watchLiveMutation.mutate(channel.login);
+			watchLiveMutation.mutate(channel.channelName);
 			return;
 		}
 
 		if (channel.latestVod !== null) {
-			watchVodMutation.mutate({ id: channel.latestVod.id });
+			watchVodMutation.mutate({ id: channel.latestVod.id, startTimeSeconds: undefined });
 		}
 	}, [
 		isWatching,
 		channel.isLive,
-		channel.login,
+		channel.channelName,
 		channel.latestVod,
 		watchLiveMutation,
 		watchVodMutation,
@@ -166,12 +165,12 @@ const ChannelCard = memo(function ChannelCard({
 
 	const handleChatClick = useCallback(() => {
 		if (isOpeningChat) return;
-		openChatMutation.mutate(channel.login);
-	}, [isOpeningChat, openChatMutation, channel.login]);
+	openChatMutation.mutate(channel.channelName);
+	}, [isOpeningChat, openChatMutation, channel.channelName]);
 
 	const favoriteButtonLabel = channel.isFavorite
-		? `Remove ${channel.displayName} from favorites`
-		: `Add ${channel.displayName} to favorites`;
+		? `Remove ${channel.channelName} from favorites`
+		: `Add ${channel.channelName} to favorites`;
 
 	const thumbnailUrl = getThumbnailUrl(channel);
 	const hasContent = channel.isLive || channel.latestVod !== null;
@@ -187,7 +186,7 @@ const ChannelCard = memo(function ChannelCard({
 				{thumbnailUrl !== null && (
 					<img
 						src={thumbnailUrl}
-						alt={channel.displayName}
+					alt={channel.channelName}
 						className="w-full h-full object-cover"
 						fetchPriority={priority ? "high" : "auto"}
 						loading={priority ? "eager" : "lazy"}
@@ -210,9 +209,9 @@ const ChannelCard = memo(function ChannelCard({
 
 				{channel.latestVod !== null && !channel.isLive && (
 					<span className="absolute bottom-2 right-2 bg-black/80 text-white text-sm font-medium px-2 py-1 rounded">
-						{formatDuration(channel.latestVod.duration)}
-					</span>
-				)}
+					{formatDurationSeconds(channel.latestVod.durationSeconds)}
+				</span>
+			)}
 
 				<button
 					type="button"
@@ -231,20 +230,20 @@ const ChannelCard = memo(function ChannelCard({
 			{/* Info */}
 			<div className="p-4">
 				<div className="flex items-center gap-3 mb-3">
-					{channel.profileImage ? (
-						<img
-							src={channel.profileImage}
-							alt={channel.displayName}
-							className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-						/>
-					) : (
-						<div className="w-10 h-10 rounded-full bg-surface-elevated flex items-center justify-center text-text-muted text-base font-semibold flex-shrink-0">
-							{channel.displayName.charAt(0).toUpperCase()}
-						</div>
-					)}
-					<span className="font-semibold text-base text-twitch-purple-light truncate">
-						{channel.displayName}
-					</span>
+				{channel.profileImage ? (
+					<img
+						src={channel.profileImage}
+						alt={channel.channelName}
+						className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+					/>
+				) : (
+					<div className="w-10 h-10 rounded-full bg-surface-elevated flex items-center justify-center text-text-muted text-base font-semibold flex-shrink-0">
+						{channel.channelName.charAt(0).toUpperCase()}
+					</div>
+				)}
+				<span className="font-semibold text-base text-twitch-purple-light truncate">
+					{channel.channelName}
+				</span>
 				</div>
 
 				{channel.isLive && channel.stream !== null && (
@@ -274,8 +273,8 @@ const ChannelCard = memo(function ChannelCard({
 						</div>
 						<div className="flex items-center gap-3 text-sm text-text-muted">
 							<span className="text-text-dim">
-								{formatDuration(channel.latestVod.duration)}
-							</span>
+						{formatDurationSeconds(channel.latestVod.durationSeconds)}
+					</span>
 							<span>{formatDate(channel.latestVod.createdAt)}</span>
 						</div>
 					</>
@@ -296,7 +295,7 @@ const ChannelCard = memo(function ChannelCard({
 								type="button"
 								onClick={handleChatClick}
 								disabled={isOpeningChat}
-								aria-label={`Open chat for ${channel.displayName}`}
+						aria-label={`Open chat for ${channel.channelName}`}
 								title={isOpeningChat ? "Opening..." : "Open Chat"}
 								className={getChatButtonClassName(isOpeningChat)}
 							>

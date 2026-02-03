@@ -87,7 +87,14 @@ bun run lint:check    # Run oxlint
 bun run format        # Format with oxfmt
 bun run format:check  # Check formatting
 bun run db:generate   # Drizzle generate
-bun run db:push       # Drizzle push
+```
+
+## Database Migrations
+
+Use the SQLite CLI to apply migrations:
+
+```bash
+sqlite3 "data/draks-tv.db" ".read drizzle/<migration>.sql"
 ```
 
 ## Knowledge Files

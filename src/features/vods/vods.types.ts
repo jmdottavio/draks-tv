@@ -1,7 +1,13 @@
-import type { cachedVods, vodPlaybackProgress } from "@/src/db/schema";
+import type { vods } from "@/src/db/schema";
 
-export type CachedVideoSelect = typeof cachedVods.$inferSelect;
-export type VodPlaybackProgressSelect = typeof vodPlaybackProgress.$inferSelect;
+export type VodSelect = typeof vods.$inferSelect;
+
+export type VodProgressSelect = {
+	vodId: string;
+	playbackPositionSeconds: number;
+	durationSeconds: number;
+	playbackUpdatedAt: string | null;
+};
 
 export type TwitchUser = {
 	id: string;
@@ -18,20 +24,4 @@ export type TwitchVideo = {
 	duration: string;
 	created_at: string;
 	thumbnail_url: string;
-};
-
-export type ChannelCacheInput = {
-	channelId: string;
-	isLive: boolean;
-	lastLiveAt: string | null;
-	latestVideoId: number | null;
-};
-
-export type ChannelCacheWithVideo = {
-	channelId: string;
-	isLive: boolean;
-	lastLiveAt: string | null;
-	latestVideoId: number | null;
-	updatedAt: string;
-	latestVideo: CachedVideoSelect | null;
 };

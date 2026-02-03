@@ -1,13 +1,11 @@
 const MAX_ID_LENGTH = 50;
-const MAX_LOGIN_LENGTH = 25;
-const MAX_DISPLAY_NAME_LENGTH = 100;
+const MAX_CHANNEL_NAME_LENGTH = 100;
 const MAX_PROFILE_IMAGE_LENGTH = 500;
 const MAX_ORDERED_IDS_COUNT = 1000;
 
 export type AddFavoriteRequest = {
 	id: string;
-	login: string;
-	displayName: string;
+	channelName: string;
 	profileImage: string;
 };
 
@@ -30,20 +28,12 @@ export function validateAddFavoriteRequest(body: unknown): AddFavoriteRequest | 
 		return new Error(`id must not exceed ${MAX_ID_LENGTH} characters`);
 	}
 
-	if (typeof data.login !== "string" || data.login.length === 0) {
-		return new Error("login is required and must be a non-empty string");
+	if (typeof data.channelName !== "string" || data.channelName.length === 0) {
+		return new Error("channelName is required and must be a non-empty string");
 	}
 
-	if (data.login.length > MAX_LOGIN_LENGTH) {
-		return new Error(`login must not exceed ${MAX_LOGIN_LENGTH} characters`);
-	}
-
-	if (typeof data.displayName !== "string" || data.displayName.length === 0) {
-		return new Error("displayName is required and must be a non-empty string");
-	}
-
-	if (data.displayName.length > MAX_DISPLAY_NAME_LENGTH) {
-		return new Error(`displayName must not exceed ${MAX_DISPLAY_NAME_LENGTH} characters`);
+	if (data.channelName.length > MAX_CHANNEL_NAME_LENGTH) {
+		return new Error(`channelName must not exceed ${MAX_CHANNEL_NAME_LENGTH} characters`);
 	}
 
 	if (typeof data.profileImage !== "string" || data.profileImage.length === 0) {
@@ -56,8 +46,7 @@ export function validateAddFavoriteRequest(body: unknown): AddFavoriteRequest | 
 
 	return {
 		id: data.id,
-		login: data.login,
-		displayName: data.displayName,
+		channelName: data.channelName,
 		profileImage: data.profileImage,
 	};
 }

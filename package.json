@@ -13,7 +13,6 @@
 		"format": "oxfmt ./src",
 		"format:check": "oxfmt ./src --check",
 		"db:generate": "drizzle-kit generate",
-		"db:push": "drizzle-kit push",
 		"db:studio": "drizzle-kit studio"
 	},
 	"dependencies": {

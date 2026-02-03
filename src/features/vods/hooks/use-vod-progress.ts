@@ -10,9 +10,9 @@ import {
 import { saveVodProgress } from "../api/vods-mutations";
 import { fetchVodProgressBulk } from "../api/vods-queries";
 
-import type { VodPlaybackProgressSelect } from "../vods.types";
+import type { VodProgressSelect } from "../vods.types";
 
-const EMPTY_PROGRESS: Array<VodPlaybackProgressSelect> = [];
+const EMPTY_PROGRESS: Array<VodProgressSelect> = [];
 
 export function useVodProgressBulk(vodIds: Array<string>) {
 	const { data, isLoading, error } = useQuery({

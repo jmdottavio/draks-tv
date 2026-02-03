@@ -1,13 +1,10 @@
-import { desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNotNull, sql } from "drizzle-orm";
 
 import { database } from "@/src/db";
-import { vodPlaybackProgress } from "@/src/db/schema";
+import { vods } from "@/src/db/schema";
 
 export type SaveProgressInput = {
 	vodId: string;
-	channelId: string;
-	channelName: string;
-	vodTitle: string;
 	positionSeconds: number;
 	durationSeconds?: number | undefined;
 };
@@ -15,9 +12,14 @@ export type SaveProgressInput = {
 export function getPlaybackProgress(vodId: string) {
 	try {
 		const row = database
-			.select()
-			.from(vodPlaybackProgress)
-			.where(eq(vodPlaybackProgress.vodId, vodId))
+			.select({
+				vodId: vods.vodId,
+				playbackPositionSeconds: vods.playbackPositionSeconds,
+				durationSeconds: vods.durationSeconds,
+				playbackUpdatedAt: vods.playbackUpdatedAt,
+			})
+			.from(vods)
+			.where(eq(vods.vodId, vodId))
 			.get();
 
 		return row ?? null;
@@ -34,9 +36,14 @@ export function getPlaybackProgressBulk(vodIds: Array<string>) {
 		}
 
 		const rows = database
-			.select()
-			.from(vodPlaybackProgress)
-			.where(inArray(vodPlaybackProgress.vodId, vodIds))
+			.select({
+				vodId: vods.vodId,
+				playbackPositionSeconds: vods.playbackPositionSeconds,
+				durationSeconds: vods.durationSeconds,
+				playbackUpdatedAt: vods.playbackUpdatedAt,
+			})
+			.from(vods)
+			.where(inArray(vods.vodId, vodIds))
 			.all();
 
 		return rows;
@@ -57,30 +64,20 @@ export function savePlaybackProgress(data: SaveProgressInput) {
 		}
 
 		const result = database
-			.insert(vodPlaybackProgress)
-			.values({
-				vodId: data.vodId,
-				channelId: data.channelId,
-				channelName: data.channelName,
-				vodTitle: data.vodTitle,
-				positionSeconds: data.positionSeconds,
-				durationSeconds: data.durationSeconds ?? null,
+			.update(vods)
+			.set({
+				playbackPositionSeconds: data.positionSeconds,
+				playbackUpdatedAt: sql`CURRENT_TIMESTAMP`,
+				...(data.durationSeconds !== undefined
+					? { durationSeconds: data.durationSeconds }
+					: {}),
 			})
-			.onConflictDoUpdate({
-				target: vodPlaybackProgress.vodId,
-				set: {
-					positionSeconds: data.positionSeconds,
-					durationSeconds: data.durationSeconds ?? null,
-					vodTitle: data.vodTitle,
-					channelName: data.channelName,
-					updatedAt: sql`CURRENT_TIMESTAMP`,
-				},
-			})
-			.returning({ id: vodPlaybackProgress.id })
+			.where(eq(vods.vodId, data.vodId))
+			.returning({ vodId: vods.vodId })
 			.get();
 
 		if (result === undefined) {
-			return new Error("Upsert did not return a row");
+			return new Error("VOD not found");
 		}
 
 		return null;
@@ -93,9 +90,13 @@ export function savePlaybackProgress(data: SaveProgressInput) {
 export function deletePlaybackProgress(vodId: string) {
 	try {
 		const deleted = database
-			.delete(vodPlaybackProgress)
-			.where(eq(vodPlaybackProgress.vodId, vodId))
-			.returning({ vodId: vodPlaybackProgress.vodId })
+			.update(vods)
+			.set({
+				playbackPositionSeconds: 0,
+				playbackUpdatedAt: null,
+			})
+			.where(eq(vods.vodId, vodId))
+			.returning({ vodId: vods.vodId })
 			.all();
 
 		return deleted.length > 0;
@@ -108,9 +109,15 @@ export function deletePlaybackProgress(vodId: string) {
 export function getRecentProgress(limit = 10) {
 	try {
 		const rows = database
-			.select()
-			.from(vodPlaybackProgress)
-			.orderBy(desc(vodPlaybackProgress.updatedAt))
+			.select({
+				vodId: vods.vodId,
+				playbackPositionSeconds: vods.playbackPositionSeconds,
+				durationSeconds: vods.durationSeconds,
+				playbackUpdatedAt: vods.playbackUpdatedAt,
+			})
+			.from(vods)
+			.where(and(gt(vods.playbackPositionSeconds, 0), isNotNull(vods.playbackUpdatedAt)))
+			.orderBy(desc(vods.playbackUpdatedAt))
 			.limit(limit)
 			.all();
 

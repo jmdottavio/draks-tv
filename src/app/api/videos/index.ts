@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { getFollowedChannelIdentity, updateLatestVod } from "@/src/features/channels/followed-channels.repository";
+import { upsertVodsFromTwitch } from "@/src/features/vods/vods.repository";
 import { getVideos } from "@/src/services/twitch-service";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 import { requireAuth } from "@/src/shared/utils/require-auth";
@@ -39,6 +41,19 @@ export const Route = createFileRoute("/api/videos/")({
 
 				if (result instanceof Error) {
 					return createErrorResponse(result.message, ErrorCode.TWITCH_API_ERROR, 500);
+				}
+
+				const upsertResult = upsertVodsFromTwitch(result);
+				if (upsertResult instanceof Error) {
+					return createErrorResponse(upsertResult.message, ErrorCode.DATABASE_ERROR, 500);
+				}
+
+				const newestVideo = result[0];
+				if (newestVideo !== undefined) {
+					const channelIdentity = getFollowedChannelIdentity(userId);
+					if (!(channelIdentity instanceof Error) && channelIdentity !== null) {
+						updateLatestVod(userId, newestVideo.id, newestVideo.created_at);
+					}
 				}
 
 				return Response.json(result);

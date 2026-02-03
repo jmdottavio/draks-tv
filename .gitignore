@@ -7,3 +7,4 @@ favorites.json
 bun.lock
 .claude/
 tsconfig.tsbuildinfo
+.tanstack/

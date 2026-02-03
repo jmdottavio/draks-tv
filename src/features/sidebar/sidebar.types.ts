@@ -1,11 +1,10 @@
 export type SidebarChannel = {
 	id: string;
-	login: string;
-	displayName: string;
+	channelName: string;
 	profileImage: string;
 	isLive: boolean;
 	isFavorite: boolean;
 	viewerCount: number | null;
-	lastVodDate: string | null;
+	lastSeenAt: string | null;
 	gameName: string | null;
 };

@@ -80,6 +80,7 @@ src/
 
 - **Runtime/Package Manager**: Bun
 - **Database file**: `data/draks-tv.db`
+- **Migrations**: Use `sqlite3` to apply SQL (`sqlite3 "data/draks-tv.db" ".read drizzle/<migration>.sql"`). Drizzle Kit push prompts for interactive confirmation.
 - **Stream launching**: Requires Streamlink + VLC installed locally
 - **OAuth redirect URL**: `http://localhost:9442/callback`
 
@@ -94,7 +95,6 @@ bun run lint:check    # Run oxlint
 bun run format        # Format with oxfmt
 bun run format:check  # Check formatting
 bun run db:generate   # Drizzle generate
-bun run db:push       # Drizzle push
 ```
 
 ## Knowledge Files

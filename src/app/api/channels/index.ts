@@ -1,16 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { getAuth } from "@/src/features/auth/auth.repository";
-import { getAllFavorites } from "@/src/features/channels/favorites.repository";
-import { getFollowedChannels, getFollowedStreams, getUsers } from "@/src/services/twitch-service";
+import { getAllFollowedChannels } from "@/src/features/channels/followed-channels.repository";
 import {
 	getChannelsWithVideos,
 	processLiveStateChanges,
 	refreshOfflineChannelsBatched,
 } from "@/src/services/video-cache-service";
+import { getFollowedStreams } from "@/src/services/twitch-service";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 
-import type { CachedVideoSelect } from "@/src/features/vods/vods.types";
 import type { TwitchStream } from "@/src/services/twitch-service";
 
 type StreamData = {
@@ -24,25 +23,14 @@ type StreamData = {
 type VodData = {
 	id: string;
 	title: string;
-	duration: string;
+	durationSeconds: number;
 	createdAt: string;
 	thumbnailUrl: string;
 };
 
-function transformCachedVod(vod: CachedVideoSelect): VodData {
-	return {
-		id: vod.videoId,
-		title: vod.title,
-		duration: vod.duration,
-		createdAt: vod.createdAt,
-		thumbnailUrl: vod.thumbnailUrl,
-	};
-}
-
 type ChannelData = {
 	id: string;
-	login: string;
-	displayName: string;
+	channelName: string;
 	profileImage: string;
 	isLive: boolean;
 	isFavorite: boolean;
@@ -74,22 +62,16 @@ export const Route = createFileRoute("/api/channels/")({
 					return createErrorResponse("Not authenticated", ErrorCode.UNAUTHORIZED, 401);
 				}
 
-				const favoritesResult = getAllFavorites();
-
-				if (favoritesResult instanceof Error) {
+				const followedChannels = getAllFollowedChannels();
+				if (followedChannels instanceof Error) {
 					return createErrorResponse(
-						favoritesResult.message,
+						followedChannels.message,
 						ErrorCode.DATABASE_ERROR,
 						500,
 					);
 				}
 
-				// Parallelize Twitch API calls
-				const [streamsResult, followedResult] = await Promise.all([
-					getFollowedStreams(authResult.userId),
-					getFollowedChannels(authResult.userId),
-				]);
-
+				const streamsResult = await getFollowedStreams(authResult.userId);
 				if (streamsResult instanceof Error) {
 					return createErrorResponse(
 						streamsResult.message,
@@ -98,31 +80,14 @@ export const Route = createFileRoute("/api/channels/")({
 					);
 				}
 
-				if (followedResult instanceof Error) {
-					return createErrorResponse(
-						followedResult.message,
-						ErrorCode.TWITCH_API_ERROR,
-						500,
-					);
-				}
-
-				// Process live state changes (detect offline transitions)
 				const channelsThatWentOffline = processLiveStateChanges(streamsResult);
-
-				// Refresh videos for channels that just went offline (batched to avoid rate limits)
 				if (
 					!(channelsThatWentOffline instanceof Error) &&
 					channelsThatWentOffline.length > 0
 				) {
-					// Fire and forget - don't block response for VOD refresh
 					refreshOfflineChannelsBatched(channelsThatWentOffline).catch((error) => {
 						console.error("[channels-api] Failed to refresh offline channels:", error);
 					});
-				}
-
-				const favoriteIds = new Set<string>();
-				for (const favorite of favoritesResult) {
-					favoriteIds.add(favorite.id);
 				}
 
 				const streamsByUserId = new Map<string, TwitchStream>();
@@ -130,99 +95,64 @@ export const Route = createFileRoute("/api/channels/")({
 					streamsByUserId.set(stream.user_id, stream);
 				}
 
-				// Fetch profile images for non-favorite channels
-				const nonFavoriteUserIds: Array<string> = [];
-				for (const channel of followedResult) {
-					if (!favoriteIds.has(channel.broadcaster_id)) {
-						nonFavoriteUserIds.push(channel.broadcaster_id);
+				const offlineFavoriteIds: Array<string> = [];
+				for (const channel of followedChannels) {
+					if (channel.isFavorite && !streamsByUserId.has(channel.channelId)) {
+						offlineFavoriteIds.push(channel.channelId);
 					}
 				}
 
-				const profileImages = new Map<string, string>();
-
-				// Twitch API allows max 100 users per request - parallelize all batches
-				const userBatches: Array<Array<string>> = [];
-				for (let i = 0; i < nonFavoriteUserIds.length; i += 100) {
-					userBatches.push(nonFavoriteUserIds.slice(i, i + 100));
-				}
-
-				const batchResults = await Promise.all(
-					userBatches.map((batch) => getUsers({ ids: batch })),
-				);
-
-				for (const usersResult of batchResults) {
-					if (!(usersResult instanceof Error)) {
-						for (const user of usersResult) {
-							profileImages.set(user.id, user.profile_image_url);
-						}
-					}
-				}
-
-				// Collect offline favorite IDs for cache lookup
-				const offlineFavoriteIds = favoritesResult
-					.filter((favorite) => !streamsByUserId.has(favorite.id))
-					.map((favorite) => favorite.id);
-
-				// Get cached videos for offline favorites
 				const cachedChannels = getChannelsWithVideos(offlineFavoriteIds);
-
-				// Build a map for lookup
 				const vodsByChannelId = new Map<string, VodData>();
 				if (!(cachedChannels instanceof Error)) {
 					for (const cached of cachedChannels) {
-						if (cached.latestVideo !== null) {
-							vodsByChannelId.set(
-								cached.channelId,
-								transformCachedVod(cached.latestVideo),
-							);
+						if (cached.latestVod !== null) {
+							vodsByChannelId.set(cached.channelId, {
+								id: cached.latestVod.vodId,
+								title: cached.latestVod.title,
+								durationSeconds: cached.latestVod.durationSeconds,
+								createdAt: cached.latestVod.createdAt,
+								thumbnailUrl: cached.latestVod.thumbnailUrl,
+							});
 						}
 					}
 				}
 
 				const favoriteChannels: Array<ChannelData> = [];
+				const liveNonFavoriteChannels: Array<ChannelData> = [];
 
-				for (const favorite of favoritesResult) {
-					const rawStream = streamsByUserId.get(favorite.id);
+				for (const channel of followedChannels) {
+					const rawStream = streamsByUserId.get(channel.channelId);
 					const isLive = rawStream !== undefined;
 					const stream = rawStream !== undefined ? transformStream(rawStream) : null;
 
-					favoriteChannels.push({
-						id: favorite.id,
-						login: favorite.login,
-						displayName: favorite.displayName,
-						profileImage: favorite.profileImage,
-						isLive,
-						isFavorite: true,
-						stream,
-						latestVod: vodsByChannelId.get(favorite.id) ?? null,
-					});
-				}
-
-				const nonFavoriteChannels: Array<ChannelData> = [];
-
-				for (const channel of followedResult) {
-					if (favoriteIds.has(channel.broadcaster_id)) {
+					if (channel.isFavorite) {
+						favoriteChannels.push({
+							id: channel.channelId,
+							channelName: channel.channelName,
+							profileImage: channel.profileImageUrl,
+							isLive,
+							isFavorite: true,
+							stream,
+							latestVod: vodsByChannelId.get(channel.channelId) ?? null,
+						});
 						continue;
 					}
 
-					const rawStream = streamsByUserId.get(channel.broadcaster_id);
-					const isLive = rawStream !== undefined;
-					const stream = rawStream !== undefined ? transformStream(rawStream) : null;
-
-					nonFavoriteChannels.push({
-						id: channel.broadcaster_id,
-						login: channel.broadcaster_login,
-						displayName: channel.broadcaster_name,
-						profileImage: profileImages.get(channel.broadcaster_id) ?? "",
-						isLive,
-						isFavorite: false,
-						stream,
-						latestVod: null,
-					});
+					if (isLive) {
+						liveNonFavoriteChannels.push({
+							id: channel.channelId,
+							channelName: channel.channelName,
+							profileImage: channel.profileImageUrl,
+							isLive,
+							isFavorite: false,
+							stream,
+							latestVod: null,
+						});
+					}
 				}
 
-				const allChannels = [...favoriteChannels, ...nonFavoriteChannels];
-
+				const allChannels = [...favoriteChannels, ...liveNonFavoriteChannels];
 				return Response.json(allChannels);
 			},
 		},

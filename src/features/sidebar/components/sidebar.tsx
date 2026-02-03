@@ -16,9 +16,9 @@ type ChannelItemProps = {
 	onFavoriteToggle: (id: string) => void;
 };
 
-function getOfflineStatusText(lastVodDate: string | null): string {
-	if (lastVodDate !== null) {
-		return `Last seen ${formatDate(lastVodDate)}`;
+function getOfflineStatusText(lastSeenAt: string | null): string {
+	if (lastSeenAt !== null) {
+		return `Last seen ${formatDate(lastSeenAt)}`;
 	}
 	return "Offline";
 }
@@ -56,16 +56,16 @@ const ChannelAvatar = memo(function ChannelAvatar({ channel, isExpanded }: Chann
 	return (
 		<div className="relative shrink-0 group/avatar">
 			{channel.profileImage ? (
-				<img
-					src={channel.profileImage}
-					alt={channel.displayName}
-					className={`rounded-full ring-2 ${ringColor} ${glowClass} transition-all duration-200 ${sizeClass}`}
-				/>
+			<img
+				src={channel.profileImage}
+				alt={channel.channelName}
+				className={`rounded-full ring-2 ${ringColor} ${glowClass} transition-all duration-200 ${sizeClass}`}
+			/>
 			) : (
 				<div
 					className={`rounded-full ring-2 ${ringColor} ${glowClass} transition-all duration-200 ${sizeClass} bg-sidebar-hover flex items-center justify-center text-sidebar-text-muted text-xs font-semibold`}
 				>
-					{channel.displayName.charAt(0).toUpperCase()}
+					{channel.channelName.charAt(0).toUpperCase()}
 				</div>
 			)}
 			{channel.isLive && (
@@ -98,7 +98,7 @@ const ChannelStatusInfo = memo(function ChannelStatusInfo({
 
 	return (
 		<div className="text-sm text-sidebar-text-dim">
-			{getOfflineStatusText(channel.lastVodDate)}
+			{getOfflineStatusText(channel.lastSeenAt)}
 		</div>
 	);
 });
@@ -109,8 +109,8 @@ const ChannelItem = memo(function ChannelItem({
 	onFavoriteToggle,
 }: ChannelItemProps) {
 	const handleClick = useCallback(async () => {
-		await watchLive(channel.login);
-	}, [channel.login]);
+		await watchLive(channel.channelName);
+	}, [channel.channelName]);
 
 	const handleFavoriteClick = useCallback(
 		(event: React.MouseEvent) => {
@@ -124,7 +124,7 @@ const ChannelItem = memo(function ChannelItem({
 		return (
 			<button
 				onClick={handleClick}
-				title={`${channel.displayName}${channel.isLive ? " (LIVE)" : ""}`}
+				title={`${channel.channelName}${channel.isLive ? " (LIVE)" : ""}`}
 				className="group flex w-full items-center justify-center py-2 transition-colors hover:bg-sidebar-hover rounded-lg"
 			>
 				<ChannelAvatar channel={channel} isExpanded={false} />
@@ -141,7 +141,7 @@ const ChannelItem = memo(function ChannelItem({
 				<ChannelAvatar channel={channel} isExpanded={true} />
 				<div className="min-w-0 flex-1">
 					<div className="truncate text-base font-semibold text-sidebar-text">
-						{channel.displayName}
+						{channel.channelName}
 					</div>
 					<ChannelStatusInfo channel={channel} />
 				</div>

@@ -15,7 +15,7 @@ import {
 } from "@/src/shared/utils/format";
 
 import type { SaveProgressInput } from "@/src/features/vods/playback-progress.repository";
-import type { TwitchVideo, VodPlaybackProgressSelect } from "@/src/features/vods/vods.types";
+import type { TwitchVideo, VodProgressSelect } from "@/src/features/vods/vods.types";
 
 export const Route = createFileRoute("/vods")({
 	component: VodsPage,
@@ -42,7 +42,7 @@ function VodsPage() {
 	const { data: progressData } = useVodProgressBulk(vodIds);
 
 	const vodProgressMap = useMemo(() => {
-		const map = new Map<string, VodPlaybackProgressSelect>();
+		const map = new Map<string, VodProgressSelect>();
 
 		for (const item of progressData) {
 			map.set(item.vodId, item);
@@ -117,8 +117,6 @@ function VodsPage() {
 							key={vod.id}
 							vod={vod}
 							progress={vodProgressMap.get(vod.id) ?? null}
-							channelId={vodSearchData.user.id}
-							channelName={vodSearchData.user.display_name}
 							onWatch={handleWatchVod}
 							onSaveProgress={saveProgressMutation.mutate}
 						/>
@@ -135,9 +133,7 @@ function VodsPage() {
 
 type VodCardProps = {
 	vod: TwitchVideo;
-	progress: VodPlaybackProgressSelect | null;
-	channelId: string;
-	channelName: string;
+	progress: VodProgressSelect | null;
 	onWatch: (id: string, startTimeSeconds?: number) => void;
 	onSaveProgress: (data: SaveProgressInput) => void;
 };
@@ -145,8 +141,6 @@ type VodCardProps = {
 const VodCard = memo(function VodCard({
 	vod,
 	progress,
-	channelId,
-	channelName,
 	onWatch,
 	onSaveProgress,
 }: VodCardProps) {
@@ -159,8 +153,8 @@ const VodCard = memo(function VodCard({
 	const durationSeconds = parseDurationToSeconds(vod.duration);
 	const progressPercent =
 		hasProgress && durationSeconds !== null && durationSeconds > 0
-			? (progress.positionSeconds / durationSeconds) * 100
-			: 0;
+		? (progress.playbackPositionSeconds / durationSeconds) * 100
+		: 0;
 
 	function handleWatchClick() {
 		onWatch(vod.id);
@@ -168,14 +162,14 @@ const VodCard = memo(function VodCard({
 
 	function handleResumeClick() {
 		if (hasProgress) {
-			onWatch(vod.id, progress.positionSeconds);
+			onWatch(vod.id, progress.playbackPositionSeconds);
 		}
 	}
 
 	function handleSaveProgressClick() {
 		setShowSaveInput(true);
 		if (hasProgress) {
-			setSaveInputValue(formatSecondsToTime(progress.positionSeconds));
+			setSaveInputValue(formatSecondsToTime(progress.playbackPositionSeconds));
 		}
 	}
 
@@ -189,9 +183,6 @@ const VodCard = memo(function VodCard({
 
 		onSaveProgress({
 			vodId: vod.id,
-			channelId: channelId,
-			channelName: channelName,
-			vodTitle: vod.title,
 			positionSeconds: seconds,
 			durationSeconds: durationSeconds ?? undefined,
 		});
@@ -240,7 +231,7 @@ const VodCard = memo(function VodCard({
 
 				{hasProgress && (
 					<div className="mb-3 text-xs text-text-muted">
-						Watched {formatSecondsToTime(progress.positionSeconds)}
+						Watched {formatSecondsToTime(progress.playbackPositionSeconds)}
 						{durationSeconds !== null && ` / ${formatSecondsToTime(durationSeconds)}`}
 					</div>
 				)}

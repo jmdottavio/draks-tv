@@ -9,15 +9,14 @@ export type Stream = {
 export type Vod = {
 	id: string;
 	title: string;
-	duration: string;
+	durationSeconds: number;
 	createdAt: string;
 	thumbnailUrl: string;
 };
 
 export type Channel = {
 	id: string;
-	login: string;
-	displayName: string;
+	channelName: string;
 	profileImage: string;
 	isFavorite: boolean;
 	isLive: boolean;
@@ -27,14 +26,12 @@ export type Channel = {
 
 export type FavoriteInput = {
 	id: string;
-	login: string;
-	displayName: string;
+	channelName: string;
 	profileImage: string;
 };
 
 export type FavoriteOutput = {
 	id: string;
-	login: string;
-	displayName: string;
+	channelName: string;
 	profileImage: string;
 };

@@ -31,6 +31,21 @@ export function formatDuration(duration: string): string {
 	return `${minutes}m`;
 }
 
+export function formatDurationSeconds(durationSeconds: number): string {
+	if (durationSeconds <= 0) {
+		return "0m";
+	}
+
+	const hours = Math.floor(durationSeconds / 3600);
+	const minutes = Math.floor((durationSeconds % 3600) / 60);
+
+	if (hours > 0) {
+		return `${hours}h ${minutes}m`;
+	}
+
+	return `${minutes}m`;
+}
+
 export function formatDate(dateString: string): string {
 	const date = new Date(dateString);
 

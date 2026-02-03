@@ -7,7 +7,7 @@ export async function watchVod({
 	startTimeSeconds,
 }: {
 	id: string;
-	startTimeSeconds: number | undefined;
+	startTimeSeconds?: number;
 }) {
 	const options: RequestInit = { method: "POST" };
 

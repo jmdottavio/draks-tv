@@ -5,7 +5,7 @@ import {
 	addFavorite,
 	removeFavorite,
 } from "@/src/features/channels/favorites.repository";
-import { getUsers } from "@/src/services/twitch-service";
+import { getFollowedChannelIdentity } from "@/src/features/channels/followed-channels.repository";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 import { requireAuth } from "@/src/shared/utils/require-auth";
 
@@ -44,31 +44,24 @@ export const Route = createFileRoute("/api/favorites/toggle/$id/")({
 					return Response.json({ isFavorite: false });
 				}
 
-				const usersResult = await getUsers({ ids: [id] });
+				const channelIdentity = getFollowedChannelIdentity(id);
 
-				if (usersResult instanceof Error) {
+				if (channelIdentity instanceof Error) {
 					return createErrorResponse(
-						usersResult.message,
-						ErrorCode.TWITCH_API_ERROR,
+						channelIdentity.message,
+						ErrorCode.DATABASE_ERROR,
 						500,
 					);
 				}
 
-				if (usersResult.length === 0) {
-					return createErrorResponse("User not found", ErrorCode.NOT_FOUND, 404);
-				}
-
-				const user = usersResult[0];
-
-				if (user === undefined) {
-					return createErrorResponse("User not found", ErrorCode.NOT_FOUND, 404);
+				if (channelIdentity === null) {
+					return createErrorResponse("Channel not found", ErrorCode.NOT_FOUND, 404);
 				}
 
 				const addResult = addFavorite({
-					id: user.id,
-					login: user.login,
-					displayName: user.display_name,
-					profileImage: user.profile_image_url,
+					id: channelIdentity.channelId,
+					channelName: channelIdentity.channelName,
+					profileImage: channelIdentity.profileImageUrl,
 				});
 
 				if (addResult instanceof Error) {

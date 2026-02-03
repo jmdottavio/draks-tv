@@ -1,7 +1,7 @@
-import { asc, count, eq, max } from "drizzle-orm";
+import { and, asc, count, eq, max, sql } from "drizzle-orm";
 
 import { database } from "@/src/db";
-import { favorites } from "@/src/db/schema";
+import { followedChannels } from "@/src/db/schema";
 
 import type { FavoriteInput, FavoriteOutput } from "./channels.types";
 
@@ -9,19 +9,18 @@ export function getAllFavorites() {
 	try {
 		const rows = database
 			.select({
-				twitchId: favorites.twitchId,
-				login: favorites.login,
-				displayName: favorites.displayName,
-				profileImage: favorites.profileImage,
+				channelId: followedChannels.channelId,
+				channelName: followedChannels.channelName,
+				profileImage: followedChannels.profileImageUrl,
 			})
-			.from(favorites)
-			.orderBy(asc(favorites.sortOrder))
+			.from(followedChannels)
+			.where(eq(followedChannels.isFavorite, true))
+			.orderBy(asc(followedChannels.sortOrder))
 			.all();
 
 		const result: Array<FavoriteOutput> = rows.map((row) => ({
-			id: row.twitchId,
-			login: row.login,
-			displayName: row.displayName,
+			id: row.channelId,
+			channelName: row.channelName,
 			profileImage: row.profileImage,
 		}));
 
@@ -37,8 +36,9 @@ export function addFavorite(favorite: FavoriteInput) {
 		database.transaction((transaction) => {
 			// Get next sort order inside the transaction
 			const result = transaction
-				.select({ maxOrder: max(favorites.sortOrder) })
-				.from(favorites)
+				.select({ maxOrder: max(followedChannels.sortOrder) })
+				.from(followedChannels)
+				.where(eq(followedChannels.isFavorite, true))
 				.get();
 
 			const nextSortOrder =
@@ -46,17 +46,18 @@ export function addFavorite(favorite: FavoriteInput) {
 					? result.maxOrder + 1
 					: 0;
 
-			// Insert with the sort order - use returning to verify
+			// Update existing followed channel to favorite
 			const inserted = transaction
-				.insert(favorites)
-				.values({
-					twitchId: favorite.id,
-					login: favorite.login,
-					displayName: favorite.displayName,
-					profileImage: favorite.profileImage,
+				.update(followedChannels)
+				.set({
+					isFavorite: true,
 					sortOrder: nextSortOrder,
+					profileImageUrl: favorite.profileImage,
+					channelName: favorite.channelName,
+					updatedAt: sql`CURRENT_TIMESTAMP`,
 				})
-				.returning({ id: favorites.id })
+				.where(eq(followedChannels.channelId, favorite.id))
+				.returning({ id: followedChannels.channelId })
 				.get();
 
 			if (inserted === undefined) {
@@ -74,9 +75,14 @@ export function addFavorite(favorite: FavoriteInput) {
 export function removeFavorite(twitchId: string) {
 	try {
 		const deleted = database
-			.delete(favorites)
-			.where(eq(favorites.twitchId, twitchId))
-			.returning({ twitchId: favorites.twitchId })
+			.update(followedChannels)
+			.set({
+				isFavorite: false,
+				sortOrder: 0,
+				updatedAt: sql`CURRENT_TIMESTAMP`,
+			})
+			.where(eq(followedChannels.channelId, twitchId))
+			.returning({ channelId: followedChannels.channelId })
 			.all();
 
 		return deleted.length > 0;
@@ -90,8 +96,10 @@ export function isFavorite(twitchId: string) {
 	try {
 		const result = database
 			.select({ count: count() })
-			.from(favorites)
-			.where(eq(favorites.twitchId, twitchId))
+			.from(followedChannels)
+			.where(
+				and(eq(followedChannels.channelId, twitchId), eq(followedChannels.isFavorite, true)),
+			)
 			.get();
 
 		return result !== undefined && result.count > 0;
@@ -103,19 +111,19 @@ export function isFavorite(twitchId: string) {
 
 export function reorderFavorites(orderedIds: Array<string>) {
 	try {
-		database.transaction((transaction) => {
-			for (let index = 0; index < orderedIds.length; index++) {
-				const twitchId = orderedIds[index];
+			database.transaction((transaction) => {
+				for (let index = 0; index < orderedIds.length; index++) {
+					const channelId = orderedIds[index];
 
-				if (twitchId !== undefined) {
-					transaction
-						.update(favorites)
-						.set({ sortOrder: index })
-						.where(eq(favorites.twitchId, twitchId))
-						.run();
+					if (channelId !== undefined) {
+						transaction
+							.update(followedChannels)
+							.set({ sortOrder: index, updatedAt: sql`CURRENT_TIMESTAMP` })
+							.where(eq(followedChannels.channelId, channelId))
+							.run();
+					}
 				}
-			}
-		});
+			});
 
 		return null;
 	} catch (error) {

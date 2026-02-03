@@ -7,18 +7,6 @@ export function parseSaveProgressBody(body: unknown) {
 		return new Error("Missing or invalid vodId");
 	}
 
-	if (!("channelId" in body) || typeof body.channelId !== "string") {
-		return new Error("Missing or invalid channelId");
-	}
-
-	if (!("channelName" in body) || typeof body.channelName !== "string") {
-		return new Error("Missing or invalid channelName");
-	}
-
-	if (!("vodTitle" in body) || typeof body.vodTitle !== "string") {
-		return new Error("Missing or invalid vodTitle");
-	}
-
 	if (!("positionSeconds" in body) || typeof body.positionSeconds !== "number") {
 		return new Error("Missing or invalid positionSeconds");
 	}
@@ -30,9 +18,6 @@ export function parseSaveProgressBody(body: unknown) {
 
 	return {
 		vodId: body.vodId,
-		channelId: body.channelId,
-		channelName: body.channelName,
-		vodTitle: body.vodTitle,
 		positionSeconds: body.positionSeconds,
 		durationSeconds,
 	};
