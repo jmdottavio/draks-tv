@@ -29,15 +29,6 @@ This file contains standards for React components, hooks, and state management.
 Hooks must be called in the exact same order on every render. Never place hooks after early returns or inside conditionals.
 
 ```tsx
-// ❌❌ Don't do this - hook after early return
-function UserProfile({ userId }: { userId: number | null }) {
-	if (!userId) {
-		return <div>No user selected</div>;
-	}
-
-	const [user, setUser] = useState<User | null>(null); // BREAKS RULES OF HOOKS
-}
-
 // ✅✅ Do this - hooks first, then conditionals
 function UserProfile({ userId }: { userId: number | null }) {
 	const [user, setUser] = useState<User | null>(null);
@@ -45,6 +36,15 @@ function UserProfile({ userId }: { userId: number | null }) {
 	if (!userId) {
 		return <div>No user selected</div>;
 	}
+}
+
+// ❌❌ Don't do this - hook after early return
+function UserProfile({ userId }: { userId: number | null }) {
+	if (!userId) {
+		return <div>No user selected</div>;
+	}
+
+	const [user, setUser] = useState<User | null>(null); // BREAKS RULES OF HOOKS
 }
 ```
 
@@ -55,6 +55,12 @@ function UserProfile({ userId }: { userId: number | null }) {
 Setting state inside useEffect causes render cascades. Use data fetching libraries (React Query, SWR) instead.
 
 ```tsx
+// ✅✅ Do this - use a data fetching library
+const { data: user, isLoading } = useQuery({
+	queryKey: ["user", userId],
+	queryFn: () => fetch(`/api/users/${userId}`).then((response) => response.json()),
+});
+
 // ❌❌ Don't do this - setState inside useEffect
 useEffect(() => {
 	setIsLoading(true);
@@ -63,12 +69,6 @@ useEffect(() => {
 		setIsLoading(false);
 	});
 }, [userId]);
-
-// ✅✅ Do this - use a data fetching library
-const { data: user, isLoading } = useQuery({
-	queryKey: ["user", userId],
-	queryFn: () => fetch(`/api/users/${userId}`).then((response) => response.json()),
-});
 ```
 
 ---
@@ -78,14 +78,9 @@ const { data: user, isLoading } = useQuery({
 `useEffect` often indicates you're synchronizing state that could be computed directly. Prefer deriving values from your data source.
 
 ```tsx
-// ❌❌ Don't do this - useEffect to transform data
+// ✅✅ Do this - derive directly from data
 function UserList({ users }: { users: Array<User> }) {
-	const [sortedUsers, setSortedUsers] = useState<Array<User>>([]);
-
-	useEffect(() => {
-		const sorted = [...users].sort((a, b) => a.name.localeCompare(b.name));
-		setSortedUsers(sorted);
-	}, [users]);
+	const sortedUsers = [...users].sort((a, b) => a.name.localeCompare(b.name));
 
 	return (
 		<ul>
@@ -96,9 +91,14 @@ function UserList({ users }: { users: Array<User> }) {
 	);
 }
 
-// ✅✅ Do this - derive directly from data
+// ❌❌ Don't do this - useEffect to transform data
 function UserList({ users }: { users: Array<User> }) {
-	const sortedUsers = [...users].sort((a, b) => a.name.localeCompare(b.name));
+	const [sortedUsers, setSortedUsers] = useState<Array<User>>([]);
+
+	useEffect(() => {
+		const sorted = [...users].sort((a, b) => a.name.localeCompare(b.name));
+		setSortedUsers(sorted);
+	}, [users]);
 
 	return (
 		<ul>
@@ -117,24 +117,6 @@ function UserList({ users }: { users: Array<User> }) {
 If a value can be computed from props, other state, or query data, compute it directly instead of storing it in state.
 
 ```tsx
-// ❌❌ Don't do this - useState for derived data
-function ProductList({ products }: { products: Array<Product> }) {
-	const [filteredProducts, setFilteredProducts] = useState<Array<Product>>([]);
-	const [searchTerm, setSearchTerm] = useState("");
-
-	useEffect(() => {
-		setFilteredProducts(products.filter((product) => product.name.includes(searchTerm)));
-	}, [products, searchTerm]);
-
-	return (
-		<div>
-			{filteredProducts.map((product) => (
-				<ProductCard key={product.id} product={product} />
-			))}
-		</div>
-	);
-}
-
 // ✅✅ Do this - compute directly
 function ProductList({ products }: { products: Array<Product> }) {
 	const [searchTerm, setSearchTerm] = useState("");
@@ -154,6 +136,24 @@ function ProductList({ products }: { products: Array<Product> }) {
 		</div>
 	);
 }
+
+// ❌❌ Don't do this - useState for derived data
+function ProductList({ products }: { products: Array<Product> }) {
+	const [filteredProducts, setFilteredProducts] = useState<Array<Product>>([]);
+	const [searchTerm, setSearchTerm] = useState("");
+
+	useEffect(() => {
+		setFilteredProducts(products.filter((product) => product.name.includes(searchTerm)));
+	}, [products, searchTerm]);
+
+	return (
+		<div>
+			{filteredProducts.map((product) => (
+				<ProductCard key={product.id} product={product} />
+			))}
+		</div>
+	);
+}
 ```
 
 ---
@@ -163,27 +163,6 @@ function ProductList({ products }: { products: Array<Product> }) {
 Move hooks into the components that actually use them. Don't define hooks in a parent and pass results down.
 
 ```tsx
-// ❌❌ Don't do this - hook in parent, logic scattered
-function LessonPage({ lessonId }: { lessonId: number }) {
-	const queryClient = useQueryClient();
-	const router = useRouter();
-
-	const deleteMutation = useMutation({
-		mutationFn: () => deleteLesson(lessonId),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["lessons"] });
-			router.push("/courses");
-		},
-	});
-
-	return (
-		<div>
-			<LessonContent lessonId={lessonId} />
-			<button onClick={() => deleteMutation.mutate()}>Delete</button>
-		</div>
-	);
-}
-
 // ✅✅ Do this - hook in component that owns the behavior
 function LessonPage({ lessonId }: { lessonId: number }) {
 	return (
@@ -217,6 +196,27 @@ function LessonDeleteButton({ lessonId }: { lessonId: number }) {
 		<button onClick={handleDelete} disabled={deleteMutation.isPending}>
 			{deleteMutation.isPending ? "Deleting..." : "Delete Lesson"}
 		</button>
+	);
+}
+
+// ❌❌ Don't do this - hook in parent, logic scattered
+function LessonPage({ lessonId }: { lessonId: number }) {
+	const queryClient = useQueryClient();
+	const router = useRouter();
+
+	const deleteMutation = useMutation({
+		mutationFn: () => deleteLesson(lessonId),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["lessons"] });
+			router.push("/courses");
+		},
+	});
+
+	return (
+		<div>
+			<LessonContent lessonId={lessonId} />
+			<button onClick={() => deleteMutation.mutate()}>Delete</button>
+		</div>
 	);
 }
 ```
@@ -275,6 +275,16 @@ function PageHeader({ title, backLink }: { title: string; backLink: string }) {
 **Ask:** Does this component have its own state, hooks, or handlers? Will it be reused? If no to both, probably don't extract.
 
 ```tsx
+// ✅✅ Do this - inline JSX when there's no behavior
+function LessonPage({ lesson }: { lesson: Lesson }) {
+	return (
+		<div>
+			<h1 className="text-xl font-semibold">{lesson.title}</h1>
+			<p className="text-gray-600">{lesson.description}</p>
+		</div>
+	);
+}
+
 // ❌❌ Don't do this - wrapper with no behavior, not reused
 function LessonTitle({ title }: { title: string }) {
 	return <h1 className="text-xl font-semibold">{title}</h1>;
@@ -292,16 +302,6 @@ function LessonPage({ lesson }: { lesson: Lesson }) {
 		</div>
 	);
 }
-
-// ✅✅ Do this - inline JSX when there's no behavior
-function LessonPage({ lesson }: { lesson: Lesson }) {
-	return (
-		<div>
-			<h1 className="text-xl font-semibold">{lesson.title}</h1>
-			<p className="text-gray-600">{lesson.description}</p>
-		</div>
-	);
-}
 ```
 
 **Exception:** Deep nesting (4+ levels of indentation) can justify extraction for readability, even without behavior.
@@ -313,22 +313,6 @@ function LessonPage({ lesson }: { lesson: Lesson }) {
 Use early returns instead of ternaries or deeply nested conditionals at the end of components.
 
 ```tsx
-// ❌❌ Don't do this - ternary at end creates nesting
-function LessonPage({ lesson }: { lesson: Lesson }) {
-	const [currentMode, setCurrentMode] = useState(LessonMode.STUDY);
-
-	return (
-		<div>
-			<PageHeader title={lesson.title} />
-			{currentMode === LessonMode.EDIT ? (
-				<LessonEditMode lesson={lesson} />
-			) : (
-				<LessonStudyMode lesson={lesson} />
-			)}
-		</div>
-	);
-}
-
 // ✅✅ Do this - early return for flat structure
 function LessonPage({ lesson }: { lesson: Lesson }) {
 	const [currentMode, setCurrentMode] = useState(LessonMode.STUDY);
@@ -346,6 +330,22 @@ function LessonPage({ lesson }: { lesson: Lesson }) {
 		<div>
 			<PageHeader title={lesson.title} />
 			<LessonEditMode lesson={lesson} />
+		</div>
+	);
+}
+
+// ❌❌ Don't do this - ternary at end creates nesting
+function LessonPage({ lesson }: { lesson: Lesson }) {
+	const [currentMode, setCurrentMode] = useState(LessonMode.STUDY);
+
+	return (
+		<div>
+			<PageHeader title={lesson.title} />
+			{currentMode === LessonMode.EDIT ? (
+				<LessonEditMode lesson={lesson} />
+			) : (
+				<LessonStudyMode lesson={lesson} />
+			)}
 		</div>
 	);
 }
@@ -377,17 +377,17 @@ function TodoList({ todos }: { todos: Array<Todo> }) {
 Use separate `&&` conditions instead of ternaries when conditionally rendering JSX.
 
 ```tsx
-// ❌❌ Don't do this - ternary for conditional display
-{
-	lessons.length > 0 ? <LessonList lessons={lessons} /> : <EmptyState />;
-}
-
 // ✅✅ Do this - separate conditions
 {
 	lessons.length === 0 && <EmptyState />;
 }
 {
 	lessons.length > 0 && <LessonList lessons={lessons} />;
+}
+
+// ❌❌ Don't do this - ternary for conditional display
+{
+	lessons.length > 0 ? <LessonList lessons={lessons} /> : <EmptyState />;
 }
 ```
 
@@ -410,13 +410,13 @@ Use separate `&&` conditions instead of ternaries when conditionally rendering J
 Controlled components (where React state drives the input value) are easier to validate, reset, and synchronize.
 
 ```tsx
-// ❌❌ Don't do this - uncontrolled input with ref
-const inputRef = useRef<HTMLInputElement>(null);
-const searchTerm = inputRef.current?.value;
-
 // ✅✅ Do this - controlled input
 const [searchTerm, setSearchTerm] = useState("");
 <input type="text" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />;
+
+// ❌❌ Don't do this - uncontrolled input with ref
+const inputRef = useRef<HTMLInputElement>(null);
+const searchTerm = inputRef.current?.value;
 ```
 
 ---
@@ -453,18 +453,20 @@ function PriceDisplay({ price }: { price: number }) {
 **Never pass inline object or array literals as props.** They create new references on every render, breaking memoization.
 
 ```tsx
-// ❌❌ Don't do this - inline object creates new reference every render
-function UserProfile({ user }: { user: User }) {
-	return <UserCard user={user} style={{ padding: 20, margin: 10 }} />;
-}
-
 // ✅✅ Do this - define objects outside component
 const USER_CARD_STYLE = { padding: 20, margin: 10 };
 
 function UserProfile({ user }: { user: User }) {
 	return <UserCard user={user} style={USER_CARD_STYLE} />;
 }
+
+// ❌❌ Don't do this - inline object creates new reference every render
+function UserProfile({ user }: { user: User }) {
+	return <UserCard user={user} style={{ padding: 20, margin: 10 }} />;
+}
 ```
+
+````
 
 **Exception:** Inline objects are acceptable when the value depends on component state or props:
 
@@ -473,7 +475,7 @@ function UserProfile({ user }: { user: User }) {
 function Alert({ isVisible }: { isVisible: boolean }) {
 	return <div style={{ opacity: isVisible ? 1 : 0 }}>Alert</div>;
 }
-```
+````
 
 ---
 
