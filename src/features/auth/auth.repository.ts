@@ -8,7 +8,7 @@ function ensureAuthRowExists() {
 	database.insert(auth).values({ id: 1 }).onConflictDoNothing().run();
 }
 
-function getAuth() {
+export function getAuth() {
 	try {
 		ensureAuthRowExists();
 
@@ -43,7 +43,12 @@ function getAuth() {
 	}
 }
 
-function setAuth(accessToken: string, refreshToken: string, userId: string, expiresIn?: number) {
+export function setAuth(
+	accessToken: string,
+	refreshToken: string,
+	userId: string,
+	expiresIn?: number,
+) {
 	try {
 		ensureAuthRowExists();
 
@@ -73,7 +78,7 @@ function setAuth(accessToken: string, refreshToken: string, userId: string, expi
 	}
 }
 
-function clearAuth() {
+export function clearAuth() {
 	try {
 		ensureAuthRowExists();
 
@@ -95,5 +100,3 @@ function clearAuth() {
 		return new Error("Failed to clear authentication data");
 	}
 }
-
-export { getAuth, setAuth, clearAuth };

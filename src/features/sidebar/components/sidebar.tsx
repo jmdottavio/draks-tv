@@ -1,3 +1,4 @@
+import { memo, useCallback, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { toggleFavorite, watchLive } from "@/src/features/channels/api/channels-mutations";
@@ -27,10 +28,12 @@ function getOfflineStatusText(lastVodDate: string | null): string {
 	return "Offline";
 }
 
-function categorizeChannels(channels: Array<SidebarChannel>): {
+type CategorizedChannels = {
 	live: Array<SidebarChannel>;
 	offline: Array<SidebarChannel>;
-} {
+};
+
+function categorizeChannels(channels: Array<SidebarChannel>): CategorizedChannels {
 	const live: Array<SidebarChannel> = [];
 	const offline: Array<SidebarChannel> = [];
 
@@ -50,7 +53,7 @@ type ChannelAvatarProps = {
 	isExpanded: boolean;
 };
 
-function ChannelAvatar({ channel, isExpanded }: ChannelAvatarProps) {
+const ChannelAvatar = memo(function ChannelAvatar({ channel, isExpanded }: ChannelAvatarProps) {
 	const ringColor = channel.isLive ? "ring-live" : "ring-sidebar-text-dim";
 	const glowClass = channel.isLive ? "shadow-[0_0_8px_rgba(255,68,68,0.5)]" : "";
 	const sizeClass = isExpanded ? "h-9 w-9" : "h-8 w-8";
@@ -78,17 +81,49 @@ function ChannelAvatar({ channel, isExpanded }: ChannelAvatarProps) {
 			)}
 		</div>
 	);
-}
+});
 
-function ChannelItem({ channel, isExpanded, onFavoriteToggle }: ChannelItemProps) {
-	async function handleClick() {
+const ChannelStatusInfo = memo(function ChannelStatusInfo({
+	channel,
+}: {
+	channel: SidebarChannel;
+}) {
+	if (channel.isLive) {
+		return (
+			<div className="flex items-center gap-2 text-sm">
+				<span className="font-bold text-live">
+					{formatViewers(channel.viewerCount ?? 0)}
+				</span>
+				{channel.gameName !== null && (
+					<span className="truncate text-sidebar-text-muted">{channel.gameName}</span>
+				)}
+			</div>
+		);
+	}
+
+	return (
+		<div className="text-sm text-sidebar-text-dim">
+			{getOfflineStatusText(channel.lastVodDate)}
+		</div>
+	);
+});
+
+const ChannelItem = memo(function ChannelItem({
+	channel,
+	isExpanded,
+	onFavoriteToggle,
+}: ChannelItemProps) {
+	const handleClick = useCallback(async () => {
 		await watchLive(channel.login);
-	}
+	}, [channel.login]);
 
-	function handleFavoriteClick(event: React.MouseEvent) {
-		event.stopPropagation();
-		onFavoriteToggle(channel.id);
-	}
+	const handleFavoriteClick = useCallback(
+		(event: React.MouseEvent) => {
+			event.stopPropagation();
+			onFavoriteToggle(channel.id);
+		},
+		[channel.id, onFavoriteToggle],
+	);
 
 	if (!isExpanded) {
 		return (
@@ -129,28 +164,7 @@ function ChannelItem({ channel, isExpanded, onFavoriteToggle }: ChannelItemProps
 			</button>
 		</div>
 	);
-}
-
-function ChannelStatusInfo({ channel }: { channel: SidebarChannel }) {
-	if (channel.isLive) {
-		return (
-			<div className="flex items-center gap-2 text-sm">
-				<span className="font-bold text-live">
-					{formatViewers(channel.viewerCount ?? 0)}
-				</span>
-				{channel.gameName !== null && (
-					<span className="truncate text-sidebar-text-muted">{channel.gameName}</span>
-				)}
-			</div>
-		);
-	}
-
-	return (
-		<div className="text-sm text-sidebar-text-dim">
-			{getOfflineStatusText(channel.lastVodDate)}
-		</div>
-	);
-}
+});
 
 function SidebarLoading({ isExpanded }: { isExpanded: boolean }) {
 	return (
@@ -183,7 +197,11 @@ type SectionHeaderProps = {
 	isExpanded: boolean;
 };
 
-function SectionHeader({ title, count, isExpanded }: SectionHeaderProps) {
+const SectionHeader = memo(function SectionHeader({
+	title,
+	count,
+	isExpanded,
+}: SectionHeaderProps) {
 	if (!isExpanded) {
 		return (
 			<div className="flex justify-center py-2">
@@ -206,7 +224,7 @@ function SectionHeader({ title, count, isExpanded }: SectionHeaderProps) {
 			<span className="text-xs font-semibold text-sidebar-text-muted">({count})</span>
 		</div>
 	);
-}
+});
 
 type ChannelListProps = {
 	channels: Array<SidebarChannel>;
@@ -214,8 +232,16 @@ type ChannelListProps = {
 	onFavoriteToggle: (id: string) => void;
 };
 
-function ChannelList({ channels, isExpanded, onFavoriteToggle }: ChannelListProps) {
-	const { live: liveChannels, offline: offlineChannels } = categorizeChannels(channels);
+const ChannelList = memo(function ChannelList({
+	channels,
+	isExpanded,
+	onFavoriteToggle,
+}: ChannelListProps) {
+	// Memoize categorization - only recalculates when channels change
+	const { live: liveChannels, offline: offlineChannels } = useMemo(
+		() => categorizeChannels(channels),
+		[channels],
+	);
 
 	if (channels.length === 0) {
 		return (
@@ -270,17 +296,21 @@ function ChannelList({ channels, isExpanded, onFavoriteToggle }: ChannelListProp
 			)}
 		</div>
 	);
-}
+});
 
 function Sidebar({ isExpanded, onToggle }: SidebarProps) {
 	const { channels, isLoading, error } = useFollowedChannels();
 	const queryClient = useQueryClient();
 
-	async function handleFavoriteToggle(id: string) {
-		await toggleFavorite(id);
-		queryClient.invalidateQueries({ queryKey: QUERY_KEYS.followedChannels });
-		queryClient.invalidateQueries({ queryKey: QUERY_KEYS.channels });
-	}
+	// Stable callback reference - queryClient is stable from TanStack Query
+	const handleFavoriteToggle = useCallback(
+		async (id: string) => {
+			await toggleFavorite(id);
+			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.followedChannels });
+			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.channels });
+		},
+		[queryClient],
+	);
 
 	return (
 		<>

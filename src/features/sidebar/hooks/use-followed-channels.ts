@@ -1,8 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 
 import { QUERY_KEYS } from "@/src/shared/query-keys";
 
 import { fetchFollowedChannels } from "../api/sidebar-queries";
+
+import type { SidebarChannel } from "../sidebar.types";
+
+const EMPTY_CHANNELS: Array<SidebarChannel> = [];
 
 function useFollowedChannels() {
 	const { data, isLoading, error } = useQuery({
@@ -14,8 +19,10 @@ function useFollowedChannels() {
 		refetchIntervalInBackground: false,
 	});
 
+	const channels = useMemo(() => data ?? EMPTY_CHANNELS, [data]);
+
 	return {
-		channels: data ?? [],
+		channels,
 		isLoading,
 		error: error instanceof Error ? error : null,
 	};

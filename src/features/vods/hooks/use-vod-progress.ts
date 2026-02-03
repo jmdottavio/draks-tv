@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
 
 import {
 	getVodProgressBulkQueryKey,
@@ -6,36 +7,29 @@ import {
 	QUERY_KEYS,
 } from "@/src/shared/query-keys";
 
-import { deleteVodProgress, saveVodProgress } from "../api/vods-mutations";
-import { fetchRecentProgress, fetchVodProgress, fetchVodProgressBulk } from "../api/vods-queries";
+import { saveVodProgress } from "../api/vods-mutations";
+import { fetchVodProgressBulk } from "../api/vods-queries";
 
-function useVodProgress(vodId: string) {
-	return useQuery({
-		queryKey: getVodProgressQueryKey(vodId),
-		queryFn: () => fetchVodProgress(vodId),
-		enabled: vodId !== "",
-		staleTime: 60_000,
-		gcTime: 10 * 60 * 1000,
-	});
-}
+import type { VodPlaybackProgressSelect } from "../vods.types";
+
+const EMPTY_PROGRESS: Array<VodPlaybackProgressSelect> = [];
 
 function useVodProgressBulk(vodIds: Array<string>) {
-	return useQuery({
+	const { data, isLoading, error } = useQuery({
 		queryKey: getVodProgressBulkQueryKey(vodIds),
 		queryFn: () => fetchVodProgressBulk(vodIds),
 		enabled: vodIds.length > 0,
 		staleTime: 60_000,
 		gcTime: 10 * 60 * 1000,
 	});
-}
 
-function useVodRecentProgress() {
-	return useQuery({
-		queryKey: QUERY_KEYS.vodProgressRecent,
-		queryFn: fetchRecentProgress,
-		staleTime: 30_000,
-		gcTime: 5 * 60 * 1000,
-	});
+	const progress = useMemo(() => data ?? EMPTY_PROGRESS, [data]);
+
+	return {
+		data: progress,
+		isLoading,
+		error: error instanceof Error ? error : null,
+	};
 }
 
 function useSaveVodProgress() {
@@ -51,23 +45,4 @@ function useSaveVodProgress() {
 	});
 }
 
-function useDeleteVodProgress() {
-	const queryClient = useQueryClient();
-
-	return useMutation({
-		mutationFn: deleteVodProgress,
-		onSuccess: (_, vodId) => {
-			queryClient.invalidateQueries({ queryKey: getVodProgressQueryKey(vodId) });
-			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.vodProgress });
-			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.vodProgressRecent });
-		},
-	});
-}
-
-export {
-	useDeleteVodProgress,
-	useSaveVodProgress,
-	useVodProgress,
-	useVodProgressBulk,
-	useVodRecentProgress,
-};
+export { useSaveVodProgress, useVodProgressBulk };

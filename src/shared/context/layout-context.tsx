@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 
 import type { ReactNode } from "react";
 
@@ -9,11 +9,14 @@ type LayoutContextValue = {
 
 const LayoutContext = createContext<LayoutContextValue | null>(null);
 
+const SIDEBAR_STORAGE_KEY = "sidebar-open";
+
 function getSavedSidebarState(): boolean {
 	if (typeof window === "undefined") {
 		return false;
 	}
-	return localStorage.getItem("sidebar-open") === "true";
+
+	return localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
 }
 
 type LayoutProviderProps = {
@@ -23,19 +26,17 @@ type LayoutProviderProps = {
 function LayoutProvider({ children }: LayoutProviderProps) {
 	const [isSidebarOpen, setIsSidebarOpen] = useState(getSavedSidebarState);
 
-	useEffect(() => {
-		localStorage.setItem("sidebar-open", String(isSidebarOpen));
-	}, [isSidebarOpen]);
+	const toggleSidebar = useCallback(() => {
+		setIsSidebarOpen((previous) => {
+			const newState = !previous;
+			localStorage.setItem(SIDEBAR_STORAGE_KEY, String(newState));
+			return newState;
+		});
+	}, []);
 
-	function toggleSidebar() {
-		setIsSidebarOpen((previous) => !previous);
-	}
+	const value = useMemo(() => ({ isSidebarOpen, toggleSidebar }), [isSidebarOpen, toggleSidebar]);
 
-	return (
-		<LayoutContext.Provider value={{ isSidebarOpen, toggleSidebar }}>
-			{children}
-		</LayoutContext.Provider>
-	);
+	return <LayoutContext.Provider value={value}>{children}</LayoutContext.Provider>;
 }
 
 function useLayout() {

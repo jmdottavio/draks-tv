@@ -1,15 +1,15 @@
 import { Link } from "@tanstack/react-router";
+import { memo } from "react";
 
-import { PlusIcon, FilmIcon, ArrowPathIcon, MenuIcon } from "./icons";
+import { ArrowPathIcon, FilmIcon, MenuIcon } from "./icons";
 
 type HeaderProps = {
-	onAddChannel: () => void;
 	onRefresh: () => void;
 	onToggleSidebar: () => void;
 	isRefreshing: boolean;
 };
 
-function Header({ onAddChannel, onRefresh, onToggleSidebar, isRefreshing }: HeaderProps) {
+const Header = memo(function Header({ onRefresh, onToggleSidebar, isRefreshing }: HeaderProps) {
 	return (
 		<header className="flex justify-between items-center px-6 py-4 bg-surface-card border-b border-surface-border sticky top-0 z-50">
 			<div className="flex items-center gap-3">
@@ -28,14 +28,6 @@ function Header({ onAddChannel, onRefresh, onToggleSidebar, isRefreshing }: Head
 			</div>
 
 			<div className="flex items-center gap-3">
-				<button
-					onClick={onAddChannel}
-					className="flex items-center gap-2 px-4 py-2.5 rounded-md bg-surface-elevated border border-surface-border-muted text-text-primary text-sm font-semibold hover:bg-twitch-purple hover:border-twitch-purple transition-all"
-				>
-					<PlusIcon className="w-4 h-4" />
-					Add Channel
-				</button>
-
 				<Link
 					to="/vods"
 					className="flex items-center gap-2 px-4 py-2.5 rounded-md text-text-muted text-sm font-semibold hover:bg-surface-elevated hover:text-text-primary transition-all"
@@ -55,6 +47,6 @@ function Header({ onAddChannel, onRefresh, onToggleSidebar, isRefreshing }: Head
 			</div>
 		</header>
 	);
-}
+});
 
 export { Header };

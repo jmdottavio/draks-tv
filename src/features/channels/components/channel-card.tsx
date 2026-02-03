@@ -67,7 +67,10 @@ function getThumbnailUrl(channel: Channel) {
 function arePropsEqual(prevProps: ChannelCardProps, nextProps: ChannelCardProps): boolean {
 	// Fast path: same reference means definitely equal
 	if (prevProps.channel === nextProps.channel) {
-		return prevProps.priority === nextProps.priority && prevProps.isDragging === nextProps.isDragging;
+		return (
+			prevProps.priority === nextProps.priority &&
+			prevProps.isDragging === nextProps.isDragging
+		);
 	}
 
 	// Check primitive props first (fast)
@@ -142,7 +145,14 @@ const ChannelCard = memo(function ChannelCard({
 		if (channel.latestVod !== null) {
 			watchVodMutation.mutate({ id: channel.latestVod.id });
 		}
-	}, [isWatching, channel.isLive, channel.login, channel.latestVod, watchLiveMutation, watchVodMutation]);
+	}, [
+		isWatching,
+		channel.isLive,
+		channel.login,
+		channel.latestVod,
+		watchLiveMutation,
+		watchVodMutation,
+	]);
 
 	const handleFavoriteClick = useCallback(
 		(event: React.MouseEvent) => {

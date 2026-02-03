@@ -1,5 +1,5 @@
-import { memo, useCallback, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { memo, useCallback, useMemo, useState } from "react";
 
 import { watchVod } from "@/src/features/vods/api/vods-mutations";
 import { useSaveVodProgress, useVodProgressBulk } from "@/src/features/vods/hooks/use-vod-progress";
@@ -21,26 +21,35 @@ export const Route = createFileRoute("/vods")({
 	component: VodsPage,
 });
 
+const EMPTY_VOD_IDS: Array<string> = [];
+
 function VodsPage() {
 	const [searchInput, setSearchInput] = useState("");
 	const [searchQuery, setSearchQuery] = useState<string | null>(null);
 
-	const { data, isLoading, error } = useVodSearch(searchQuery);
+	const saveProgressMutation = useSaveVodProgress();
 
-	const vodIds = data?.videos.map((video) => video.id) ?? [];
+	const { data: vodSearchData, isLoading, error } = useVodSearch(searchQuery);
+
+	const vodIds = useMemo(() => {
+		if (!vodSearchData || vodSearchData.videos.length === 0) {
+			return EMPTY_VOD_IDS;
+		}
+
+		return vodSearchData.videos.map((video) => video.id);
+	}, [vodSearchData]);
+
 	const { data: progressData } = useVodProgressBulk(vodIds);
 
-	const progressMap = useMemo(() => {
+	const vodProgressMap = useMemo(() => {
 		const map = new Map<string, VodPlaybackProgressSelect>();
-		if (progressData !== undefined) {
-			for (const item of progressData) {
-				map.set(item.vodId, item);
-			}
+
+		for (const item of progressData) {
+			map.set(item.vodId, item);
 		}
+
 		return map;
 	}, [progressData]);
-
-	const saveProgressMutation = useSaveVodProgress();
 
 	function handleSearch(event: React.FormEvent) {
 		event.preventDefault();
@@ -56,13 +65,6 @@ function VodsPage() {
 			console.error("Failed to launch VOD:", watchError);
 		});
 	}, []);
-
-	const handleSaveProgress = useCallback(
-		(input: SaveProgressInput) => {
-			saveProgressMutation.mutate(input);
-		},
-		[saveProgressMutation],
-	);
 
 	return (
 		<section className="animate-[fadeIn_0.2s_ease]">
@@ -108,23 +110,23 @@ function VodsPage() {
 
 			{error !== null && <p className="text-sm text-live">{error.message}</p>}
 
-			{data !== null && data !== undefined && (
+			{vodSearchData !== null && (
 				<div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
-					{data.videos.map((vod) => (
+					{vodSearchData.videos.map((vod) => (
 						<VodCard
 							key={vod.id}
 							vod={vod}
-							progress={progressMap.get(vod.id) ?? null}
-							channelId={data.user.id}
-							channelName={data.user.display_name}
+							progress={vodProgressMap.get(vod.id) ?? null}
+							channelId={vodSearchData.user.id}
+							channelName={vodSearchData.user.display_name}
 							onWatch={handleWatchVod}
-							onSaveProgress={handleSaveProgress}
+							onSaveProgress={saveProgressMutation.mutate}
 						/>
 					))}
 				</div>
 			)}
 
-			{data !== null && data !== undefined && data.videos.length === 0 && (
+			{vodSearchData !== null && vodSearchData.videos.length === 0 && (
 				<p className="text-sm text-text-dim">No VODs found for {searchQuery}</p>
 			)}
 		</section>

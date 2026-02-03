@@ -26,10 +26,7 @@ function useChannels() {
 	const channels = useMemo(() => data ?? EMPTY_CHANNELS, [data]);
 
 	// Memoize error to prevent new Error wrapper on each render
-	const normalizedError = useMemo(
-		() => (error instanceof Error ? error : null),
-		[error],
-	);
+	const normalizedError = useMemo(() => (error instanceof Error ? error : null), [error]);
 
 	return {
 		channels,
