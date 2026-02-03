@@ -1,19 +1,14 @@
-import { memo, useCallback, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { memo, useCallback, useMemo } from "react";
 
 import { toggleFavorite, watchLive } from "@/src/features/channels/api/channels-mutations";
-import { ChevronLeftIcon, ChevronRightIcon, StarIcon } from "@/src/shared/components/icons";
+import { StarIcon } from "@/src/shared/components/icons";
 import { QUERY_KEYS } from "@/src/shared/query-keys";
 import { formatDate, formatViewers } from "@/src/shared/utils/format";
 
 import { useFollowedChannels } from "../hooks/use-followed-channels";
 
 import type { SidebarChannel } from "../sidebar.types";
-
-type SidebarProps = {
-	isExpanded: boolean;
-	onToggle: () => void;
-};
 
 type ChannelItemProps = {
 	channel: SidebarChannel;
@@ -298,7 +293,7 @@ const ChannelList = memo(function ChannelList({
 	);
 });
 
-export function Sidebar({ isExpanded, onToggle }: SidebarProps) {
+export function Sidebar({ isExpanded }: { isExpanded: boolean }) {
 	const { channels, isLoading, error } = useFollowedChannels();
 	const queryClient = useQueryClient();
 
@@ -313,62 +308,26 @@ export function Sidebar({ isExpanded, onToggle }: SidebarProps) {
 	);
 
 	return (
-		<>
-			{/* Mobile backdrop */}
-			{isExpanded && (
-				<button
-					type="button"
-					className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
-					onClick={onToggle}
-				/>
-			)}
-
-			<aside
-				className={`fixed left-0 top-0 z-50 flex h-full flex-col border-r border-sidebar-border bg-sidebar-bg transition-all duration-300 ease-out ${
-					isExpanded ? "w-72" : "w-16"
-				}`}
+		<aside
+			className={`fixed left-0 top-0 z-50 flex h-full flex-col border-r border-sidebar-border bg-sidebar-bg transition-all duration-300 ease-out ${
+				isExpanded ? "w-72" : "w-16"
+			}`}
+		>
+			<div
+				className={`sidebar-scroll flex-1 overflow-y-auto ${isExpanded ? "px-2 py-3" : "px-1 py-2"}`}
 			>
-				{/* Header */}
-				<div
-					className={`flex items-center border-b border-sidebar-border ${
-						isExpanded ? "justify-between px-4 py-4" : "justify-center py-4"
-					}`}
-				>
-					{isExpanded && (
-						<h2 className="text-base font-bold text-sidebar-text tracking-tight">
-							Followed Channels
-						</h2>
-					)}
-					<button
-						onClick={onToggle}
-						className="rounded-lg p-2 text-sidebar-text-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-text"
-						title={isExpanded ? "Collapse sidebar" : "Expand sidebar"}
-					>
-						{isExpanded ? (
-							<ChevronLeftIcon className="h-5 w-5" />
-						) : (
-							<ChevronRightIcon className="h-5 w-5" />
-						)}
-					</button>
-				</div>
-
-				{/* Channel list */}
-				<div
-					className={`sidebar-scroll flex-1 overflow-y-auto ${isExpanded ? "px-2 py-3" : "px-1 py-2"}`}
-				>
-					{isLoading ? (
-						<SidebarLoading isExpanded={isExpanded} />
-					) : error !== null ? (
-						<SidebarError isExpanded={isExpanded} message={error.message} />
-					) : (
-						<ChannelList
-							channels={channels}
-							isExpanded={isExpanded}
-							onFavoriteToggle={handleFavoriteToggle}
-						/>
-					)}
-				</div>
-			</aside>
-		</>
+				{isLoading && <SidebarLoading isExpanded={isExpanded} />}
+				{!isLoading && error !== null && (
+					<SidebarError isExpanded={isExpanded} message={error.message} />
+				)}
+				{!isLoading && error === null && (
+					<ChannelList
+						channels={channels}
+						isExpanded={isExpanded}
+						onFavoriteToggle={handleFavoriteToggle}
+					/>
+				)}
+			</div>
+		</aside>
 	);
 }
