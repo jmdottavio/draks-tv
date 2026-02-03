@@ -2,7 +2,7 @@ import { extractApiErrorMessage } from "@/src/shared/utils/api-errors";
 
 import type { Channel } from "../channels.types";
 
-async function fetchChannels(): Promise<Array<Channel>> {
+export async function fetchChannels(): Promise<Array<Channel>> {
 	const response = await fetch("/api/channels");
 
 	if (!response.ok) {
@@ -12,5 +12,3 @@ async function fetchChannels(): Promise<Array<Channel>> {
 
 	return response.json() as Promise<Array<Channel>>;
 }
-
-export { fetchChannels };

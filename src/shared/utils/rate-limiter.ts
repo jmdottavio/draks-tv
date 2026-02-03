@@ -64,11 +64,11 @@ const AUTH_RATE_LIMIT: RateLimitConfig = {
 	maxRequests: 10, // 10 requests per minute for auth endpoints
 };
 
-function checkAuthRateLimit(ip: string): { allowed: boolean; retryAfterMs?: number } {
+export function checkAuthRateLimit(ip: string): { allowed: boolean; retryAfterMs?: number } {
 	return checkRateLimit(`auth:${ip}`, AUTH_RATE_LIMIT);
 }
 
-function createRateLimitResponse(retryAfterMs?: number): Response {
+export function createRateLimitResponse(retryAfterMs?: number): Response {
 	return new Response(JSON.stringify({ error: "Too many requests" }), {
 		status: 429,
 		headers: {
@@ -77,5 +77,3 @@ function createRateLimitResponse(retryAfterMs?: number): Response {
 		},
 	});
 }
-
-export { checkAuthRateLimit, createRateLimitResponse };

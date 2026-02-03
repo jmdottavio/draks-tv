@@ -14,7 +14,7 @@ import type { VodPlaybackProgressSelect } from "../vods.types";
 
 const EMPTY_PROGRESS: Array<VodPlaybackProgressSelect> = [];
 
-function useVodProgressBulk(vodIds: Array<string>) {
+export function useVodProgressBulk(vodIds: Array<string>) {
 	const { data, isLoading, error } = useQuery({
 		queryKey: getVodProgressBulkQueryKey(vodIds),
 		queryFn: () => fetchVodProgressBulk(vodIds),
@@ -32,7 +32,7 @@ function useVodProgressBulk(vodIds: Array<string>) {
 	};
 }
 
-function useSaveVodProgress() {
+export function useSaveVodProgress() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
@@ -44,5 +44,3 @@ function useSaveVodProgress() {
 		},
 	});
 }
-
-export { useSaveVodProgress, useVodProgressBulk };

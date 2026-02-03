@@ -4,7 +4,7 @@ import { QUERY_KEYS } from "@/src/shared/query-keys";
 
 import { fetchAuthStatus } from "../api/auth-queries";
 
-function useAuth() {
+export function useAuth() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: QUERY_KEYS.auth,
 		queryFn: fetchAuthStatus,
@@ -17,5 +17,3 @@ function useAuth() {
 		error: error instanceof Error ? error : null,
 	};
 }
-
-export { useAuth };

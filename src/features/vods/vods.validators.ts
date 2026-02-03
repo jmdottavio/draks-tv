@@ -1,4 +1,4 @@
-function parseSaveProgressBody(body: unknown) {
+export function parseSaveProgressBody(body: unknown) {
 	if (typeof body !== "object" || body === null) {
 		return new Error("Invalid request body");
 	}
@@ -37,5 +37,3 @@ function parseSaveProgressBody(body: unknown) {
 		durationSeconds,
 	};
 }
-
-export { parseSaveProgressBody };

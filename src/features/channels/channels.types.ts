@@ -1,4 +1,4 @@
-type Stream = {
+export type Stream = {
 	title: string;
 	gameName: string;
 	viewerCount: number;
@@ -6,7 +6,7 @@ type Stream = {
 	startedAt: string;
 };
 
-type Vod = {
+export type Vod = {
 	id: string;
 	title: string;
 	duration: string;
@@ -14,7 +14,7 @@ type Vod = {
 	thumbnailUrl: string;
 };
 
-type Channel = {
+export type Channel = {
 	id: string;
 	login: string;
 	displayName: string;
@@ -25,18 +25,16 @@ type Channel = {
 	latestVod: Vod | null;
 };
 
-type FavoriteInput = {
+export type FavoriteInput = {
 	id: string;
 	login: string;
 	displayName: string;
 	profileImage: string;
 };
 
-type FavoriteOutput = {
+export type FavoriteOutput = {
 	id: string;
 	login: string;
 	displayName: string;
 	profileImage: string;
 };
-
-export type { Channel, Stream, Vod, FavoriteInput, FavoriteOutput };

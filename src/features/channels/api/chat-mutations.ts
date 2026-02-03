@@ -1,6 +1,6 @@
 import { extractApiErrorMessage } from "@/src/shared/utils/api-errors";
 
-async function openChat(channel: string): Promise<void> {
+export async function openChat(channel: string): Promise<void> {
 	const response = await fetch(`/api/chat/${channel}`, { method: "POST" });
 
 	if (!response.ok) {
@@ -8,5 +8,3 @@ async function openChat(channel: string): Promise<void> {
 		throw new Error(message);
 	}
 }
-
-export { openChat };

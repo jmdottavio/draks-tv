@@ -11,7 +11,7 @@ type VodSearchData = {
 	videos: Array<TwitchVideo>;
 };
 
-function useVodSearch(channelLogin: string | null) {
+export function useVodSearch(channelLogin: string | null) {
 	const { data, isLoading, error } = useQuery({
 		queryKey: channelLogin !== null ? getVodsQueryKey(channelLogin) : QUERY_KEYS.vods,
 		queryFn: async () => {
@@ -38,5 +38,3 @@ function useVodSearch(channelLogin: string | null) {
 		error: error instanceof Error ? error : null,
 	};
 }
-
-export { useVodSearch };

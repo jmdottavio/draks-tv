@@ -160,7 +160,7 @@ function getEncryptionKey(): Buffer {
 	return cachedKey;
 }
 
-function encryptToken(plaintext: string): string {
+export function encryptToken(plaintext: string): string {
 	const key = getEncryptionKey();
 	const iv = randomBytes(IV_LENGTH);
 	const cipher = createCipheriv(ALGORITHM, key, iv);
@@ -173,7 +173,7 @@ function encryptToken(plaintext: string): string {
 	return combined.toString("base64");
 }
 
-function decryptToken(ciphertext: string): string | Error {
+export function decryptToken(ciphertext: string): string | Error {
 	// Strip legacy "v2:" prefix if present (for backwards compat with existing tokens)
 	const data = ciphertext.startsWith("v2:") ? ciphertext.slice(3) : ciphertext;
 
@@ -198,5 +198,3 @@ function decryptToken(ciphertext: string): string | Error {
 		return new Error("Failed to decrypt token - key mismatch or corrupted data");
 	}
 }
-
-export { encryptToken, decryptToken };

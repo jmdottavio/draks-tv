@@ -9,7 +9,7 @@ import type { SidebarChannel } from "../sidebar.types";
 
 const EMPTY_CHANNELS: Array<SidebarChannel> = [];
 
-function useFollowedChannels() {
+export function useFollowedChannels() {
 	const { data, isLoading, error } = useQuery({
 		queryKey: QUERY_KEYS.followedChannels,
 		queryFn: fetchFollowedChannels,
@@ -27,5 +27,3 @@ function useFollowedChannels() {
 		error: error instanceof Error ? error : null,
 	};
 }
-
-export { useFollowedChannels };

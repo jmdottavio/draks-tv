@@ -4,18 +4,18 @@ const MAX_DISPLAY_NAME_LENGTH = 100;
 const MAX_PROFILE_IMAGE_LENGTH = 500;
 const MAX_ORDERED_IDS_COUNT = 1000;
 
-type AddFavoriteRequest = {
+export type AddFavoriteRequest = {
 	id: string;
 	login: string;
 	displayName: string;
 	profileImage: string;
 };
 
-type ReorderFavoritesRequest = {
+export type ReorderFavoritesRequest = {
 	orderedIds: Array<string>;
 };
 
-function validateAddFavoriteRequest(body: unknown): AddFavoriteRequest | Error {
+export function validateAddFavoriteRequest(body: unknown): AddFavoriteRequest | Error {
 	if (typeof body !== "object" || body === null) {
 		return new Error("Request body must be an object");
 	}
@@ -62,7 +62,7 @@ function validateAddFavoriteRequest(body: unknown): AddFavoriteRequest | Error {
 	};
 }
 
-function validateReorderFavoritesRequest(body: unknown): ReorderFavoritesRequest | Error {
+export function validateReorderFavoritesRequest(body: unknown): ReorderFavoritesRequest | Error {
 	if (typeof body !== "object" || body === null) {
 		return new Error("Request body must be an object");
 	}
@@ -91,6 +91,3 @@ function validateReorderFavoritesRequest(body: unknown): ReorderFavoritesRequest
 		orderedIds: data.orderedIds as Array<string>,
 	};
 }
-
-export { validateAddFavoriteRequest, validateReorderFavoritesRequest };
-export type { AddFavoriteRequest, ReorderFavoritesRequest };

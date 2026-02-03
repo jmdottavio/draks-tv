@@ -1,4 +1,4 @@
-type SidebarChannel = {
+export type SidebarChannel = {
 	id: string;
 	login: string;
 	displayName: string;
@@ -9,5 +9,3 @@ type SidebarChannel = {
 	lastVodDate: string | null;
 	gameName: string | null;
 };
-
-export type { SidebarChannel };

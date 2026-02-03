@@ -42,7 +42,7 @@ function getChatterinoConfig() {
 
 const chatterinoConfig = getChatterinoConfig();
 
-function launchChatterino(channelName: string) {
+export function launchChatterino(channelName: string) {
 	return new Promise<void | Error>((promiseResolve) => {
 		if (!chatterinoConfig.enabled) {
 			promiseResolve(new Error("Chatterino integration is not available on this platform"));
@@ -74,5 +74,3 @@ function launchChatterino(channelName: string) {
 		});
 	});
 }
-
-export { launchChatterino };

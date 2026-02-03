@@ -6,7 +6,7 @@ import { cachedVods, channelCache } from "@/src/db/schema";
 import type { SQL } from "drizzle-orm";
 import type { CachedVideoSelect, ChannelCacheWithVideo } from "./vods.types";
 
-function getChannelCacheBulk(channelIds: Array<string>) {
+export function getChannelCacheBulk(channelIds: Array<string>) {
 	try {
 		if (channelIds.length === 0) {
 			return [];
@@ -54,7 +54,7 @@ function getChannelCacheBulk(channelIds: Array<string>) {
 	}
 }
 
-function processLiveStateChangesAtomic(currentlyLiveChannelIds: Array<string>) {
+export function processLiveStateChangesAtomic(currentlyLiveChannelIds: Array<string>) {
 	try {
 		// Wrap in transaction to ensure both updates happen atomically
 		return database.transaction((transaction) => {
@@ -98,5 +98,3 @@ function processLiveStateChangesAtomic(currentlyLiveChannelIds: Array<string>) {
 		return new Error("Failed to process live state changes");
 	}
 }
-
-export { getChannelCacheBulk, processLiveStateChangesAtomic };

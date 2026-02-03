@@ -298,7 +298,7 @@ const ChannelList = memo(function ChannelList({
 	);
 });
 
-function Sidebar({ isExpanded, onToggle }: SidebarProps) {
+export function Sidebar({ isExpanded, onToggle }: SidebarProps) {
 	const { channels, isLoading, error } = useFollowedChannels();
 	const queryClient = useQueryClient();
 
@@ -372,5 +372,3 @@ function Sidebar({ isExpanded, onToggle }: SidebarProps) {
 		</>
 	);
 }
-
-export { Sidebar };

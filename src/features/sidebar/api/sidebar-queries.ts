@@ -2,7 +2,7 @@ import { extractApiErrorMessage } from "@/src/shared/utils/api-errors";
 
 import type { SidebarChannel } from "../sidebar.types";
 
-async function fetchFollowedChannels(): Promise<Array<SidebarChannel>> {
+export async function fetchFollowedChannels(): Promise<Array<SidebarChannel>> {
 	const response = await fetch("/api/channels/followed");
 
 	if (!response.ok) {
@@ -12,5 +12,3 @@ async function fetchFollowedChannels(): Promise<Array<SidebarChannel>> {
 
 	return response.json() as Promise<Array<SidebarChannel>>;
 }
-
-export { fetchFollowedChannels };

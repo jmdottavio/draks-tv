@@ -4,22 +4,20 @@ import { openChat } from "../api/chat-mutations";
 import { watchLive } from "../api/channels-mutations";
 import { watchVod } from "@/src/features/vods/api/vods-mutations";
 
-function useWatchLive() {
+export function useWatchLive() {
 	return useMutation({
 		mutationFn: watchLive,
 	});
 }
 
-function useWatchVod() {
+export function useWatchVod() {
 	return useMutation({
 		mutationFn: watchVod,
 	});
 }
 
-function useOpenChat() {
+export function useOpenChat() {
 	return useMutation({
 		mutationFn: openChat,
 	});
 }
-
-export { useOpenChat, useWatchLive, useWatchVod };

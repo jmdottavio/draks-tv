@@ -1,7 +1,7 @@
 import { database } from "@/src/db";
 import { channelLastSeen } from "@/src/db/schema";
 
-function getAllLastSeenDates() {
+export function getAllLastSeenDates() {
 	try {
 		const rows = database
 			.select({
@@ -23,5 +23,3 @@ function getAllLastSeenDates() {
 		return new Error("Failed to get last seen dates");
 	}
 }
-
-export { getAllLastSeenDates };

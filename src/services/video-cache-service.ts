@@ -176,7 +176,7 @@ async function refreshVideosForChannelSafe(channelId: string) {
 	return result;
 }
 
-async function populateInitialCache() {
+export async function populateInitialCache() {
 	console.log("[video-cache] Starting initial cache population...");
 
 	const favorites = getAllFavorites();
@@ -225,7 +225,7 @@ async function populateInitialCache() {
 	return null;
 }
 
-function startBackgroundRefresh() {
+export function startBackgroundRefresh() {
 	if (refreshIntervalId !== null) {
 		clearTimeout(refreshIntervalId);
 	}
@@ -299,7 +299,7 @@ function startBackgroundRefresh() {
 	console.log("[video-cache] Background refresh started");
 }
 
-function stopBackgroundRefresh() {
+export function stopBackgroundRefresh() {
 	if (refreshIntervalId !== null) {
 		clearTimeout(refreshIntervalId);
 		refreshIntervalId = null;
@@ -311,16 +311,16 @@ function stopBackgroundRefresh() {
 	console.log("[video-cache] Background refresh stopped");
 }
 
-function processLiveStateChanges(currentStreams: Array<TwitchStream>) {
+export function processLiveStateChanges(currentStreams: Array<TwitchStream>) {
 	const currentlyLiveChannelIds = currentStreams.map((stream) => stream.user_id);
 	return processLiveStateChangesAtomic(currentlyLiveChannelIds);
 }
 
-function getChannelsWithVideos(channelIds: Array<string>) {
+export function getChannelsWithVideos(channelIds: Array<string>) {
 	return getChannelCacheBulk(channelIds);
 }
 
-async function refreshOfflineChannelsBatched(channelIds: Array<string>) {
+export async function refreshOfflineChannelsBatched(channelIds: Array<string>) {
 	// Batch the refresh to avoid rate limits and overwhelming the API
 	for (
 		let batchStartIndex = 0;
@@ -336,12 +336,3 @@ async function refreshOfflineChannelsBatched(channelIds: Array<string>) {
 		}
 	}
 }
-
-export {
-	getChannelsWithVideos,
-	populateInitialCache,
-	processLiveStateChanges,
-	refreshOfflineChannelsBatched,
-	startBackgroundRefresh,
-	stopBackgroundRefresh,
-};

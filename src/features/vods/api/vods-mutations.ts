@@ -2,7 +2,7 @@ import { extractApiErrorMessage } from "@/src/shared/utils/api-errors";
 
 import type { SaveProgressInput } from "../playback-progress.repository";
 
-async function watchVod({
+export async function watchVod({
 	id,
 	startTimeSeconds,
 }: {
@@ -24,7 +24,7 @@ async function watchVod({
 	}
 }
 
-async function saveVodProgress(data: SaveProgressInput) {
+export async function saveVodProgress(data: SaveProgressInput) {
 	const response = await fetch("/api/vod-progress", {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
@@ -36,5 +36,3 @@ async function saveVodProgress(data: SaveProgressInput) {
 		throw new Error(message);
 	}
 }
-
-export { saveVodProgress, watchVod };

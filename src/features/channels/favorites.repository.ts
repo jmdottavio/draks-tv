@@ -5,7 +5,7 @@ import { favorites } from "@/src/db/schema";
 
 import type { FavoriteInput, FavoriteOutput } from "./channels.types";
 
-function getAllFavorites() {
+export function getAllFavorites() {
 	try {
 		const rows = database
 			.select({
@@ -32,7 +32,7 @@ function getAllFavorites() {
 	}
 }
 
-function addFavorite(favorite: FavoriteInput) {
+export function addFavorite(favorite: FavoriteInput) {
 	try {
 		database.transaction((transaction) => {
 			// Get next sort order inside the transaction
@@ -71,7 +71,7 @@ function addFavorite(favorite: FavoriteInput) {
 	}
 }
 
-function removeFavorite(twitchId: string) {
+export function removeFavorite(twitchId: string) {
 	try {
 		const deleted = database
 			.delete(favorites)
@@ -86,7 +86,7 @@ function removeFavorite(twitchId: string) {
 	}
 }
 
-function isFavorite(twitchId: string) {
+export function isFavorite(twitchId: string) {
 	try {
 		const result = database
 			.select({ count: count() })
@@ -101,7 +101,7 @@ function isFavorite(twitchId: string) {
 	}
 }
 
-function reorderFavorites(orderedIds: Array<string>) {
+export function reorderFavorites(orderedIds: Array<string>) {
 	try {
 		database.transaction((transaction) => {
 			for (let index = 0; index < orderedIds.length; index++) {
@@ -123,5 +123,3 @@ function reorderFavorites(orderedIds: Array<string>) {
 		return new Error("Failed to reorder favorites");
 	}
 }
-
-export { addFavorite, getAllFavorites, isFavorite, removeFavorite, reorderFavorites };

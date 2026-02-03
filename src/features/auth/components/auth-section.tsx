@@ -2,7 +2,7 @@ import { TwitchIcon } from "@/src/shared/components/icons";
 
 import { fetchAuthUrl } from "../api/auth-queries";
 
-function AuthSection() {
+export function AuthSection() {
 	async function handleLogin() {
 		try {
 			const { url } = await fetchAuthUrl();
@@ -33,5 +33,3 @@ function AuthSection() {
 		</section>
 	);
 }
-
-export { AuthSection };

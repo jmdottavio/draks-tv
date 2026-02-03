@@ -3,7 +3,7 @@ import { desc, eq, inArray, sql } from "drizzle-orm";
 import { database } from "@/src/db";
 import { vodPlaybackProgress } from "@/src/db/schema";
 
-type SaveProgressInput = {
+export type SaveProgressInput = {
 	vodId: string;
 	channelId: string;
 	channelName: string;
@@ -12,7 +12,7 @@ type SaveProgressInput = {
 	durationSeconds?: number | undefined;
 };
 
-function getPlaybackProgress(vodId: string) {
+export function getPlaybackProgress(vodId: string) {
 	try {
 		const row = database
 			.select()
@@ -27,7 +27,7 @@ function getPlaybackProgress(vodId: string) {
 	}
 }
 
-function getPlaybackProgressBulk(vodIds: Array<string>) {
+export function getPlaybackProgressBulk(vodIds: Array<string>) {
 	try {
 		if (vodIds.length === 0) {
 			return [];
@@ -46,7 +46,7 @@ function getPlaybackProgressBulk(vodIds: Array<string>) {
 	}
 }
 
-function savePlaybackProgress(data: SaveProgressInput) {
+export function savePlaybackProgress(data: SaveProgressInput) {
 	try {
 		if (data.positionSeconds < 0) {
 			return new Error("Position cannot be negative");
@@ -90,7 +90,7 @@ function savePlaybackProgress(data: SaveProgressInput) {
 	}
 }
 
-function deletePlaybackProgress(vodId: string) {
+export function deletePlaybackProgress(vodId: string) {
 	try {
 		const deleted = database
 			.delete(vodPlaybackProgress)
@@ -105,7 +105,7 @@ function deletePlaybackProgress(vodId: string) {
 	}
 }
 
-function getRecentProgress(limit = 10) {
+export function getRecentProgress(limit = 10) {
 	try {
 		const rows = database
 			.select()
@@ -120,13 +120,3 @@ function getRecentProgress(limit = 10) {
 		return new Error("Failed to get recent progress");
 	}
 }
-
-export {
-	deletePlaybackProgress,
-	getPlaybackProgress,
-	getPlaybackProgressBulk,
-	getRecentProgress,
-	savePlaybackProgress,
-};
-
-export type { SaveProgressInput };

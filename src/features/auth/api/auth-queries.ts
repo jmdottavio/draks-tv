@@ -2,7 +2,7 @@ import { extractApiErrorMessage } from "@/src/shared/utils/api-errors";
 
 import type { AuthStatus, AuthUrl } from "../auth.types";
 
-async function fetchAuthStatus(): Promise<AuthStatus> {
+export async function fetchAuthStatus(): Promise<AuthStatus> {
 	const response = await fetch("/api/auth/status");
 
 	if (!response.ok) {
@@ -13,7 +13,7 @@ async function fetchAuthStatus(): Promise<AuthStatus> {
 	return response.json() as Promise<AuthStatus>;
 }
 
-async function fetchAuthUrl(): Promise<AuthUrl> {
+export async function fetchAuthUrl(): Promise<AuthUrl> {
 	const response = await fetch("/api/auth/url");
 
 	if (!response.ok) {
@@ -23,5 +23,3 @@ async function fetchAuthUrl(): Promise<AuthUrl> {
 
 	return response.json() as Promise<AuthUrl>;
 }
-
-export { fetchAuthStatus, fetchAuthUrl };

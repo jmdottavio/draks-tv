@@ -16,12 +16,12 @@ function launchStream(url: string) {
 	});
 }
 
-function launchLiveStream(channel: string) {
+export function launchLiveStream(channel: string) {
 	const sanitizedChannel = channel.replace(/[^a-zA-Z0-9_]/g, "");
 	return launchStream(`twitch.tv/${sanitizedChannel}`);
 }
 
-function launchVod(vodId: string, startTimeSeconds?: number) {
+export function launchVod(vodId: string, startTimeSeconds?: number) {
 	const sanitizedId = vodId.replace(/[^0-9]/g, "");
 
 	if (!sanitizedId) {
@@ -48,5 +48,3 @@ function launchVod(vodId: string, startTimeSeconds?: number) {
 		});
 	});
 }
-
-export { launchLiveStream, launchVod };

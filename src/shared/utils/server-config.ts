@@ -1,5 +1,5 @@
 // Default port (used as fallback when PORT env var is not set)
-const DEFAULT_PORT = 9447;
+export const DEFAULT_PORT = 9447;
 
 // Valid protocols for app configuration
 const ALLOWED_PROTOCOLS = ["http", "https"];
@@ -37,31 +37,21 @@ function parseHost(hostString: string | undefined) {
 }
 
 // App configuration - validated at module load time
-const APP_PORT = parsePort(process.env.PORT, DEFAULT_PORT);
-const APP_HOST = parseHost(process.env.APP_HOST);
-const APP_PROTOCOL = parseProtocol(process.env.APP_PROTOCOL);
+export const APP_PORT = parsePort(process.env.PORT, DEFAULT_PORT);
+export const APP_HOST = parseHost(process.env.APP_HOST);
+export const APP_PROTOCOL = parseProtocol(process.env.APP_PROTOCOL);
 
 // Auth paths
-const AUTH_CALLBACK_PATH = "/api/auth/callback";
+export const AUTH_CALLBACK_PATH = "/api/auth/callback";
 
 // Pre-computed URLs for efficiency
 const APP_BASE_URL = `${APP_PROTOCOL}://${APP_HOST}:${APP_PORT}`;
 const AUTH_REDIRECT_URI = `${APP_BASE_URL}${AUTH_CALLBACK_PATH}`;
 
-function getAppBaseUrl() {
+export function getAppBaseUrl() {
 	return APP_BASE_URL;
 }
 
-function getAuthRedirectUri() {
+export function getAuthRedirectUri() {
 	return AUTH_REDIRECT_URI;
 }
-
-export {
-	APP_HOST,
-	APP_PORT,
-	APP_PROTOCOL,
-	AUTH_CALLBACK_PATH,
-	DEFAULT_PORT,
-	getAppBaseUrl,
-	getAuthRedirectUri,
-};

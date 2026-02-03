@@ -7,14 +7,14 @@ import {
 	TWITCH_OAUTH_TOKEN_URL,
 } from "@/src/shared/utils/twitch-urls";
 
-type TwitchUser = {
+export type TwitchUser = {
 	id: string;
 	login: string;
 	display_name: string;
 	profile_image_url: string;
 };
 
-type TwitchStream = {
+export type TwitchStream = {
 	user_id: string;
 	user_login: string;
 	user_name: string;
@@ -25,7 +25,7 @@ type TwitchStream = {
 	started_at: string;
 };
 
-type TwitchVideo = {
+export type TwitchVideo = {
 	id: string;
 	user_id: string;
 	user_name: string;
@@ -163,7 +163,7 @@ async function twitchFetch<T>(endpoint: string, isRetry: boolean = false) {
 	return response.json() as Promise<TwitchResponse<T>>;
 }
 
-async function getUsers(params: { ids?: Array<string>; logins?: Array<string> }) {
+export async function getUsers(params: { ids?: Array<string>; logins?: Array<string> }) {
 	const queryParts: Array<string> = [];
 
 	if (params.ids !== undefined) {
@@ -189,7 +189,7 @@ async function getUsers(params: { ids?: Array<string>; logins?: Array<string> })
 	return result.data;
 }
 
-async function getFollowedStreams(userId: string) {
+export async function getFollowedStreams(userId: string) {
 	const result = await twitchFetch<TwitchStream>(`/streams/followed?user_id=${userId}&first=100`);
 
 	if (result instanceof Error) {
@@ -199,7 +199,7 @@ async function getFollowedStreams(userId: string) {
 	return result.data;
 }
 
-async function getVideos(userId: string, limit: number = 1) {
+export async function getVideos(userId: string, limit: number = 1) {
 	const result = await twitchFetch<TwitchVideo>(
 		`/videos?user_id=${userId}&type=archive&first=${limit}`,
 	);
@@ -211,7 +211,7 @@ async function getVideos(userId: string, limit: number = 1) {
 	return result.data;
 }
 
-async function getFollowedChannels(userId: string) {
+export async function getFollowedChannels(userId: string) {
 	const allChannels: Array<TwitchFollowedChannel> = [];
 	let cursor: string | undefined;
 
@@ -233,7 +233,7 @@ async function getFollowedChannels(userId: string) {
 	return allChannels;
 }
 
-async function revokeToken(token: string) {
+export async function revokeToken(token: string) {
 	const clientId = getTwitchClientId();
 
 	if (clientId === undefined) {
@@ -260,7 +260,3 @@ async function revokeToken(token: string) {
 		);
 	}
 }
-
-export { getUsers, getFollowedStreams, getVideos, getFollowedChannels, revokeToken };
-
-export type { TwitchUser, TwitchStream, TwitchVideo };

@@ -12,7 +12,7 @@ import type { Channel } from "../channels.types";
 // Stable empty array reference - defined outside component to prevent recreation
 const EMPTY_CHANNELS: Array<Channel> = [];
 
-function useChannels() {
+export function useChannels() {
 	const { data, isLoading, isFetching, error, refetch } = useQuery({
 		queryKey: QUERY_KEYS.channels,
 		queryFn: fetchChannels,
@@ -66,7 +66,7 @@ function updateChannelFavoriteStatus<T extends { id: string; isFavorite: boolean
 	return result;
 }
 
-function useToggleFavorite() {
+export function useToggleFavorite() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
@@ -123,7 +123,7 @@ function useToggleFavorite() {
 	});
 }
 
-function useReorderFavorites() {
+export function useReorderFavorites() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
@@ -173,5 +173,3 @@ function useReorderFavorites() {
 		},
 	});
 }
-
-export { useChannels, useReorderFavorites, useToggleFavorite };
