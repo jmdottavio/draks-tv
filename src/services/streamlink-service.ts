@@ -1,8 +1,16 @@
 import { spawn } from "child_process";
+import { homedir } from "os";
 import { resolve } from "path";
 
-const LOCALAPPDATA = process.env.LOCALAPPDATA ?? "";
-const STREAMLINK_PATH = resolve(LOCALAPPDATA, "Programs", "Streamlink", "bin", "streamlink.exe");
+const STREAMLINK_PATH = resolve(
+	homedir(),
+	"AppData",
+	"Local",
+	"Programs",
+	"Streamlink",
+	"bin",
+	"streamlink.exe",
+);
 
 function launchStream(url: string) {
 	return new Promise<void | Error>((promiseResolve) => {
