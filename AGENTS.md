@@ -1,6 +1,6 @@
 # draks-tv
 
-A lightweight local personal web app for viewing Twitch followed channels and launching streams or vods via Streamlink/VLC and chat via Chatterino.
+A lightweight local personal web app for viewing Twitch followed channels and launching streams or VODs via Streamlink/VLC and chat via Chatterino.
 
 ## Quick Start
 
@@ -75,6 +75,13 @@ src/
 - Latest VOD for offline channels
 - One-click launch to VLC via Streamlink
 - Favorites stored in SQLite (toggle from sidebar or main grid)
+
+## Helpful Notes
+
+- **Runtime/Package Manager**: Bun
+- **Database file**: `data/draks-tv.db`
+- **Stream launching**: Requires Streamlink + VLC installed locally
+- **OAuth redirect URL**: `http://localhost:9442/callback`
 
 ## Common Scripts
 
