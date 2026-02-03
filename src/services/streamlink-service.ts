@@ -1,4 +1,4 @@
-import { execFile } from "child_process";
+import { spawn } from "child_process";
 import { resolve } from "path";
 
 const LOCALAPPDATA = process.env.LOCALAPPDATA ?? "";
@@ -6,13 +6,27 @@ const STREAMLINK_PATH = resolve(LOCALAPPDATA, "Programs", "Streamlink", "bin", "
 
 function launchStream(url: string) {
 	return new Promise<void | Error>((promiseResolve) => {
-		execFile(STREAMLINK_PATH, [url, "best"], (error) => {
-			if (error) {
+		try {
+			const child = spawn(STREAMLINK_PATH, [url, "best"], {
+				detached: true,
+				stdio: "ignore",
+				windowsHide: true,
+			});
+
+			child.once("error", (error) => {
+				promiseResolve(new Error(error.message));
+			});
+			child.once("spawn", () => {
+				child.unref();
+				promiseResolve();
+			});
+		} catch (error) {
+			if (error instanceof Error) {
 				promiseResolve(new Error(error.message));
 				return;
 			}
-			promiseResolve();
-		});
+			promiseResolve(new Error("Failed to launch stream: unknown error"));
+		}
 	});
 }
 
@@ -39,12 +53,26 @@ export function launchVod(vodId: string, startTimeSeconds?: number) {
 	}
 
 	return new Promise<void | Error>((promiseResolve) => {
-		execFile(STREAMLINK_PATH, args, (error) => {
-			if (error) {
+		try {
+			const child = spawn(STREAMLINK_PATH, args, {
+				detached: true,
+				stdio: "ignore",
+				windowsHide: true,
+			});
+
+			child.once("error", (error) => {
+				promiseResolve(new Error(error.message));
+			});
+			child.once("spawn", () => {
+				child.unref();
+				promiseResolve();
+			});
+		} catch (error) {
+			if (error instanceof Error) {
 				promiseResolve(new Error(error.message));
 				return;
 			}
-			promiseResolve();
-		});
+			promiseResolve(new Error("Failed to launch stream: unknown error"));
+		}
 	});
 }

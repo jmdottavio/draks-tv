@@ -1,6 +1,52 @@
-import { exec } from "child_process";
+import { spawn } from "child_process";
+import { existsSync } from "fs";
 import { platform } from "os";
 import { resolve } from "path";
+
+function parseCommandLine(commandLine: string) {
+	const tokens: Array<string> = [];
+	const matcher = /"([^"]*)"|[^\s"]+/g;
+
+	let match = matcher.exec(commandLine);
+	while (match) {
+		if (match[1] !== undefined) {
+			tokens.push(match[1]);
+		} else {
+			tokens.push(match[0]);
+		}
+		match = matcher.exec(commandLine);
+	}
+
+	return tokens;
+}
+
+function isWindowsPath(command: string) {
+	return /[\\/]/.test(command) || /^[a-zA-Z]:/.test(command);
+}
+
+function resolveWindowsChatterinoCommand(command: string) {
+	const candidates: Array<string> = [];
+	if (command) {
+		candidates.push(command);
+	}
+
+	const PROGRAMFILES = process.env.PROGRAMFILES ?? "C:\\Program Files";
+	const PROGRAMFILES_X86 = process.env["PROGRAMFILES(X86)"] ?? "C:\\Program Files (x86)";
+	const LOCALAPPDATA = process.env.LOCALAPPDATA ?? "";
+
+	candidates.push(resolve(PROGRAMFILES, "Chatterino", "chatterino.exe"));
+	candidates.push(resolve(PROGRAMFILES_X86, "Chatterino", "chatterino.exe"));
+	if (LOCALAPPDATA) {
+		candidates.push(resolve(LOCALAPPDATA, "Programs", "Chatterino", "chatterino.exe"));
+	}
+
+	const existing = candidates.find((candidate) => existsSync(candidate));
+
+	return {
+		command: existing ?? command,
+		candidates,
+	};
+}
 
 function getChatterinoConfig() {
 	const envCommand = process.env.CHATTERINO_PATH;
@@ -56,21 +102,81 @@ export function launchChatterino(channelName: string) {
 			return;
 		}
 
-		const commandArguments = [...chatterinoConfig.baseArguments, "-c", sanitizedChannel].join(
-			" ",
-		);
+		const configuredCommandLine = chatterinoConfig.command.trim();
+		const hasEnvCommand = Boolean(process.env.CHATTERINO_PATH);
+		let configuredExists = false;
+		if (configuredCommandLine) {
+			configuredExists = existsSync(configuredCommandLine);
+		}
+		const shouldParse = hasEnvCommand || !configuredExists;
+		let configuredTokens: Array<string> = [];
+		if (shouldParse) {
+			configuredTokens = parseCommandLine(configuredCommandLine);
+		}
+		let resolvedCommand = configuredCommandLine;
+		let resolvedArguments: Array<string> = [];
+		if (shouldParse && configuredTokens.length > 0) {
+			resolvedCommand = configuredTokens[0] ?? "";
+			resolvedArguments = configuredTokens.slice(1);
+		}
 
-		const command =
-			platform() === "win32"
-				? `start "" "${chatterinoConfig.command}" ${commandArguments}`
-				: `${chatterinoConfig.command} ${commandArguments} &`;
+		if (!resolvedCommand) {
+			promiseResolve(new Error("Chatterino executable not configured"));
+			return;
+		}
+		const commandArguments = [
+			...resolvedArguments,
+			...chatterinoConfig.baseArguments,
+			"-c",
+			sanitizedChannel,
+		];
 
-		exec(command, (error) => {
-			if (error) {
+		const isWindows = platform() === "win32";
+		let resolvedWindowsCommand = resolvedCommand;
+		let candidates: Array<string> = [];
+		if (isWindows) {
+			const resolved = resolveWindowsChatterinoCommand(resolvedCommand);
+			resolvedWindowsCommand = resolved.command;
+			candidates = resolved.candidates;
+		}
+
+		if (isWindows && isWindowsPath(resolvedWindowsCommand) && !existsSync(resolvedWindowsCommand)) {
+			const windowsCandidates = candidates.filter((candidate) => isWindowsPath(candidate));
+			const checked = windowsCandidates.join("; ");
+			promiseResolve(
+				new Error(
+					`Chatterino executable not found. Checked: ${checked || resolvedWindowsCommand}`,
+				),
+			);
+			return;
+		}
+
+		try {
+			let spawnCommand = resolvedWindowsCommand;
+			let spawnArguments = commandArguments;
+			if (isWindows) {
+				spawnCommand = "cmd.exe";
+				spawnArguments = ["/c", "start", "", resolvedWindowsCommand, ...commandArguments];
+			}
+			const child = spawn(spawnCommand, spawnArguments, {
+				detached: true,
+				stdio: "ignore",
+				windowsHide: true,
+			});
+
+			child.once("error", (error: Error) => {
+				promiseResolve(new Error(`Failed to launch Chatterino: ${error.message}`));
+			});
+			child.once("spawn", () => {
+				child.unref();
+				promiseResolve();
+			});
+		} catch (error) {
+			if (error instanceof Error) {
 				promiseResolve(new Error(`Failed to launch Chatterino: ${error.message}`));
 				return;
 			}
-			promiseResolve();
-		});
+			promiseResolve(new Error("Failed to launch Chatterino: unknown error"));
+		}
 	});
 }
