@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import {
-	isFavorite,
 	addFavorite,
+	getFollowedChannelIdentity,
+	isFavorite,
 	removeFavorite,
-} from "@/src/features/channels/favorites.repository";
-import { getFollowedChannelIdentity } from "@/src/features/channels/followed-channels.repository";
+} from "@/src/features/channels/followed-channels.repository";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 import { requireAuth } from "@/src/shared/utils/require-auth";
 
@@ -60,8 +60,6 @@ export const Route = createFileRoute("/api/favorites/toggle/$id/")({
 
 				const addResult = addFavorite({
 					id: channelIdentity.channelId,
-					channelName: channelIdentity.channelName,
-					profileImage: channelIdentity.profileImageUrl,
 				});
 
 				if (addResult instanceof Error) {

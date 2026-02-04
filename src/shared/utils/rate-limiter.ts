@@ -24,7 +24,7 @@ function cleanup(windowMs: number) {
 
 	const cutoff = now - windowMs;
 	for (const [key, record] of requestRecords) {
-		record.timestamps = record.timestamps.filter((t) => t > cutoff);
+		record.timestamps = record.timestamps.filter((timestamp) => timestamp > cutoff);
 		if (record.timestamps.length === 0) {
 			requestRecords.delete(key);
 		}

@@ -8,23 +8,44 @@ import { getAuthRedirectUri } from "@/src/shared/utils/server-config";
 import { getTwitchClientId, getTwitchClientSecret } from "@/src/shared/utils/twitch-config";
 import { TWITCH_HELIX_BASE_URL, TWITCH_OAUTH_TOKEN_URL } from "@/src/shared/utils/twitch-urls";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
+import { isRecord } from "@/src/shared/utils/validation";
 
-type TwitchTokenResponse = {
-	access_token: string;
-	refresh_token: string;
-	expires_in: number;
-	scope: Array<string>;
-	token_type: string;
-};
+function parseTokenResponse(data: unknown) {
+	if (!isRecord(data)) {
+		return new Error("Invalid token response");
+	}
 
-type TwitchUserResponse = {
-	data: Array<{
-		id: string;
-		login: string;
-		display_name: string;
-		profile_image_url: string;
-	}>;
-};
+	if (typeof data.access_token !== "string") {
+		return new Error("Invalid access token");
+	}
+
+	if (typeof data.refresh_token !== "string") {
+		return new Error("Invalid refresh token");
+	}
+
+	if (typeof data.expires_in !== "number") {
+		return new Error("Invalid token expiry");
+	}
+
+	return {
+		accessToken: data.access_token,
+		refreshToken: data.refresh_token,
+		expiresIn: data.expires_in,
+	};
+}
+
+function parseUserResponse(data: unknown) {
+	if (!isRecord(data) || !Array.isArray(data.data)) {
+		return new Error("Invalid user response");
+	}
+
+	const user = data.data[0];
+	if (!isRecord(user) || typeof user.id !== "string") {
+		return new Error("Invalid user data");
+	}
+
+	return { id: user.id };
+}
 
 export const Route = createFileRoute("/api/auth/callback/")({
 	server: {
@@ -107,14 +128,22 @@ export const Route = createFileRoute("/api/auth/callback/")({
 					);
 				}
 
-				const tokenData = (await tokenResponse.json()) as TwitchTokenResponse;
+				const tokenJson: unknown = await tokenResponse.json();
+				const tokenData = parseTokenResponse(tokenJson);
+				if (tokenData instanceof Error) {
+					return createErrorResponse(
+						tokenData.message,
+						ErrorCode.TWITCH_API_ERROR,
+						500,
+					);
+				}
 
 				const userResponse = await fetch(`${TWITCH_HELIX_BASE_URL}/users`, {
 					headers: {
-						Authorization: `Bearer ${tokenData.access_token}`,
-						"Client-Id": clientId,
-					},
-				});
+					Authorization: `Bearer ${tokenData.accessToken}`,
+					"Client-Id": clientId,
+				},
+			});
 
 				if (!userResponse.ok) {
 					return createErrorResponse(
@@ -124,22 +153,17 @@ export const Route = createFileRoute("/api/auth/callback/")({
 					);
 				}
 
-				const userData = (await userResponse.json()) as TwitchUserResponse;
-				const user = userData.data[0];
-
-				if (user === undefined) {
-					return createErrorResponse(
-						"No user data returned",
-						ErrorCode.TWITCH_API_ERROR,
-						500,
-					);
+				const userJson: unknown = await userResponse.json();
+				const user = parseUserResponse(userJson);
+				if (user instanceof Error) {
+					return createErrorResponse(user.message, ErrorCode.TWITCH_API_ERROR, 500);
 				}
 
 				const setAuthResult = setAuth(
-					tokenData.access_token,
-					tokenData.refresh_token,
+					tokenData.accessToken,
+					tokenData.refreshToken,
 					user.id,
-					tokenData.expires_in,
+					tokenData.expiresIn,
 				);
 
 				if (setAuthResult instanceof Error) {

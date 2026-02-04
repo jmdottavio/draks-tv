@@ -1,42 +1,16 @@
-import { and, asc, desc, eq, inArray, notInArray, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, max, notInArray, sql } from "drizzle-orm";
 
 import { database } from "@/src/db";
 import { followedChannels, vods } from "@/src/db/schema";
 
-export type FollowedChannelRow = {
-	channelId: string;
-	channelName: string;
-	profileImageUrl: string;
-	isFavorite: boolean;
-	sortOrder: number;
-	isLive: boolean;
-	lastSeenAt: string | null;
-	latestVodId: string | null;
-	updatedAt: string;
-};
+import type { FavoriteInput } from "@/src/features/channels/channels.types";
+import type { VodSummary } from "@/src/features/vods/vods.types";
 
-export type FollowedChannelIdentity = {
-	channelId: string;
-	channelName: string;
-	profileImageUrl: string;
-};
-
-export type FollowedChannelUpsertInput = {
+type FollowedChannelUpsertInput = {
 	channelId: string;
 	channelName: string;
 	profileImageUrl: string;
 	followedAt: string | null;
-};
-
-export type LatestVodRow = {
-	channelId: string;
-	latestVod: {
-		vodId: string;
-		title: string;
-		durationSeconds: number;
-		createdAt: string;
-		thumbnailUrl: string;
-	} | null;
 };
 
 export function getAllFollowedChannels() {
@@ -94,6 +68,112 @@ export function getFavoriteChannelIds() {
 	} catch (error) {
 		console.error("[followed-channels.repository] getFavoriteChannelIds failed:", error);
 		return new Error("Failed to get favorite channel ids");
+	}
+}
+
+export function addFavorite(favorite: FavoriteInput) {
+	try {
+		const transactionResult = database.transaction((transaction) => {
+			const result = transaction
+				.select({ maxOrder: max(followedChannels.sortOrder) })
+				.from(followedChannels)
+				.where(eq(followedChannels.isFavorite, true))
+				.get();
+
+			const nextSortOrder =
+				result?.maxOrder !== null && result?.maxOrder !== undefined
+					? result.maxOrder + 1
+					: 0;
+
+			const inserted = transaction
+				.update(followedChannels)
+				.set({
+					isFavorite: true,
+					sortOrder: nextSortOrder,
+					updatedAt: sql`CURRENT_TIMESTAMP`,
+				})
+				.where(eq(followedChannels.channelId, favorite.id))
+				.returning({ id: followedChannels.channelId })
+				.get();
+
+			if (inserted === undefined) {
+				return new Error("Insert did not return a row");
+			}
+
+			return null;
+		});
+
+		if (transactionResult instanceof Error) {
+			return transactionResult;
+		}
+
+		return null;
+	} catch (error) {
+		console.error("[followed-channels.repository] addFavorite failed:", error);
+		return new Error("Failed to add favorite");
+	}
+}
+
+export function removeFavorite(twitchId: string) {
+	try {
+		const deleted = database
+			.update(followedChannels)
+			.set({
+				isFavorite: false,
+				sortOrder: 0,
+				updatedAt: sql`CURRENT_TIMESTAMP`,
+			})
+			.where(eq(followedChannels.channelId, twitchId))
+			.returning({ channelId: followedChannels.channelId })
+			.all();
+
+		return deleted.length > 0;
+	} catch (error) {
+		console.error("[followed-channels.repository] removeFavorite failed:", error);
+		return new Error("Failed to remove favorite");
+	}
+}
+
+export function isFavorite(twitchId: string) {
+	try {
+		const result = database
+			.select({ count: count() })
+			.from(followedChannels)
+			.where(
+				and(
+					eq(followedChannels.channelId, twitchId),
+					eq(followedChannels.isFavorite, true),
+				),
+			)
+			.get();
+
+		return result !== undefined && result.count > 0;
+	} catch (error) {
+		console.error("[followed-channels.repository] isFavorite failed:", error);
+		return new Error("Failed to check favorite status");
+	}
+}
+
+export function reorderFavorites(orderedIds: Array<string>) {
+	try {
+		database.transaction((transaction) => {
+			for (let index = 0; index < orderedIds.length; index++) {
+				const channelId = orderedIds[index];
+
+				if (channelId !== undefined) {
+					transaction
+						.update(followedChannels)
+						.set({ sortOrder: index, updatedAt: sql`CURRENT_TIMESTAMP` })
+						.where(eq(followedChannels.channelId, channelId))
+						.run();
+				}
+			}
+		});
+
+		return null;
+	} catch (error) {
+		console.error("[followed-channels.repository] reorderFavorites failed:", error);
+		return new Error("Failed to reorder favorites");
 	}
 }
 
@@ -247,7 +327,7 @@ export function getLatestVodsByChannelIds(channelIds: Array<string>) {
 			.select({
 				channelId: followedChannels.channelId,
 				latestVod: {
-					vodId: vods.vodId,
+					id: vods.vodId,
 					title: vods.title,
 					durationSeconds: vods.durationSeconds,
 					createdAt: vods.createdAt,
@@ -259,10 +339,13 @@ export function getLatestVodsByChannelIds(channelIds: Array<string>) {
 			.where(inArray(followedChannels.channelId, channelIds))
 			.all();
 
-		const results: Array<LatestVodRow> = [];
+		const results: Array<{
+			channelId: string;
+			latestVod: VodSummary | null;
+		}> = [];
 		for (const row of rows) {
 			const latestVod =
-				row.latestVod === null || row.latestVod.vodId === null ? null : row.latestVod;
+				row.latestVod === null || row.latestVod.id === null ? null : row.latestVod;
 			results.push({ channelId: row.channelId, latestVod });
 		}
 

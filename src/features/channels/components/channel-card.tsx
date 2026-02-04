@@ -1,5 +1,7 @@
 import { memo, useCallback } from "react";
 
+import { useToggleFavorite } from "@/src/features/channels/hooks/use-channels";
+import { useOpenChat, useWatchLive, useWatchVod } from "@/src/features/channels/hooks/use-launch";
 import { ChatIcon, StarIcon } from "@/src/shared/components/icons";
 import {
 	formatDate,
@@ -8,10 +10,7 @@ import {
 	formatViewers,
 } from "@/src/shared/utils/format";
 
-import { useToggleFavorite } from "../hooks/use-channels";
-import { useOpenChat, useWatchLive, useWatchVod } from "../hooks/use-launch";
-
-import type { Channel } from "../channels.types";
+import type { Channel } from "@/src/features/channels/channels.types";
 
 type ChannelCardProps = {
 	channel: Channel;

@@ -1,11 +1,7 @@
 import { extractApiErrorMessage } from "@/src/shared/utils/api-errors";
 
-import type { TwitchChannelIdentity, TwitchVideo } from "../vods.types";
+import { parseChannelSearchResponse, parseVodProgressResponse } from "../vods.validators";
 
-export type ChannelSearchResponse = {
-	channel: TwitchChannelIdentity;
-	videos: Array<TwitchVideo>;
-};
 
 export async function fetchChannelSearch(channelName: string) {
 	const response = await fetch(
@@ -17,7 +13,13 @@ export async function fetchChannelSearch(channelName: string) {
 		throw new Error(message);
 	}
 
-	return response.json() as Promise<ChannelSearchResponse>;
+	const data: unknown = await response.json();
+	const parsed = parseChannelSearchResponse(data);
+	if (parsed instanceof Error) {
+		throw parsed;
+	}
+
+	return parsed;
 }
 
 export async function fetchVodProgressBulk(vodIds: Array<string>) {
@@ -32,6 +34,11 @@ export async function fetchVodProgressBulk(vodIds: Array<string>) {
 		throw new Error(message);
 	}
 
-	const data = await response.json();
-	return data.progress;
+	const data: unknown = await response.json();
+	const parsed = parseVodProgressResponse(data);
+	if (parsed instanceof Error) {
+		throw parsed;
+	}
+
+	return parsed;
 }

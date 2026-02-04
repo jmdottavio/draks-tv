@@ -118,7 +118,7 @@ function AppShell() {
 
 	return (
 		<div className="min-h-screen bg-background">
-			<Sidebar isExpanded={isSidebarOpen} onToggle={toggleSidebar} />
+			<Sidebar isExpanded={isSidebarOpen} />
 
 			<div className={`transition-[margin] duration-300 ${marginClass}`}>
 				<Header

@@ -1,9 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import {
-	deletePlaybackProgress,
-	getPlaybackProgress,
-} from "@/src/features/vods/playback-progress.repository";
+import { deletePlaybackProgress, getPlaybackProgress } from "@/src/features/vods/vods.repository";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 import { requireAuth } from "@/src/shared/utils/require-auth";
 

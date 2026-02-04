@@ -7,8 +7,7 @@ import {
 	parseTimeToSeconds,
 } from "@/src/shared/utils/format";
 
-import type { SaveProgressInput } from "@/src/features/vods/playback-progress.repository";
-import type { VodProgressSelect } from "@/src/features/vods/vods.types";
+import type { SaveProgressInput, VodProgressSelect } from "@/src/features/vods/vods.types";
 
 type VodCardData = {
 	id: string;

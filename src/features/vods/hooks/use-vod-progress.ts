@@ -1,16 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 
+import { saveVodProgress } from "@/src/features/vods/api/vods-mutations";
+import { fetchVodProgressBulk } from "@/src/features/vods/api/vods-queries";
 import {
 	getVodProgressBulkQueryKey,
 	getVodProgressQueryKey,
 	QUERY_KEYS,
 } from "@/src/shared/query-keys";
 
-import { saveVodProgress } from "../api/vods-mutations";
-import { fetchVodProgressBulk } from "../api/vods-queries";
-
-import type { VodProgressSelect } from "../vods.types";
+import type { VodProgressSelect } from "@/src/features/vods/vods.types";
 
 const EMPTY_PROGRESS: Array<VodProgressSelect> = [];
 

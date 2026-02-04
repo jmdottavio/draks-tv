@@ -2,13 +2,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { memo, useCallback, useMemo } from "react";
 
 import { toggleFavorite, watchLive } from "@/src/features/channels/api/channels-mutations";
+import { useFollowedChannels } from "@/src/features/sidebar/hooks/use-followed-channels";
 import { StarIcon } from "@/src/shared/components/icons";
 import { QUERY_KEYS } from "@/src/shared/query-keys";
 import { formatDate, formatViewers } from "@/src/shared/utils/format";
 
-import { useFollowedChannels } from "../hooks/use-followed-channels";
-
-import type { SidebarChannel } from "../sidebar.types";
+import type { SidebarChannel } from "@/src/features/sidebar/sidebar.types";
 
 type ChannelItemProps = {
 	channel: SidebarChannel;
@@ -109,7 +108,14 @@ const ChannelItem = memo(function ChannelItem({
 	onFavoriteToggle,
 }: ChannelItemProps) {
 	const handleClick = useCallback(async () => {
-		await watchLive(channel.channelName);
+		try {
+			await watchLive(channel.channelName);
+		} catch (error) {
+			console.error(
+				"Failed to launch stream:",
+				error instanceof Error ? error.message : error,
+			);
+		}
 	}, [channel.channelName]);
 
 	const handleFavoriteClick = useCallback(

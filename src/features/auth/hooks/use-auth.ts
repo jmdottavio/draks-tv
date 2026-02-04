@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
+import { fetchAuthStatus } from "@/src/features/auth/api/auth-queries";
 import { QUERY_KEYS } from "@/src/shared/query-keys";
-
-import { fetchAuthStatus } from "../api/auth-queries";
 
 export function useAuth() {
 	const { data, isLoading, error } = useQuery({

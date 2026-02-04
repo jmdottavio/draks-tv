@@ -38,7 +38,7 @@ async function fetchProfileImages(channelIds: Array<string>) {
 			continue;
 		}
 		for (const user of result) {
-			profileImages.set(user.id, user.profile_image_url);
+			profileImages.set(user.id, user.profileImageUrl);
 		}
 	}
 
@@ -60,15 +60,15 @@ async function refreshFollowedChannels() {
 		return followedResult;
 	}
 
-	const channelIds = followedResult.map((channel) => channel.broadcaster_id);
+	const channelIds = followedResult.map((channel) => channel.broadcasterId);
 	const profileImages = await fetchProfileImages(channelIds);
 	const fetchedAt = new Date().toISOString();
 
 	const upsertInputs = followedResult.map((channel) => ({
-		channelId: channel.broadcaster_id,
-		channelName: channel.broadcaster_name,
-		profileImageUrl: profileImages.get(channel.broadcaster_id) ?? "",
-		followedAt: channel.followed_at ?? null,
+		channelId: channel.broadcasterId,
+		channelName: channel.broadcasterName,
+		profileImageUrl: profileImages.get(channel.broadcasterId) ?? "",
+		followedAt: channel.followedAt ?? null,
 	}));
 
 	const upsertResult = upsertFollowedChannels(upsertInputs, fetchedAt);
@@ -104,7 +104,7 @@ async function refreshVideosForChannel(channelId: string) {
 		return null;
 	}
 
-	const updateResult = updateLatestVod(channelId, newestVideo.id, newestVideo.created_at);
+	const updateResult = updateLatestVod(channelId, newestVideo.id, newestVideo.createdAt);
 	if (updateResult instanceof Error) {
 		return updateResult;
 	}

@@ -1,15 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
+import { fetchChannelSearch } from "@/src/features/vods/api/vods-queries";
 import { getVodsQueryKey, QUERY_KEYS } from "@/src/shared/query-keys";
-
-import { fetchChannelSearch } from "../api/vods-queries";
-
-import type { TwitchChannelIdentity, TwitchVideo } from "../vods.types";
-
-type VodSearchData = {
-	channel: TwitchChannelIdentity;
-	videos: Array<TwitchVideo>;
-};
 
 export function useVodSearch(channelName: string | null) {
 	const { data, isLoading, error } = useQuery({
@@ -25,7 +17,7 @@ export function useVodSearch(channelName: string | null) {
 	});
 
 	return {
-		data: (data ?? null) as VodSearchData | null,
+		data: data ?? null,
 		isLoading,
 		error: error instanceof Error ? error : null,
 	};

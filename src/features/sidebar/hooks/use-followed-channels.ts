@@ -1,11 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
+import { fetchFollowedChannels } from "@/src/features/sidebar/api/sidebar-queries";
 import { QUERY_KEYS } from "@/src/shared/query-keys";
 
-import { fetchFollowedChannels } from "../api/sidebar-queries";
-
-import type { SidebarChannel } from "../sidebar.types";
+import type { SidebarChannel } from "@/src/features/sidebar/sidebar.types";
 
 const EMPTY_CHANNELS: Array<SidebarChannel> = [];
 

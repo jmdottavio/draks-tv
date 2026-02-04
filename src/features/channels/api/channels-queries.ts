@@ -1,8 +1,7 @@
+import { isChannelArray } from "@/src/features/channels/channels.validators";
 import { extractApiErrorMessage } from "@/src/shared/utils/api-errors";
 
-import type { Channel } from "../channels.types";
-
-export async function fetchChannels(): Promise<Array<Channel>> {
+export async function fetchChannels() {
 	const response = await fetch("/api/channels");
 
 	if (!response.ok) {
@@ -10,5 +9,10 @@ export async function fetchChannels(): Promise<Array<Channel>> {
 		throw new Error(message);
 	}
 
-	return response.json() as Promise<Array<Channel>>;
+	const data: unknown = await response.json();
+	if (!isChannelArray(data)) {
+		throw new Error("Invalid channels payload");
+	}
+
+	return data;
 }

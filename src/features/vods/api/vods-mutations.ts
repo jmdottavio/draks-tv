@@ -1,6 +1,6 @@
 import { extractApiErrorMessage } from "@/src/shared/utils/api-errors";
 
-import type { SaveProgressInput } from "../playback-progress.repository";
+import type { SaveProgressInput } from "@/src/features/vods/vods.types";
 
 export async function watchVod({
 	id,

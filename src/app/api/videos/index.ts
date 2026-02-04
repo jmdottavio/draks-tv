@@ -50,7 +50,7 @@ export const Route = createFileRoute("/api/videos/")({
 
 				const newestVideo = result[0];
 				if (newestVideo !== undefined) {
-					scheduleLatestVodUpdate(channelId, newestVideo.id, newestVideo.created_at);
+					scheduleLatestVodUpdate(channelId, newestVideo.id, newestVideo.createdAt);
 				}
 
 				return Response.json(result);

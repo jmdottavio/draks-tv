@@ -1,5 +1,3 @@
-import { memo, useCallback, useMemo } from "react";
-
 import {
 	DndContext,
 	PointerSensor,
@@ -10,21 +8,19 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { memo, useCallback, useMemo } from "react";
 
+import { ChannelCard } from "@/src/features/channels/components/channel-card";
+import { useReorderFavorites } from "@/src/features/channels/hooks/use-channels";
+import { useWatchVod } from "@/src/features/channels/hooks/use-launch";
 import { VodCard } from "@/src/features/vods/components/vod-card";
 import { useSaveVodProgress, useVodProgressBulk } from "@/src/features/vods/hooks/use-vod-progress";
-import { useWatchVod } from "@/src/features/channels/hooks/use-launch";
 import { GripIcon } from "@/src/shared/components/icons";
 import { formatDurationSeconds } from "@/src/shared/utils/format";
 
-import { useReorderFavorites } from "../hooks/use-channels";
-
-import { ChannelCard } from "./channel-card";
-
-import type { SaveProgressInput } from "@/src/features/vods/playback-progress.repository";
-import type { VodProgressSelect } from "@/src/features/vods/vods.types";
+import type { Channel } from "@/src/features/channels/channels.types";
 import type { VodCardData } from "@/src/features/vods/components/vod-card";
-import type { Channel } from "../channels.types";
+import type { SaveProgressInput, VodProgressSelect } from "@/src/features/vods/vods.types";
 
 function getVodCardData(channel: Channel): VodCardData | null {
 	if (channel.latestVod === null) {
@@ -83,8 +79,7 @@ const SortableChannelCard = memo(function SortableChannelCard({
 	);
 
 	const vodCardData = getVodCardData(channel);
-	const shouldShowVodCard =
-		channel.isFavorite && !channel.isLive && vodCardData !== null;
+	const shouldShowVodCard = channel.isFavorite && !channel.isLive && vodCardData !== null;
 
 	return (
 		<div ref={setNodeRef} style={style} className="relative">
@@ -127,45 +122,41 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 	const saveProgressMutation = useSaveVodProgress();
 	const watchVodMutation = useWatchVod();
 
-	const {
-		allFavorites,
-		allVisibleChannels,
-		offlineFavoriteChannels,
-		priorityIds,
-	} = useMemo(() => {
-		const liveFavoriteChannels: Array<Channel> = [];
-		const offlineFavoriteChannels: Array<Channel> = [];
-		const liveNonFavoriteChannels: Array<Channel> = [];
+	const { allFavorites, allVisibleChannels, offlineFavoriteChannels, priorityIds } =
+		useMemo(() => {
+			const liveFavoriteChannels: Array<Channel> = [];
+			const offlineFavoriteChannels: Array<Channel> = [];
+			const liveNonFavoriteChannels: Array<Channel> = [];
 
-		for (const channel of channels) {
-			if (channel.isFavorite) {
-				if (channel.isLive) {
-					liveFavoriteChannels.push(channel);
-				} else {
-					offlineFavoriteChannels.push(channel);
+			for (const channel of channels) {
+				if (channel.isFavorite) {
+					if (channel.isLive) {
+						liveFavoriteChannels.push(channel);
+					} else {
+						offlineFavoriteChannels.push(channel);
+					}
+				} else if (channel.isLive) {
+					liveNonFavoriteChannels.push(channel);
 				}
-			} else if (channel.isLive) {
-				liveNonFavoriteChannels.push(channel);
 			}
-		}
 
-		// First 6 cards get priority loading (typically first row)
-		const allVisibleChannels = [
-			...liveFavoriteChannels,
-			...offlineFavoriteChannels,
-			...liveNonFavoriteChannels,
-		];
-		const priorityChannelIds = new Set(
-			allVisibleChannels.slice(0, 6).map((channel) => channel.id),
-		);
+			// First 6 cards get priority loading (typically first row)
+			const allVisibleChannels = [
+				...liveFavoriteChannels,
+				...offlineFavoriteChannels,
+				...liveNonFavoriteChannels,
+			];
+			const priorityChannelIds = new Set(
+				allVisibleChannels.slice(0, 6).map((channel) => channel.id),
+			);
 
-		return {
-			allFavorites: [...liveFavoriteChannels, ...offlineFavoriteChannels],
-			allVisibleChannels,
-			offlineFavoriteChannels,
-			priorityIds: priorityChannelIds,
-		};
-	}, [channels]);
+			return {
+				allFavorites: [...liveFavoriteChannels, ...offlineFavoriteChannels],
+				allVisibleChannels,
+				offlineFavoriteChannels,
+				priorityIds: priorityChannelIds,
+			};
+		}, [channels]);
 
 	const offlineVodIds = useMemo(() => {
 		const ids: Array<string> = [];

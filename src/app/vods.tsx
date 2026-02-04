@@ -8,8 +8,9 @@ import { useVodSearch } from "@/src/features/vods/hooks/use-vods";
 import { ArrowLeftIcon, SearchIcon } from "@/src/shared/components/icons";
 import { formatDuration, parseDurationToSeconds } from "@/src/shared/utils/format";
 
-import type { TwitchVideo, VodProgressSelect } from "@/src/features/vods/vods.types";
 import type { VodCardData } from "@/src/features/vods/components/vod-card";
+import type { VodProgressSelect } from "@/src/features/vods/vods.types";
+import type { TwitchVideo } from "@/src/services/twitch-service";
 
 export const Route = createFileRoute("/vods")({
 	component: VodsPage,
@@ -21,11 +22,11 @@ function getVodCardData(vod: TwitchVideo): VodCardData {
 	return {
 		id: vod.id,
 		title: vod.title,
-		channelName: vod.user_name,
-		createdAt: vod.created_at,
+		channelName: vod.userName,
+		createdAt: vod.createdAt,
 		durationSeconds: parseDurationToSeconds(vod.duration),
 		durationLabel: formatDuration(vod.duration),
-		thumbnailUrl: vod.thumbnail_url,
+		thumbnailUrl: vod.thumbnailUrl,
 	};
 }
 

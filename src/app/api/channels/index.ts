@@ -9,41 +9,17 @@ import { getFollowedStreams } from "@/src/services/twitch-service";
 import { scheduleLiveStateUpdate } from "@/src/services/video-cache-service";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 
+import type { Channel, Stream } from "@/src/features/channels/channels.types";
+import type { VodSummary } from "@/src/features/vods/vods.types";
 import type { TwitchStream } from "@/src/services/twitch-service";
 
-type StreamData = {
-	title: string;
-	gameName: string;
-	viewerCount: number;
-	thumbnailUrl: string;
-	startedAt: string;
-};
-
-type VodData = {
-	id: string;
-	title: string;
-	durationSeconds: number;
-	createdAt: string;
-	thumbnailUrl: string;
-};
-
-type ChannelData = {
-	id: string;
-	channelName: string;
-	profileImage: string;
-	isLive: boolean;
-	isFavorite: boolean;
-	stream: StreamData | null;
-	latestVod: VodData | null;
-};
-
-function transformStream(stream: TwitchStream): StreamData {
+function transformStream(stream: TwitchStream): Stream {
 	return {
 		title: stream.title,
-		gameName: stream.game_name,
-		viewerCount: stream.viewer_count,
-		thumbnailUrl: stream.thumbnail_url,
-		startedAt: stream.started_at,
+		gameName: stream.gameName,
+		viewerCount: stream.viewerCount,
+		thumbnailUrl: stream.thumbnailUrl,
+		startedAt: stream.startedAt,
 	};
 }
 
@@ -84,8 +60,8 @@ export const Route = createFileRoute("/api/channels/")({
 				const liveStreamsByChannelId = new Map<string, TwitchStream>();
 				const liveChannelIds: Array<string> = [];
 				for (const stream of liveStreamsResult) {
-					liveStreamsByChannelId.set(stream.user_id, stream);
-					liveChannelIds.push(stream.user_id);
+					liveStreamsByChannelId.set(stream.userId, stream);
+					liveChannelIds.push(stream.userId);
 				}
 
 				scheduleLiveStateUpdate(liveChannelIds, "channels-api", true);
@@ -105,11 +81,11 @@ export const Route = createFileRoute("/api/channels/")({
 						500,
 					);
 				}
-				const vodsByChannelId = new Map<string, VodData>();
+				const vodsByChannelId = new Map<string, VodSummary>();
 				for (const cached of cachedChannels) {
 					if (cached.latestVod !== null) {
 						vodsByChannelId.set(cached.channelId, {
-							id: cached.latestVod.vodId,
+							id: cached.latestVod.id,
 							title: cached.latestVod.title,
 							durationSeconds: cached.latestVod.durationSeconds,
 							createdAt: cached.latestVod.createdAt,
@@ -118,8 +94,8 @@ export const Route = createFileRoute("/api/channels/")({
 					}
 				}
 
-				const favoriteChannels: Array<ChannelData> = [];
-				const liveNonFavoriteChannels: Array<ChannelData> = [];
+				const favoriteChannels: Array<Channel> = [];
+				const liveNonFavoriteChannels: Array<Channel> = [];
 
 				for (const channel of followedChannelsResult) {
 					const rawStream = liveStreamsByChannelId.get(channel.channelId);

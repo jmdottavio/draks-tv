@@ -1,6 +1,5 @@
+import { fetchAuthUrl } from "@/src/features/auth/api/auth-queries";
 import { TwitchIcon } from "@/src/shared/components/icons";
-
-import { fetchAuthUrl } from "../api/auth-queries";
 
 export function AuthSection() {
 	async function handleLogin() {

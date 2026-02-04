@@ -1,13 +1,15 @@
-import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
 
+import {
+	reorderFavoritesApi,
+	toggleFavorite,
+} from "@/src/features/channels/api/channels-mutations";
+import { fetchChannels } from "@/src/features/channels/api/channels-queries";
 import { QUERY_KEYS } from "@/src/shared/query-keys";
 
-import { reorderFavoritesApi, toggleFavorite } from "../api/channels-mutations";
-import { fetchChannels } from "../api/channels-queries";
-
+import type { Channel } from "@/src/features/channels/channels.types";
 import type { SidebarChannel } from "@/src/features/sidebar/sidebar.types";
-import type { Channel } from "../channels.types";
 
 // Stable empty array reference - defined outside component to prevent recreation
 const EMPTY_CHANNELS: Array<Channel> = [];
@@ -60,8 +62,11 @@ function updateChannelFavoriteStatus<T extends { id: string; isFavorite: boolean
 
 	// Create new array with same references except for the changed channel
 	const result = [...channels];
-	const targetChannel = channels[targetIndex] as T;
-	result[targetIndex] = { ...targetChannel, isFavorite: !targetChannel.isFavorite } as T;
+	const targetChannel = channels[targetIndex];
+	if (targetChannel === undefined) {
+		return channels;
+	}
+	result[targetIndex] = { ...targetChannel, isFavorite: !targetChannel.isFavorite };
 
 	return result;
 }

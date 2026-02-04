@@ -1,4 +1,5 @@
 import type { vods } from "@/src/db/schema";
+import type { TwitchChannel, TwitchVideo } from "@/src/services/twitch-service";
 
 export type VodSelect = typeof vods.$inferSelect;
 
@@ -9,19 +10,21 @@ export type VodProgressSelect = {
 	playbackUpdatedAt: string | null;
 };
 
-export type TwitchChannelIdentity = {
+export type VodSummary = {
 	id: string;
-	login: string;
-	display_name: string;
-	profile_image_url: string;
+	title: string;
+	durationSeconds: number;
+	createdAt: string;
+	thumbnailUrl: string;
 };
 
-export type TwitchVideo = {
-	id: string;
-	user_id: string;
-	user_name: string;
-	title: string;
-	duration: string;
-	created_at: string;
-	thumbnail_url: string;
+export type SaveProgressInput = {
+	vodId: string;
+	positionSeconds: number;
+	durationSeconds?: number | undefined;
+};
+
+export type ChannelSearchResponse = {
+	channel: TwitchChannel;
+	videos: Array<TwitchVideo>;
 };

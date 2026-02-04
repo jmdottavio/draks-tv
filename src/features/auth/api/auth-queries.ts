@@ -1,6 +1,6 @@
 import { extractApiErrorMessage } from "@/src/shared/utils/api-errors";
 
-import type { AuthStatus, AuthUrl } from "../auth.types";
+import type { AuthStatus, AuthUrl } from "@/src/features/auth/auth.types";
 
 export async function fetchAuthStatus(): Promise<AuthStatus> {
 	const response = await fetch("/api/auth/status");
