@@ -51,6 +51,10 @@ function VodsPage() {
 	const vodProgressMap = useMemo(() => {
 		const map = new Map<string, VodProgressSelect>();
 
+		if (!progressData) {
+			return map;
+		}
+
 		for (const item of progressData) {
 			map.set(item.vodId, item);
 		}
