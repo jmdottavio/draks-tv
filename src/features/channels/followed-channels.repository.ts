@@ -218,7 +218,9 @@ export function upsertFollowedChannels(
 export function removeUnfollowedChannels(channelIds: Array<string>) {
 	try {
 		if (channelIds.length === 0) {
-			database.delete(followedChannels).run();
+			console.warn(
+				"[followed-channels.repository] removeUnfollowedChannels skipped: empty channelIds",
+			);
 			return null;
 		}
 
