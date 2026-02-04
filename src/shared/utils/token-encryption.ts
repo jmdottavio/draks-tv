@@ -8,6 +8,8 @@ import {
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
+import { isRecord } from "@/src/shared/utils/validation";
+
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
 const AUTH_TAG_LENGTH = 16;
@@ -52,12 +54,9 @@ function getOrCreateKeyConfig(): KeyConfig {
 
 			// Validate parsed content has required fields
 			if (
-				typeof parsed === "object" &&
-				parsed !== null &&
-				"secret" in parsed &&
+				isRecord(parsed) &&
 				typeof parsed.secret === "string" &&
 				parsed.secret !== "" &&
-				"salt" in parsed &&
 				typeof parsed.salt === "string" &&
 				parsed.salt !== ""
 			) {
@@ -112,13 +111,7 @@ function getOrCreateSalt(envSecret: string): Buffer {
 			const content = readFileSync(KEY_FILE_PATH, "utf8");
 			const parsed: unknown = JSON.parse(content);
 
-			if (
-				typeof parsed === "object" &&
-				parsed !== null &&
-				"salt" in parsed &&
-				typeof parsed.salt === "string" &&
-				parsed.salt !== ""
-			) {
+			if (isRecord(parsed) && typeof parsed.salt === "string" && parsed.salt !== "") {
 				cachedSalt = Buffer.from(parsed.salt, "hex");
 				cachedSecret = envSecret;
 				return cachedSalt;
