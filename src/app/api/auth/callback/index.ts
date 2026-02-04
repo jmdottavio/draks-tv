@@ -1,13 +1,13 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import { setAuth } from "@/src/features/auth/auth.repository";
-import { validateStateToken } from "@/src/shared/utils/oauth-state";
+import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 import { FORM_HEADERS, getClientIp } from "@/src/shared/utils/http";
+import { validateStateToken } from "@/src/shared/utils/oauth-state";
 import { checkAuthRateLimit, createRateLimitResponse } from "@/src/shared/utils/rate-limiter";
 import { getAuthRedirectUri } from "@/src/shared/utils/server-config";
 import { getTwitchClientId, getTwitchClientSecret } from "@/src/shared/utils/twitch-config";
 import { TWITCH_HELIX_BASE_URL, TWITCH_OAUTH_TOKEN_URL } from "@/src/shared/utils/twitch-urls";
-import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 import { isRecord } from "@/src/shared/utils/validation";
 
 function parseTokenResponse(data: unknown) {
@@ -131,19 +131,15 @@ export const Route = createFileRoute("/api/auth/callback/")({
 				const tokenJson: unknown = await tokenResponse.json();
 				const tokenData = parseTokenResponse(tokenJson);
 				if (tokenData instanceof Error) {
-					return createErrorResponse(
-						tokenData.message,
-						ErrorCode.TWITCH_API_ERROR,
-						500,
-					);
+					return createErrorResponse(tokenData.message, ErrorCode.TWITCH_API_ERROR, 500);
 				}
 
 				const userResponse = await fetch(`${TWITCH_HELIX_BASE_URL}/users`, {
 					headers: {
-					Authorization: `Bearer ${tokenData.accessToken}`,
-					"Client-Id": clientId,
-				},
-			});
+						Authorization: `Bearer ${tokenData.accessToken}`,
+						"Client-Id": clientId,
+					},
+				});
 
 				if (!userResponse.ok) {
 					return createErrorResponse(

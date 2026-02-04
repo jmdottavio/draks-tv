@@ -20,11 +20,15 @@ export function launchChatterino(channelName: string) {
 		const commandArguments = ["-c", sanitizedChannel];
 
 		try {
-			const child = spawn("cmd.exe", ["/c", "start", "", CHATTERINO_PATH, ...commandArguments], {
-				detached: true,
-				stdio: "ignore",
-				windowsHide: true,
-			});
+			const child = spawn(
+				"cmd.exe",
+				["/c", "start", "", CHATTERINO_PATH, ...commandArguments],
+				{
+					detached: true,
+					stdio: "ignore",
+					windowsHide: true,
+				},
+			);
 
 			child.once("error", (error: Error) => {
 				promiseResolve(new Error(`Failed to launch Chatterino: ${error.message}`));

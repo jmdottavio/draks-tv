@@ -7,8 +7,12 @@ import {
 } from "@/src/features/channels/followed-channels.repository";
 import { upsertVodsFromTwitch } from "@/src/features/vods/vods.repository";
 import { getAuth } from "@/src/features/auth/auth.repository";
-import { getFollowedChannels, getFollowedStreams, getUsers, getVideos } from "@/src/services/twitch-service";
-
+import {
+	getFollowedChannels,
+	getFollowedStreams,
+	getUsers,
+	getVideos,
+} from "@/src/services/twitch-service";
 
 const VOD_REFRESH_INTERVAL_MS = 30 * 60 * 1000;
 const VIDEOS_FETCH_LIMIT = 5;
@@ -29,9 +33,7 @@ async function fetchProfileImages(channelIds: Array<string>) {
 	const profileImages = new Map<string, string>();
 	const channelBatches = chunkArray(channelIds, 100);
 
-	const results = await Promise.all(
-		channelBatches.map((batch) => getUsers({ ids: batch })),
-	);
+	const results = await Promise.all(channelBatches.map((batch) => getUsers({ ids: batch })));
 
 	for (const result of results) {
 		if (result instanceof Error) {

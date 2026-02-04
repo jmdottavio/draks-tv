@@ -23,20 +23,16 @@ export const vods = sqliteTable(
 		thumbnailUrl: text("thumbnail_url").notNull(),
 		playbackPositionSeconds: integer("playback_position_seconds").notNull().default(0),
 		playbackUpdatedAt: text("playback_updated_at"),
-		fetchedAt: text("fetched_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+		fetchedAt: text("fetched_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
 	},
 	(table) => [
 		index("vods_channel_created_idx").on(table.channelId, table.createdAt),
 		index("vods_fetched_at_idx").on(table.fetchedAt),
 		index("vods_playback_updated_idx").on(table.playbackUpdatedAt),
-		check(
-			"vods_duration_non_negative",
-			sql`${table.durationSeconds} >= 0`,
-		),
-		check(
-			"vods_playback_position_non_negative",
-			sql`${table.playbackPositionSeconds} >= 0`,
-		),
+		check("vods_duration_non_negative", sql`${table.durationSeconds} >= 0`),
+		check("vods_playback_position_non_negative", sql`${table.playbackPositionSeconds} >= 0`),
 	],
 );
 
@@ -52,8 +48,12 @@ export const followedChannels = sqliteTable(
 		lastSeenAt: text("last_seen_at"),
 		latestVodId: text("latest_vod_id"),
 		followedAt: text("followed_at"),
-		fetchedAt: text("fetched_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
-		updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+		fetchedAt: text("fetched_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+		updatedAt: text("updated_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
 	},
 	(table) => [
 		index("followed_channels_channel_name_idx").on(table.channelName),

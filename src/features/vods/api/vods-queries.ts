@@ -2,7 +2,6 @@ import { extractApiErrorMessage } from "@/src/shared/utils/api-errors";
 
 import { parseChannelSearchResponse, parseVodProgressResponse } from "../vods.validators";
 
-
 export async function fetchChannelSearch(channelName: string) {
 	const response = await fetch(
 		`/api/channels/search?channelName=${encodeURIComponent(channelName)}`,
