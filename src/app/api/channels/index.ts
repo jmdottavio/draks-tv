@@ -1,13 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { getAuth } from "@/src/features/auth/auth.repository";
-import { getAllFollowedChannels } from "@/src/features/channels/followed-channels.repository";
 import {
-	getChannelsWithVideos,
-	processLiveStateChanges,
-	refreshOfflineChannelsBatched,
-} from "@/src/services/video-cache-service";
+	getAllFollowedChannels,
+	getLatestVodsByChannelIds,
+} from "@/src/features/channels/followed-channels.repository";
 import { getFollowedStreams } from "@/src/services/twitch-service";
+import { scheduleLiveStateUpdate } from "@/src/services/video-cache-service";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 
 import type { TwitchStream } from "@/src/services/twitch-service";
@@ -62,67 +61,68 @@ export const Route = createFileRoute("/api/channels/")({
 					return createErrorResponse("Not authenticated", ErrorCode.UNAUTHORIZED, 401);
 				}
 
-				const followedChannels = getAllFollowedChannels();
-				if (followedChannels instanceof Error) {
+				const followedChannelsResult = getAllFollowedChannels();
+
+				if (followedChannelsResult instanceof Error) {
 					return createErrorResponse(
-						followedChannels.message,
+						followedChannelsResult.message,
 						ErrorCode.DATABASE_ERROR,
 						500,
 					);
 				}
 
-				const streamsResult = await getFollowedStreams(authResult.userId);
-				if (streamsResult instanceof Error) {
+				const liveStreamsResult = await getFollowedStreams(authResult.userId);
+
+				if (liveStreamsResult instanceof Error) {
 					return createErrorResponse(
-						streamsResult.message,
+						liveStreamsResult.message,
 						ErrorCode.TWITCH_API_ERROR,
 						500,
 					);
 				}
 
-				const channelsThatWentOffline = processLiveStateChanges(streamsResult);
-				if (
-					!(channelsThatWentOffline instanceof Error) &&
-					channelsThatWentOffline.length > 0
-				) {
-					refreshOfflineChannelsBatched(channelsThatWentOffline).catch((error) => {
-						console.error("[channels-api] Failed to refresh offline channels:", error);
-					});
+				const liveStreamsByChannelId = new Map<string, TwitchStream>();
+				const liveChannelIds: Array<string> = [];
+				for (const stream of liveStreamsResult) {
+					liveStreamsByChannelId.set(stream.user_id, stream);
+					liveChannelIds.push(stream.user_id);
 				}
 
-				const streamsByUserId = new Map<string, TwitchStream>();
-				for (const stream of streamsResult) {
-					streamsByUserId.set(stream.user_id, stream);
-				}
+				scheduleLiveStateUpdate(liveChannelIds, "channels-api", true);
 
 				const offlineFavoriteIds: Array<string> = [];
-				for (const channel of followedChannels) {
-					if (channel.isFavorite && !streamsByUserId.has(channel.channelId)) {
+				for (const channel of followedChannelsResult) {
+					if (channel.isFavorite && !liveStreamsByChannelId.has(channel.channelId)) {
 						offlineFavoriteIds.push(channel.channelId);
 					}
 				}
 
-				const cachedChannels = getChannelsWithVideos(offlineFavoriteIds);
+				const cachedChannels = getLatestVodsByChannelIds(offlineFavoriteIds);
+				if (cachedChannels instanceof Error) {
+					return createErrorResponse(
+						cachedChannels.message,
+						ErrorCode.DATABASE_ERROR,
+						500,
+					);
+				}
 				const vodsByChannelId = new Map<string, VodData>();
-				if (!(cachedChannels instanceof Error)) {
-					for (const cached of cachedChannels) {
-						if (cached.latestVod !== null) {
-							vodsByChannelId.set(cached.channelId, {
-								id: cached.latestVod.vodId,
-								title: cached.latestVod.title,
-								durationSeconds: cached.latestVod.durationSeconds,
-								createdAt: cached.latestVod.createdAt,
-								thumbnailUrl: cached.latestVod.thumbnailUrl,
-							});
-						}
+				for (const cached of cachedChannels) {
+					if (cached.latestVod !== null) {
+						vodsByChannelId.set(cached.channelId, {
+							id: cached.latestVod.vodId,
+							title: cached.latestVod.title,
+							durationSeconds: cached.latestVod.durationSeconds,
+							createdAt: cached.latestVod.createdAt,
+							thumbnailUrl: cached.latestVod.thumbnailUrl,
+						});
 					}
 				}
 
 				const favoriteChannels: Array<ChannelData> = [];
 				const liveNonFavoriteChannels: Array<ChannelData> = [];
 
-				for (const channel of followedChannels) {
-					const rawStream = streamsByUserId.get(channel.channelId);
+				for (const channel of followedChannelsResult) {
+					const rawStream = liveStreamsByChannelId.get(channel.channelId);
 					const isLive = rawStream !== undefined;
 					const stream = rawStream !== undefined ? transformStream(rawStream) : null;
 

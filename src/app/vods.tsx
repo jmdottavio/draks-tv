@@ -1,27 +1,33 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { memo, useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { watchVod } from "@/src/features/vods/api/vods-mutations";
+import { VodCard } from "@/src/features/vods/components/vod-card";
 import { useSaveVodProgress, useVodProgressBulk } from "@/src/features/vods/hooks/use-vod-progress";
 import { useVodSearch } from "@/src/features/vods/hooks/use-vods";
 import { ArrowLeftIcon, SearchIcon } from "@/src/shared/components/icons";
-import {
-	formatDate,
-	formatDuration,
-	formatSecondsToTime,
-	formatThumbnail,
-	parseDurationToSeconds,
-	parseTimeToSeconds,
-} from "@/src/shared/utils/format";
+import { formatDuration, parseDurationToSeconds } from "@/src/shared/utils/format";
 
-import type { SaveProgressInput } from "@/src/features/vods/playback-progress.repository";
 import type { TwitchVideo, VodProgressSelect } from "@/src/features/vods/vods.types";
+import type { VodCardData } from "@/src/features/vods/components/vod-card";
 
 export const Route = createFileRoute("/vods")({
 	component: VodsPage,
 });
 
 const EMPTY_VOD_IDS: Array<string> = [];
+
+function getVodCardData(vod: TwitchVideo): VodCardData {
+	return {
+		id: vod.id,
+		title: vod.title,
+		channelName: vod.user_name,
+		createdAt: vod.created_at,
+		durationSeconds: parseDurationToSeconds(vod.duration),
+		durationLabel: formatDuration(vod.duration),
+		thumbnailUrl: vod.thumbnail_url,
+	};
+}
 
 function VodsPage() {
 	const [searchInput, setSearchInput] = useState("");
@@ -61,6 +67,12 @@ function VodsPage() {
 	}
 
 	const handleWatchVod = useCallback((vodId: string, startTimeSeconds?: number) => {
+		if (startTimeSeconds === undefined) {
+			watchVod({ id: vodId }).catch((watchError: unknown) => {
+				console.error("Failed to launch VOD:", watchError);
+			});
+			return;
+		}
 		watchVod({ id: vodId, startTimeSeconds }).catch((watchError: unknown) => {
 			console.error("Failed to launch VOD:", watchError);
 		});
@@ -115,10 +127,11 @@ function VodsPage() {
 					{vodSearchData.videos.map((vod) => (
 						<VodCard
 							key={vod.id}
-							vod={vod}
+							vod={getVodCardData(vod)}
 							progress={vodProgressMap.get(vod.id) ?? null}
 							onWatch={handleWatchVod}
 							onSaveProgress={saveProgressMutation.mutate}
+							showOfflineBadge={false}
 						/>
 					))}
 				</div>
@@ -130,176 +143,3 @@ function VodsPage() {
 		</section>
 	);
 }
-
-type VodCardProps = {
-	vod: TwitchVideo;
-	progress: VodProgressSelect | null;
-	onWatch: (id: string, startTimeSeconds?: number) => void;
-	onSaveProgress: (data: SaveProgressInput) => void;
-};
-
-const VodCard = memo(function VodCard({
-	vod,
-	progress,
-	onWatch,
-	onSaveProgress,
-}: VodCardProps) {
-	const [showSaveInput, setShowSaveInput] = useState(false);
-	const [saveInputValue, setSaveInputValue] = useState("");
-
-	const thumbnailUrl = formatThumbnail(vod.thumbnail_url, 440, 248);
-
-	const hasProgress = progress !== null;
-	const durationSeconds = parseDurationToSeconds(vod.duration);
-	const progressPercent =
-		hasProgress && durationSeconds !== null && durationSeconds > 0
-		? (progress.playbackPositionSeconds / durationSeconds) * 100
-		: 0;
-
-	function handleWatchClick() {
-		onWatch(vod.id);
-	}
-
-	function handleResumeClick() {
-		if (hasProgress) {
-			onWatch(vod.id, progress.playbackPositionSeconds);
-		}
-	}
-
-	function handleSaveProgressClick() {
-		setShowSaveInput(true);
-		if (hasProgress) {
-			setSaveInputValue(formatSecondsToTime(progress.playbackPositionSeconds));
-		}
-	}
-
-	function handleSaveProgressSubmit(event: React.FormEvent) {
-		event.preventDefault();
-		const seconds = parseTimeToSeconds(saveInputValue);
-
-		if (seconds === null || seconds < 0) {
-			return;
-		}
-
-		onSaveProgress({
-			vodId: vod.id,
-			positionSeconds: seconds,
-			durationSeconds: durationSeconds ?? undefined,
-		});
-
-		setShowSaveInput(false);
-		setSaveInputValue("");
-	}
-
-	function handleCancelSave() {
-		setShowSaveInput(false);
-		setSaveInputValue("");
-	}
-
-	return (
-		<div className="overflow-hidden rounded-lg border border-surface-border-muted bg-surface-card transition-all hover:-translate-y-0.5 hover:border-surface-border">
-			<div className="relative aspect-video bg-surface-elevated">
-				<img
-					src={thumbnailUrl}
-					alt={vod.title}
-					className="h-full w-full object-cover"
-					onError={(event) => {
-						const img = event.currentTarget;
-						img.style.display = "none";
-					}}
-				/>
-				<span className="absolute bottom-2 right-2 rounded bg-black/80 px-2 py-1 text-sm font-medium text-white">
-					{formatDuration(vod.duration)}
-				</span>
-				{/* Progress bar - always reserve space to prevent CLS */}
-				<div className="absolute bottom-0 left-0 right-0 h-1 bg-black/50">
-					<div
-						className="h-full bg-twitch-purple transition-all"
-						style={{ width: `${progressPercent}%` }}
-					/>
-				</div>
-			</div>
-
-			<div className="p-4">
-				<div className="mb-2 line-clamp-2 text-sm text-text-primary" title={vod.title}>
-					{vod.title}
-				</div>
-				<div className="mb-2 flex items-center gap-3 text-sm text-text-muted">
-					<span className="font-semibold text-twitch-purple-light">{vod.user_name}</span>
-					<span>{formatDate(vod.created_at)}</span>
-				</div>
-
-				{hasProgress && (
-					<div className="mb-3 text-xs text-text-muted">
-						Watched {formatSecondsToTime(progress.playbackPositionSeconds)}
-						{durationSeconds !== null && ` / ${formatSecondsToTime(durationSeconds)}`}
-					</div>
-				)}
-
-				{showSaveInput && (
-					<form onSubmit={handleSaveProgressSubmit} className="mb-3">
-						<label
-							htmlFor={`progress-input-${vod.id}`}
-							className="mb-1 block text-xs text-text-muted"
-						>
-							Enter timestamp (H:MM:SS or MM:SS)
-						</label>
-						<div className="flex gap-2">
-							<input
-								id={`progress-input-${vod.id}`}
-								type="text"
-								value={saveInputValue}
-								onChange={(event) => setSaveInputValue(event.target.value)}
-								placeholder="1:30:00"
-								className="flex-1 rounded border border-surface-border-muted bg-surface-elevated px-2 py-1.5 text-sm text-text-primary placeholder:text-text-dim focus:border-twitch-purple focus:outline-none"
-								autoFocus
-							/>
-							<button
-								type="submit"
-								className="rounded bg-twitch-purple px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-twitch-purple-hover"
-							>
-								Save
-							</button>
-							<button
-								type="button"
-								onClick={handleCancelSave}
-								className="rounded border border-surface-border-muted bg-surface-elevated px-3 py-1.5 text-xs font-semibold text-text-muted transition-all hover:text-text-primary"
-							>
-								Cancel
-							</button>
-						</div>
-					</form>
-				)}
-
-				<div className="flex flex-wrap gap-2">
-					{hasProgress && (
-						<button
-							type="button"
-							onClick={handleResumeClick}
-							className="flex-1 rounded-md bg-twitch-purple px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-twitch-purple-hover"
-						>
-							Resume
-						</button>
-					)}
-					<button
-						type="button"
-						onClick={handleWatchClick}
-						className="flex-1 rounded-md border border-surface-border-muted bg-surface-elevated px-4 py-2.5 text-sm font-semibold text-text-primary transition-all hover:border-twitch-purple hover:bg-twitch-purple"
-					>
-						{hasProgress ? "Start Over" : "Watch in VLC"}
-					</button>
-					{!showSaveInput && (
-						<button
-							type="button"
-							onClick={handleSaveProgressClick}
-							className="rounded-md border border-surface-border-muted bg-surface-elevated px-3 py-2.5 text-sm font-semibold text-text-muted transition-all hover:border-twitch-purple hover:text-text-primary"
-							title="Save progress"
-						>
-							{hasProgress ? "Update" : "Save"}
-						</button>
-					)}
-				</div>
-			</div>
-		</div>
-	);
-});

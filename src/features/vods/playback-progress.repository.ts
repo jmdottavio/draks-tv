@@ -1,4 +1,5 @@
 import { and, desc, eq, gt, inArray, isNotNull, sql } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 
 import { database } from "@/src/db";
 import { vods } from "@/src/db/schema";
@@ -63,15 +64,22 @@ export function savePlaybackProgress(data: SaveProgressInput) {
 			return new Error("Duration cannot be negative");
 		}
 
+		const updateValues: {
+			playbackPositionSeconds: number;
+			playbackUpdatedAt: SQL<unknown>;
+			durationSeconds?: number;
+		} = {
+			playbackPositionSeconds: data.positionSeconds,
+			playbackUpdatedAt: sql`CURRENT_TIMESTAMP`,
+		};
+
+		if (data.durationSeconds !== undefined) {
+			updateValues.durationSeconds = data.durationSeconds;
+		}
+
 		const result = database
 			.update(vods)
-			.set({
-				playbackPositionSeconds: data.positionSeconds,
-				playbackUpdatedAt: sql`CURRENT_TIMESTAMP`,
-				...(data.durationSeconds !== undefined
-					? { durationSeconds: data.durationSeconds }
-					: {}),
-			})
+			.set(updateValues)
 			.where(eq(vods.vodId, data.vodId))
 			.returning({ vodId: vods.vodId })
 			.get();

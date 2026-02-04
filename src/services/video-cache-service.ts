@@ -1,6 +1,5 @@
 import {
 	getFavoriteChannelIds,
-	getLatestVodsByChannelIds,
 	removeUnfollowedChannels,
 	updateLatestVod,
 	updateLiveStates,
@@ -10,7 +9,6 @@ import { upsertVodsFromTwitch } from "@/src/features/vods/vods.repository";
 import { getAuth } from "@/src/features/auth/auth.repository";
 import { getFollowedChannels, getFollowedStreams, getUsers, getVideos } from "@/src/services/twitch-service";
 
-import type { TwitchStream } from "@/src/services/twitch-service";
 
 const VOD_REFRESH_INTERVAL_MS = 30 * 60 * 1000;
 const VIDEOS_FETCH_LIMIT = 5;
@@ -27,11 +25,13 @@ function chunkArray<T>(items: Array<T>, size: number): Array<Array<T>> {
 	return chunks;
 }
 
-async function fetchProfileImages(userIds: Array<string>) {
+async function fetchProfileImages(channelIds: Array<string>) {
 	const profileImages = new Map<string, string>();
-	const userBatches = chunkArray(userIds, 100);
+	const channelBatches = chunkArray(channelIds, 100);
 
-	const results = await Promise.all(userBatches.map((batch) => getUsers({ ids: batch })));
+	const results = await Promise.all(
+		channelBatches.map((batch) => getUsers({ ids: batch })),
+	);
 
 	for (const result of results) {
 		if (result instanceof Error) {
@@ -60,13 +60,13 @@ async function refreshFollowedChannels() {
 		return followedResult;
 	}
 
-	const userIds = followedResult.map((channel) => channel.broadcaster_id);
-	const profileImages = await fetchProfileImages(userIds);
+	const channelIds = followedResult.map((channel) => channel.broadcaster_id);
+	const profileImages = await fetchProfileImages(channelIds);
 	const fetchedAt = new Date().toISOString();
 
 	const upsertInputs = followedResult.map((channel) => ({
 		channelId: channel.broadcaster_id,
-		channelName: channel.broadcaster_login,
+		channelName: channel.broadcaster_name,
 		profileImageUrl: profileImages.get(channel.broadcaster_id) ?? "",
 		followedAt: channel.followed_at ?? null,
 	}));
@@ -76,7 +76,7 @@ async function refreshFollowedChannels() {
 		return upsertResult;
 	}
 
-	const removeResult = removeUnfollowedChannels(userIds);
+	const removeResult = removeUnfollowedChannels(channelIds);
 	if (removeResult instanceof Error) {
 		return removeResult;
 	}
@@ -112,7 +112,7 @@ async function refreshVideosForChannel(channelId: string) {
 	return null;
 }
 
-async function refreshVideosForChannels(channelIds: Array<string>) {
+export async function refreshVideosForChannels(channelIds: Array<string>) {
 	for (let batchStart = 0; batchStart < channelIds.length; batchStart += BATCH_SIZE) {
 		const batch = channelIds.slice(batchStart, batchStart + BATCH_SIZE);
 
@@ -122,6 +122,35 @@ async function refreshVideosForChannels(channelIds: Array<string>) {
 			await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
 		}
 	}
+}
+
+export function scheduleLiveStateUpdate(
+	liveChannelIds: Array<string>,
+	logLabel: string,
+	shouldRefreshOffline: boolean,
+) {
+	setTimeout(() => {
+		const lastSeenAt = new Date().toISOString();
+		const updateResult = updateLiveStates(liveChannelIds, lastSeenAt);
+		if (updateResult instanceof Error) {
+			console.warn(`[${logLabel}] Failed to update live states:`, updateResult.message);
+			return;
+		}
+		if (shouldRefreshOffline && updateResult.length > 0) {
+			refreshVideosForChannels(updateResult).catch((error: unknown) => {
+				console.error(`[${logLabel}] Failed to refresh offline channels:`, error);
+			});
+		}
+	}, 0);
+}
+
+export function scheduleLatestVodUpdate(channelId: string, vodId: string, vodCreatedAt: string) {
+	setTimeout(() => {
+		const updateResult = updateLatestVod(channelId, vodId, vodCreatedAt);
+		if (updateResult instanceof Error) {
+			console.warn("[videos-api] Failed to update latest VOD:", updateResult.message);
+		}
+	}, 0);
 }
 
 export async function populateInitialCache() {
@@ -183,20 +212,6 @@ export function stopBackgroundRefresh() {
 	}
 
 	console.log("[video-cache] Background refresh stopped");
-}
-
-export function processLiveStateChanges(currentStreams: Array<TwitchStream>) {
-	const currentlyLiveChannelIds = currentStreams.map((stream) => stream.user_id);
-	const lastSeenAt = new Date().toISOString();
-	return updateLiveStates(currentlyLiveChannelIds, lastSeenAt);
-}
-
-export function getChannelsWithVideos(channelIds: Array<string>) {
-	return getLatestVodsByChannelIds(channelIds);
-}
-
-export async function refreshOfflineChannelsBatched(channelIds: Array<string>) {
-	await refreshVideosForChannels(channelIds);
 }
 
 export async function refreshLiveStreams() {

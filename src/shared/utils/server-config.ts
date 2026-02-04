@@ -1,4 +1,4 @@
-const DEFAULT_PORT = 9447;
+const DEFAULT_PORT = 9446;
 const ALLOWED_PROTOCOLS = ["http", "https"];
 
 function parsePort(portString: string | undefined, defaultPort: number) {

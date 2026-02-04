@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { getAuth } from "@/src/features/auth/auth.repository";
 import { getAllFollowedChannels } from "@/src/features/channels/followed-channels.repository";
-import { processLiveStateChanges } from "@/src/services/video-cache-service";
 import { getFollowedStreams } from "@/src/services/twitch-service";
+import { scheduleLiveStateUpdate } from "@/src/services/video-cache-service";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 
 import type { TwitchStream } from "@/src/services/twitch-service";
@@ -33,34 +33,37 @@ export const Route = createFileRoute("/api/channels/followed/")({
 					return createErrorResponse("Not authenticated", ErrorCode.UNAUTHORIZED, 401);
 				}
 
-				const followedChannels = getAllFollowedChannels();
-				if (followedChannels instanceof Error) {
+				const followedChannelsResult = getAllFollowedChannels();
+				const liveStreamsResult = await getFollowedStreams(authResult.userId);
+
+				if (followedChannelsResult instanceof Error) {
 					return createErrorResponse(
-						followedChannels.message,
+						followedChannelsResult.message,
 						ErrorCode.DATABASE_ERROR,
 						500,
 					);
 				}
 
-				const streamsResult = await getFollowedStreams(authResult.userId);
-				if (streamsResult instanceof Error) {
+				if (liveStreamsResult instanceof Error) {
 					return createErrorResponse(
-						streamsResult.message,
+						liveStreamsResult.message,
 						ErrorCode.TWITCH_API_ERROR,
 						500,
 					);
 				}
 
-				processLiveStateChanges(streamsResult);
-
-				const streamsByUserId = new Map<string, TwitchStream>();
-				for (const stream of streamsResult) {
-					streamsByUserId.set(stream.user_id, stream);
+				const liveStreamsByChannelId = new Map<string, TwitchStream>();
+				const liveChannelIds: Array<string> = [];
+				for (const stream of liveStreamsResult) {
+					liveStreamsByChannelId.set(stream.user_id, stream);
+					liveChannelIds.push(stream.user_id);
 				}
 
+				scheduleLiveStateUpdate(liveChannelIds, "followed-channels-api", false);
+
 				const channels: Array<SidebarChannelData> = [];
-				for (const channel of followedChannels) {
-					const stream = streamsByUserId.get(channel.channelId);
+				for (const channel of followedChannelsResult) {
+					const stream = liveStreamsByChannelId.get(channel.channelId);
 					const isLive = stream !== undefined;
 
 					channels.push({

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { getFollowedChannelIdentity, updateLatestVod } from "@/src/features/channels/followed-channels.repository";
+import { scheduleLatestVodUpdate } from "@/src/services/video-cache-service";
 import { upsertVodsFromTwitch } from "@/src/features/vods/vods.repository";
 import { getVideos } from "@/src/services/twitch-service";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
@@ -16,12 +16,12 @@ export const Route = createFileRoute("/api/videos/")({
 				}
 
 				const url = new URL(request.url);
-				const userId = url.searchParams.get("userId");
+				const channelId = url.searchParams.get("channelId");
 				const limitParam = url.searchParams.get("limit");
 
-				if (userId === null) {
+				if (channelId === null) {
 					return createErrorResponse(
-						"userId query param required",
+						"channelId query param required",
 						ErrorCode.INVALID_INPUT,
 						400,
 					);
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/api/videos/")({
 					);
 				}
 
-				const result = await getVideos(userId, limit);
+				const result = await getVideos(channelId, limit);
 
 				if (result instanceof Error) {
 					return createErrorResponse(result.message, ErrorCode.TWITCH_API_ERROR, 500);
@@ -50,10 +50,7 @@ export const Route = createFileRoute("/api/videos/")({
 
 				const newestVideo = result[0];
 				if (newestVideo !== undefined) {
-					const channelIdentity = getFollowedChannelIdentity(userId);
-					if (!(channelIdentity instanceof Error) && channelIdentity !== null) {
-						updateLatestVod(userId, newestVideo.id, newestVideo.created_at);
-					}
+					scheduleLatestVodUpdate(channelId, newestVideo.id, newestVideo.created_at);
 				}
 
 				return Response.json(result);

@@ -133,6 +133,11 @@ const ChannelCard = memo(function ChannelCard({
 	const isWatching = isWatchingLive || isWatchingVod;
 	const isOpeningChat = openChatMutation.isPending;
 
+	let offlineLabel = "Offline - No VODs";
+	if (channel.latestVod !== null) {
+		offlineLabel = "Offline";
+	}
+
 	const handleWatchClick = useCallback(() => {
 		if (isWatching) return;
 
@@ -142,7 +147,7 @@ const ChannelCard = memo(function ChannelCard({
 		}
 
 		if (channel.latestVod !== null) {
-			watchVodMutation.mutate({ id: channel.latestVod.id, startTimeSeconds: undefined });
+			watchVodMutation.mutate({ id: channel.latestVod.id });
 		}
 	}, [
 		isWatching,
@@ -165,7 +170,7 @@ const ChannelCard = memo(function ChannelCard({
 
 	const handleChatClick = useCallback(() => {
 		if (isOpeningChat) return;
-	openChatMutation.mutate(channel.channelName);
+		openChatMutation.mutate(channel.channelName);
 	}, [isOpeningChat, openChatMutation, channel.channelName]);
 
 	const favoriteButtonLabel = channel.isFavorite
@@ -186,7 +191,7 @@ const ChannelCard = memo(function ChannelCard({
 				{thumbnailUrl !== null && (
 					<img
 						src={thumbnailUrl}
-					alt={channel.channelName}
+						alt={channel.channelName}
 						className="w-full h-full object-cover"
 						fetchPriority={priority ? "high" : "auto"}
 						loading={priority ? "eager" : "lazy"}
@@ -202,16 +207,16 @@ const ChannelCard = memo(function ChannelCard({
 				{!channel.isLive && (
 					<div className="absolute inset-0 bg-black/50 flex items-center justify-center">
 						<span className="bg-black/70 text-text-secondary text-sm font-semibold px-3 py-1.5 rounded uppercase">
-							{channel.latestVod !== null ? "Offline" : "Offline - No VODs"}
+							{offlineLabel}
 						</span>
 					</div>
 				)}
 
 				{channel.latestVod !== null && !channel.isLive && (
 					<span className="absolute bottom-2 right-2 bg-black/80 text-white text-sm font-medium px-2 py-1 rounded">
-					{formatDurationSeconds(channel.latestVod.durationSeconds)}
-				</span>
-			)}
+						{formatDurationSeconds(channel.latestVod.durationSeconds)}
+					</span>
+				)}
 
 				<button
 					type="button"
@@ -230,20 +235,21 @@ const ChannelCard = memo(function ChannelCard({
 			{/* Info */}
 			<div className="p-4">
 				<div className="flex items-center gap-3 mb-3">
-				{channel.profileImage ? (
-					<img
-						src={channel.profileImage}
-						alt={channel.channelName}
-						className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-					/>
-				) : (
-					<div className="w-10 h-10 rounded-full bg-surface-elevated flex items-center justify-center text-text-muted text-base font-semibold flex-shrink-0">
-						{channel.channelName.charAt(0).toUpperCase()}
-					</div>
-				)}
-				<span className="font-semibold text-base text-twitch-purple-light truncate">
-					{channel.channelName}
-				</span>
+					{channel.profileImage && (
+						<img
+							src={channel.profileImage}
+							alt={channel.channelName}
+							className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+						/>
+					)}
+					{!channel.profileImage && (
+						<div className="w-10 h-10 rounded-full bg-surface-elevated flex items-center justify-center text-text-muted text-base font-semibold flex-shrink-0">
+							{channel.channelName.charAt(0).toUpperCase()}
+						</div>
+					)}
+					<span className="font-semibold text-base text-twitch-purple-light truncate">
+						{channel.channelName}
+					</span>
 				</div>
 
 				{channel.isLive && channel.stream !== null && (
@@ -273,8 +279,8 @@ const ChannelCard = memo(function ChannelCard({
 						</div>
 						<div className="flex items-center gap-3 text-sm text-text-muted">
 							<span className="text-text-dim">
-						{formatDurationSeconds(channel.latestVod.durationSeconds)}
-					</span>
+								{formatDurationSeconds(channel.latestVod.durationSeconds)}
+							</span>
 							<span>{formatDate(channel.latestVod.createdAt)}</span>
 						</div>
 					</>
@@ -295,7 +301,7 @@ const ChannelCard = memo(function ChannelCard({
 								type="button"
 								onClick={handleChatClick}
 								disabled={isOpeningChat}
-						aria-label={`Open chat for ${channel.channelName}`}
+								aria-label={`Open chat for ${channel.channelName}`}
 								title={isOpeningChat ? "Opening..." : "Open Chat"}
 								className={getChatButtonClassName(isOpeningChat)}
 							>

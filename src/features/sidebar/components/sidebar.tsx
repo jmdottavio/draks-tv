@@ -56,11 +56,11 @@ const ChannelAvatar = memo(function ChannelAvatar({ channel, isExpanded }: Chann
 	return (
 		<div className="relative shrink-0 group/avatar">
 			{channel.profileImage ? (
-			<img
-				src={channel.profileImage}
-				alt={channel.channelName}
-				className={`rounded-full ring-2 ${ringColor} ${glowClass} transition-all duration-200 ${sizeClass}`}
-			/>
+				<img
+					src={channel.profileImage}
+					alt={channel.channelName}
+					className={`rounded-full ring-2 ${ringColor} ${glowClass} transition-all duration-200 ${sizeClass}`}
+				/>
 			) : (
 				<div
 					className={`rounded-full ring-2 ${ringColor} ${glowClass} transition-all duration-200 ${sizeClass} bg-sidebar-hover flex items-center justify-center text-sidebar-text-muted text-xs font-semibold`}
@@ -133,10 +133,10 @@ const ChannelItem = memo(function ChannelItem({
 	}
 
 	return (
-		<div className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-sidebar-hover">
+		<div className="group flex w-full items-center gap-3 rounded-lg px-3 py-1.5 transition-colors hover:bg-sidebar-hover">
 			<button
 				onClick={handleClick}
-				className="flex flex-1 items-center gap-3 text-left min-w-0"
+				className="flex flex-1 items-center gap-3 text-left min-w-0 cursor-pointer"
 			>
 				<ChannelAvatar channel={channel} isExpanded={true} />
 				<div className="min-w-0 flex-1">
@@ -148,7 +148,7 @@ const ChannelItem = memo(function ChannelItem({
 			</button>
 			<button
 				onClick={handleFavoriteClick}
-				className={`shrink-0 p-1.5 rounded-md transition-all duration-200 opacity-0 group-hover:opacity-100 ${
+				className={`shrink-0 p-1.5 rounded-md transition-all duration-200 opacity-0 group-hover:opacity-100 cursor-pointer ${
 					channel.isFavorite
 						? "opacity-100 text-favorite hover:text-favorite-hover"
 						: "text-sidebar-text-dim hover:text-favorite hover:bg-sidebar-hover"
@@ -186,41 +186,6 @@ function SidebarError({ isExpanded, message }: SidebarErrorProps) {
 	return <div className="px-3 py-8 text-center text-sm text-live">{message}</div>;
 }
 
-type SectionHeaderProps = {
-	title: string;
-	count: number;
-	isExpanded: boolean;
-};
-
-const SectionHeader = memo(function SectionHeader({
-	title,
-	count,
-	isExpanded,
-}: SectionHeaderProps) {
-	if (!isExpanded) {
-		return (
-			<div className="flex justify-center py-2">
-				<div
-					className={`h-1.5 w-6 rounded-full ${title === "Live" ? "bg-live" : "bg-sidebar-text-dim"}`}
-				/>
-			</div>
-		);
-	}
-
-	return (
-		<div className="flex items-center gap-2 px-3 py-2">
-			<span
-				className={`text-xs font-bold uppercase tracking-wider ${
-					title === "Live" ? "text-live" : "text-sidebar-text-dim"
-				}`}
-			>
-				{title}
-			</span>
-			<span className="text-xs font-semibold text-sidebar-text-muted">({count})</span>
-		</div>
-	);
-});
-
 type ChannelListProps = {
 	channels: Array<SidebarChannel>;
 	isExpanded: boolean;
@@ -232,7 +197,6 @@ const ChannelList = memo(function ChannelList({
 	isExpanded,
 	onFavoriteToggle,
 }: ChannelListProps) {
-	// Memoize categorization - only recalculates when channels change
 	const { live: liveChannels, offline: offlineChannels } = useMemo(
 		() => categorizeChannels(channels),
 		[channels],
@@ -249,46 +213,24 @@ const ChannelList = memo(function ChannelList({
 	}
 
 	return (
-		<div className="space-y-4">
-			{liveChannels.length > 0 && (
-				<div>
-					<SectionHeader
-						title="Live"
-						count={liveChannels.length}
-						isExpanded={isExpanded}
-					/>
-					<div className="space-y-1">
-						{liveChannels.map((channel) => (
-							<ChannelItem
-								key={channel.id}
-								channel={channel}
-								isExpanded={isExpanded}
-								onFavoriteToggle={onFavoriteToggle}
-							/>
-						))}
-					</div>
-				</div>
-			)}
+		<div>
+			{liveChannels.map((channel) => (
+				<ChannelItem
+					key={channel.id}
+					channel={channel}
+					isExpanded={isExpanded}
+					onFavoriteToggle={onFavoriteToggle}
+				/>
+			))}
 
-			{offlineChannels.length > 0 && (
-				<div>
-					<SectionHeader
-						title="Offline"
-						count={offlineChannels.length}
-						isExpanded={isExpanded}
-					/>
-					<div className="space-y-1">
-						{offlineChannels.map((channel) => (
-							<ChannelItem
-								key={channel.id}
-								channel={channel}
-								isExpanded={isExpanded}
-								onFavoriteToggle={onFavoriteToggle}
-							/>
-						))}
-					</div>
-				</div>
-			)}
+			{offlineChannels.map((channel) => (
+				<ChannelItem
+					key={channel.id}
+					channel={channel}
+					isExpanded={isExpanded}
+					onFavoriteToggle={onFavoriteToggle}
+				/>
+			))}
 		</div>
 	);
 });

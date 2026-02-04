@@ -9,7 +9,7 @@ export type VodProgressSelect = {
 	playbackUpdatedAt: string | null;
 };
 
-export type TwitchUser = {
+export type TwitchChannelIdentity = {
 	id: string;
 	login: string;
 	display_name: string;

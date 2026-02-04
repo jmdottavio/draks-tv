@@ -11,13 +11,36 @@ import {
 import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
+import { VodCard } from "@/src/features/vods/components/vod-card";
+import { useSaveVodProgress, useVodProgressBulk } from "@/src/features/vods/hooks/use-vod-progress";
+import { useWatchVod } from "@/src/features/channels/hooks/use-launch";
 import { GripIcon } from "@/src/shared/components/icons";
+import { formatDurationSeconds } from "@/src/shared/utils/format";
 
 import { useReorderFavorites } from "../hooks/use-channels";
 
 import { ChannelCard } from "./channel-card";
 
+import type { SaveProgressInput } from "@/src/features/vods/playback-progress.repository";
+import type { VodProgressSelect } from "@/src/features/vods/vods.types";
+import type { VodCardData } from "@/src/features/vods/components/vod-card";
 import type { Channel } from "../channels.types";
+
+function getVodCardData(channel: Channel): VodCardData | null {
+	if (channel.latestVod === null) {
+		return null;
+	}
+
+	return {
+		id: channel.latestVod.id,
+		title: channel.latestVod.title,
+		channelName: channel.channelName,
+		createdAt: channel.latestVod.createdAt,
+		durationSeconds: channel.latestVod.durationSeconds,
+		durationLabel: formatDurationSeconds(channel.latestVod.durationSeconds),
+		thumbnailUrl: channel.latestVod.thumbnailUrl,
+	};
+}
 
 type ChannelGridProps = {
 	channels: Array<Channel>;
@@ -26,11 +49,17 @@ type ChannelGridProps = {
 type SortableChannelCardProps = {
 	channel: Channel;
 	priority: boolean;
+	vodProgressMap: Map<string, VodProgressSelect>;
+	onWatchVod: (vodId: string, startTimeSeconds?: number) => void;
+	onSaveProgress: (data: SaveProgressInput) => void;
 };
 
 const SortableChannelCard = memo(function SortableChannelCard({
 	channel,
 	priority,
+	vodProgressMap,
+	onWatchVod,
+	onSaveProgress,
 }: SortableChannelCardProps) {
 	const {
 		attributes,
@@ -53,6 +82,10 @@ const SortableChannelCard = memo(function SortableChannelCard({
 		[transform, transition],
 	);
 
+	const vodCardData = getVodCardData(channel);
+	const shouldShowVodCard =
+		channel.isFavorite && !channel.isLive && vodCardData !== null;
+
 	return (
 		<div ref={setNodeRef} style={style} className="relative">
 			{channel.isFavorite && (
@@ -65,7 +98,20 @@ const SortableChannelCard = memo(function SortableChannelCard({
 					<GripIcon className="w-4 h-4 text-text-dim rotate-90" />
 				</div>
 			)}
-			<ChannelCard channel={channel} priority={priority} isDragging={isDragging} />
+			{shouldShowVodCard && vodCardData !== null && (
+				<div className={isDragging ? "opacity-50 scale-95" : ""}>
+					<VodCard
+						vod={vodCardData}
+						progress={vodProgressMap.get(vodCardData.id) ?? null}
+						onWatch={onWatchVod}
+						onSaveProgress={onSaveProgress}
+						showOfflineBadge={true}
+					/>
+				</div>
+			)}
+			{!shouldShowVodCard && (
+				<ChannelCard channel={channel} priority={priority} isDragging={isDragging} />
+			)}
 		</div>
 	);
 });
@@ -78,8 +124,15 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 	);
 
 	const reorderFavoritesMutation = useReorderFavorites();
+	const saveProgressMutation = useSaveVodProgress();
+	const watchVodMutation = useWatchVod();
 
-	const { allFavorites, allVisibleChannels, priorityIds } = useMemo(() => {
+	const {
+		allFavorites,
+		allVisibleChannels,
+		offlineFavoriteChannels,
+		priorityIds,
+	} = useMemo(() => {
 		const liveFavoriteChannels: Array<Channel> = [];
 		const offlineFavoriteChannels: Array<Channel> = [];
 		const liveNonFavoriteChannels: Array<Channel> = [];
@@ -109,9 +162,41 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 		return {
 			allFavorites: [...liveFavoriteChannels, ...offlineFavoriteChannels],
 			allVisibleChannels,
+			offlineFavoriteChannels,
 			priorityIds: priorityChannelIds,
 		};
 	}, [channels]);
+
+	const offlineVodIds = useMemo(() => {
+		const ids: Array<string> = [];
+		for (const channel of offlineFavoriteChannels) {
+			if (channel.latestVod !== null) {
+				ids.push(channel.latestVod.id);
+			}
+		}
+		return ids;
+	}, [offlineFavoriteChannels]);
+
+	const { data: vodProgressData } = useVodProgressBulk(offlineVodIds);
+
+	const vodProgressMap = useMemo(() => {
+		const map = new Map<string, VodProgressSelect>();
+		for (const item of vodProgressData) {
+			map.set(item.vodId, item);
+		}
+		return map;
+	}, [vodProgressData]);
+
+	const handleWatchVod = useCallback(
+		(vodId: string, startTimeSeconds?: number) => {
+			if (startTimeSeconds === undefined) {
+				watchVodMutation.mutate({ id: vodId });
+				return;
+			}
+			watchVodMutation.mutate({ id: vodId, startTimeSeconds });
+		},
+		[watchVodMutation],
+	);
 
 	const handleDragEnd = useCallback(
 		(event: DragEndEvent) => {
@@ -173,6 +258,9 @@ function ChannelGrid({ channels }: ChannelGridProps) {
 							key={channel.id}
 							channel={channel}
 							priority={priorityIds.has(channel.id)}
+							vodProgressMap={vodProgressMap}
+							onWatchVod={handleWatchVod}
+							onSaveProgress={saveProgressMutation.mutate}
 						/>
 					))}
 				</div>
