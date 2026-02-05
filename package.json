@@ -8,12 +8,11 @@
 		"dev": "bunx --bun vite dev",
 		"build": "vite build",
 		"start": "node .output/server/index.mjs",
-		"lint": "oxlint ./src",
-		"lint:fix": "oxlint ./src --fix",
+		"lint": "oxlint ./src --fix",
+		"lint:check": "oxlint ./src",
 		"format": "oxfmt ./src",
 		"format:check": "oxfmt ./src --check",
 		"db:generate": "drizzle-kit generate",
-		"db:push": "drizzle-kit push",
 		"db:studio": "drizzle-kit studio"
 	},
 	"dependencies": {

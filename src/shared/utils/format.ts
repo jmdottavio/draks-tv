@@ -1,4 +1,4 @@
-function formatViewers(count: number | undefined | null): string {
+export function formatViewers(count: number | undefined | null): string {
 	if (count === undefined || count === null) {
 		return "0";
 	}
@@ -14,7 +14,7 @@ function formatViewers(count: number | undefined | null): string {
 	return count.toString();
 }
 
-function formatDuration(duration: string): string {
+export function formatDuration(duration: string): string {
 	const match = duration.match(/(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?/);
 
 	if (match === null) {
@@ -31,7 +31,22 @@ function formatDuration(duration: string): string {
 	return `${minutes}m`;
 }
 
-function formatDate(dateString: string): string {
+export function formatDurationSeconds(durationSeconds: number): string {
+	if (durationSeconds <= 0) {
+		return "0m";
+	}
+
+	const hours = Math.floor(durationSeconds / 3600);
+	const minutes = Math.floor((durationSeconds % 3600) / 60);
+
+	if (hours > 0) {
+		return `${hours}h ${minutes}m`;
+	}
+
+	return `${minutes}m`;
+}
+
+export function formatDate(dateString: string): string {
 	const date = new Date(dateString);
 
 	if (Number.isNaN(date.getTime())) {
@@ -51,7 +66,7 @@ function formatDate(dateString: string): string {
 	return date.toLocaleDateString();
 }
 
-function formatThumbnail(url: string, width: number, height: number): string {
+export function formatThumbnail(url: string, width: number, height: number): string {
 	// Handle various Twitch thumbnail URL formats:
 	// - Streams: {width}x{height}
 	// - VODs: %{width}x%{height}
@@ -70,7 +85,7 @@ function formatThumbnail(url: string, width: number, height: number): string {
 	return `${formattedUrl}${separator}t=${cacheBuster}`;
 }
 
-function formatSecondsToTime(totalSeconds: number): string {
+export function formatSecondsToTime(totalSeconds: number): string {
 	const hours = Math.floor(totalSeconds / 3600);
 	const minutes = Math.floor((totalSeconds % 3600) / 60);
 	const seconds = totalSeconds % 60;
@@ -82,7 +97,7 @@ function formatSecondsToTime(totalSeconds: number): string {
 	return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
-function parseTimeToSeconds(timeString: string): number | null {
+export function parseTimeToSeconds(timeString: string): number | null {
 	const splitParts = timeString.split(":");
 	const parts = splitParts.map((part) => parseInt(part, 10));
 
@@ -120,7 +135,7 @@ function parseTimeToSeconds(timeString: string): number | null {
 	return null;
 }
 
-function parseDurationToSeconds(duration: string): number | null {
+export function parseDurationToSeconds(duration: string): number | null {
 	const match = duration.match(/(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?/);
 
 	if (match === null) {
@@ -133,13 +148,3 @@ function parseDurationToSeconds(duration: string): number | null {
 
 	return hours * 3600 + minutes * 60 + seconds;
 }
-
-export {
-	formatDate,
-	formatDuration,
-	formatSecondsToTime,
-	formatThumbnail,
-	formatViewers,
-	parseDurationToSeconds,
-	parseTimeToSeconds,
-};

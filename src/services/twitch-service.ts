@@ -7,14 +7,14 @@ import {
 	TWITCH_OAUTH_TOKEN_URL,
 } from "@/src/shared/utils/twitch-urls";
 
-type TwitchUser = {
+type TwitchChannelResponse = {
 	id: string;
 	login: string;
 	display_name: string;
 	profile_image_url: string;
 };
 
-type TwitchStream = {
+type TwitchStreamResponse = {
 	user_id: string;
 	user_login: string;
 	user_name: string;
@@ -25,7 +25,7 @@ type TwitchStream = {
 	started_at: string;
 };
 
-type TwitchVideo = {
+type TwitchVideoResponse = {
 	id: string;
 	user_id: string;
 	user_name: string;
@@ -35,11 +35,46 @@ type TwitchVideo = {
 	thumbnail_url: string;
 };
 
-type TwitchFollowedChannel = {
+type TwitchFollowedChannelResponse = {
 	broadcaster_id: string;
 	broadcaster_login: string;
 	broadcaster_name: string;
 	followed_at: string;
+};
+
+export type TwitchChannel = {
+	id: string;
+	login: string;
+	displayName: string;
+	profileImageUrl: string;
+};
+
+export type TwitchStream = {
+	userId: string;
+	userLogin: string;
+	userName: string;
+	title: string;
+	gameName: string;
+	viewerCount: number;
+	thumbnailUrl: string;
+	startedAt: string;
+};
+
+export type TwitchVideo = {
+	id: string;
+	userId: string;
+	userName: string;
+	title: string;
+	duration: string;
+	createdAt: string;
+	thumbnailUrl: string;
+};
+
+export type TwitchFollowedChannel = {
+	broadcasterId: string;
+	broadcasterLogin: string;
+	broadcasterName: string;
+	followedAt: string;
 };
 
 type TwitchResponse<T> = {
@@ -163,7 +198,50 @@ async function twitchFetch<T>(endpoint: string, isRetry: boolean = false) {
 	return response.json() as Promise<TwitchResponse<T>>;
 }
 
-async function getUsers(params: { ids?: Array<string>; logins?: Array<string> }) {
+function mapTwitchChannel(channel: TwitchChannelResponse): TwitchChannel {
+	return {
+		id: channel.id,
+		login: channel.login,
+		displayName: channel.display_name,
+		profileImageUrl: channel.profile_image_url,
+	};
+}
+
+function mapTwitchStream(stream: TwitchStreamResponse): TwitchStream {
+	return {
+		userId: stream.user_id,
+		userLogin: stream.user_login,
+		userName: stream.user_name,
+		title: stream.title,
+		gameName: stream.game_name,
+		viewerCount: stream.viewer_count,
+		thumbnailUrl: stream.thumbnail_url,
+		startedAt: stream.started_at,
+	};
+}
+
+function mapTwitchVideo(video: TwitchVideoResponse): TwitchVideo {
+	return {
+		id: video.id,
+		userId: video.user_id,
+		userName: video.user_name,
+		title: video.title,
+		duration: video.duration,
+		createdAt: video.created_at,
+		thumbnailUrl: video.thumbnail_url,
+	};
+}
+
+function mapTwitchFollowedChannel(channel: TwitchFollowedChannelResponse): TwitchFollowedChannel {
+	return {
+		broadcasterId: channel.broadcaster_id,
+		broadcasterLogin: channel.broadcaster_login,
+		broadcasterName: channel.broadcaster_name,
+		followedAt: channel.followed_at,
+	};
+}
+
+export async function getUsers(params: { ids?: Array<string>; logins?: Array<string> }) {
 	const queryParts: Array<string> = [];
 
 	if (params.ids !== undefined) {
@@ -180,27 +258,29 @@ async function getUsers(params: { ids?: Array<string>; logins?: Array<string> })
 		return new Error("Must provide ids or logins");
 	}
 
-	const result = await twitchFetch<TwitchUser>(`/users?${queryParts.join("&")}`);
+	const result = await twitchFetch<TwitchChannelResponse>(`/users?${queryParts.join("&")}`);
 
 	if (result instanceof Error) {
 		return result;
 	}
 
-	return result.data;
+	return result.data.map(mapTwitchChannel);
 }
 
-async function getFollowedStreams(userId: string) {
-	const result = await twitchFetch<TwitchStream>(`/streams/followed?user_id=${userId}&first=100`);
+export async function getFollowedStreams(userId: string) {
+	const result = await twitchFetch<TwitchStreamResponse>(
+		`/streams/followed?user_id=${userId}&first=100`,
+	);
 
 	if (result instanceof Error) {
 		return result;
 	}
 
-	return result.data;
+	return result.data.map(mapTwitchStream);
 }
 
-async function getVideos(userId: string, limit: number = 1) {
-	const result = await twitchFetch<TwitchVideo>(
+export async function getVideos(userId: string, limit: number = 1) {
+	const result = await twitchFetch<TwitchVideoResponse>(
 		`/videos?user_id=${userId}&type=archive&first=${limit}`,
 	);
 
@@ -208,10 +288,10 @@ async function getVideos(userId: string, limit: number = 1) {
 		return result;
 	}
 
-	return result.data;
+	return result.data.map(mapTwitchVideo);
 }
 
-async function getFollowedChannels(userId: string) {
+export async function getFollowedChannels(userId: string) {
 	const allChannels: Array<TwitchFollowedChannel> = [];
 	let cursor: string | undefined;
 
@@ -220,20 +300,22 @@ async function getFollowedChannels(userId: string) {
 			? `/channels/followed?user_id=${userId}&first=100&after=${cursor}`
 			: `/channels/followed?user_id=${userId}&first=100`;
 
-		const result = await twitchFetch<TwitchFollowedChannel>(endpoint);
+		const result = await twitchFetch<TwitchFollowedChannelResponse>(endpoint);
 
 		if (result instanceof Error) {
 			return result;
 		}
 
-		allChannels.push(...result.data);
+		for (const channel of result.data) {
+			allChannels.push(mapTwitchFollowedChannel(channel));
+		}
 		cursor = result.pagination?.cursor;
 	} while (cursor !== undefined);
 
 	return allChannels;
 }
 
-async function revokeToken(token: string) {
+export async function revokeToken(token: string) {
 	const clientId = getTwitchClientId();
 
 	if (clientId === undefined) {
@@ -260,7 +342,3 @@ async function revokeToken(token: string) {
 		);
 	}
 }
-
-export { getUsers, getFollowedStreams, getVideos, getFollowedChannels, revokeToken };
-
-export type { TwitchUser, TwitchStream, TwitchVideo };

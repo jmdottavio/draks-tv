@@ -1,13 +1,13 @@
-import { useState } from "react";
-import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import { useState } from "react";
 
-import { LayoutProvider, useLayout } from "@/src/shared/context/layout-context";
-import { Header } from "@/src/shared/components/header";
-import { Sidebar } from "@/src/features/sidebar/components/sidebar";
 import { AuthSection } from "@/src/features/auth/components/auth-section";
 import { useAuth } from "@/src/features/auth/hooks/use-auth";
 import { useChannels } from "@/src/features/channels/hooks/use-channels";
+import { Sidebar } from "@/src/features/sidebar/components/sidebar";
+import { Header } from "@/src/shared/components/header";
+import { LayoutProvider, useLayout } from "@/src/shared/context/layout-context";
 
 import appCss from "./globals.css?url";
 
@@ -15,7 +15,7 @@ function createQueryClient() {
 	return new QueryClient({
 		defaultOptions: {
 			queries: {
-				staleTime: 30_000,
+				staleTime: 30_000, // 30 seconds
 				refetchOnWindowFocus: true,
 			},
 		},
@@ -112,24 +112,17 @@ const sidebarMargins = {
 
 function AppShell() {
 	const { isSidebarOpen, toggleSidebar } = useLayout();
-	const { isFetching, refetch } = useChannels();
-
-	function handleRefresh() {
-		refetch();
-	}
+	const { isFetching, refetch: refetchChannels } = useChannels();
 
 	const marginClass = isSidebarOpen ? sidebarMargins.open : sidebarMargins.closed;
 
 	return (
 		<div className="min-h-screen bg-background">
-			<Sidebar isExpanded={isSidebarOpen} onToggle={toggleSidebar} />
+			<Sidebar isExpanded={isSidebarOpen} />
 
 			<div className={`transition-[margin] duration-300 ${marginClass}`}>
 				<Header
-					onAddChannel={() => {
-						/* TODO: modal handling via route or context */
-					}}
-					onRefresh={handleRefresh}
+					onRefresh={refetchChannels}
 					onToggleSidebar={toggleSidebar}
 					isRefreshing={isFetching}
 				/>

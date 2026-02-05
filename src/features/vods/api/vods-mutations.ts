@@ -1,8 +1,14 @@
 import { extractApiErrorMessage } from "@/src/shared/utils/api-errors";
 
-import type { SaveProgressInput } from "../playback-progress.repository";
+import type { SaveProgressInput } from "@/src/features/vods/vods.types";
 
-async function watchVod({ id, startTimeSeconds }: { id: string; startTimeSeconds?: number }) {
+export async function watchVod({
+	id,
+	startTimeSeconds,
+}: {
+	id: string;
+	startTimeSeconds?: number;
+}) {
 	const options: RequestInit = { method: "POST" };
 
 	if (startTimeSeconds !== undefined && startTimeSeconds > 0) {
@@ -18,7 +24,7 @@ async function watchVod({ id, startTimeSeconds }: { id: string; startTimeSeconds
 	}
 }
 
-async function saveVodProgress(data: SaveProgressInput) {
+export async function saveVodProgress(data: SaveProgressInput) {
 	const response = await fetch("/api/vod-progress", {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
@@ -30,16 +36,3 @@ async function saveVodProgress(data: SaveProgressInput) {
 		throw new Error(message);
 	}
 }
-
-async function deleteVodProgress(vodId: string) {
-	const response = await fetch(`/api/vod-progress/${vodId}`, {
-		method: "DELETE",
-	});
-
-	if (!response.ok) {
-		const message = await extractApiErrorMessage(response, "Failed to delete VOD progress");
-		throw new Error(message);
-	}
-}
-
-export { deleteVodProgress, saveVodProgress, watchVod };

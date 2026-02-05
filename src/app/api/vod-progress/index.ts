@@ -4,9 +4,10 @@ import {
 	getPlaybackProgressBulk,
 	getRecentProgress,
 	savePlaybackProgress,
-} from "@/src/features/vods/playback-progress.repository";
+} from "@/src/features/vods/vods.repository";
 import { parseSaveProgressBody } from "@/src/features/vods/vods.validators";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
+import { parseRequestBody } from "@/src/shared/utils/parse-request-body";
 import { requireAuth } from "@/src/shared/utils/require-auth";
 
 export const Route = createFileRoute("/api/vod-progress/")({
@@ -46,21 +47,9 @@ export const Route = createFileRoute("/api/vod-progress/")({
 					return auth.response;
 				}
 
-				let body: unknown;
-				try {
-					body = await request.json();
-				} catch {
-					return createErrorResponse(
-						"Invalid JSON body",
-						ErrorCode.VALIDATION_ERROR,
-						400,
-					);
-				}
-
-				const parsed = parseSaveProgressBody(body);
-
-				if (parsed instanceof Error) {
-					return createErrorResponse(parsed.message, ErrorCode.VALIDATION_ERROR, 400);
+				const parsed = await parseRequestBody(request, parseSaveProgressBody);
+				if (parsed instanceof Response) {
+					return parsed;
 				}
 
 				const result = savePlaybackProgress(parsed);

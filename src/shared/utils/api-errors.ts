@@ -1,3 +1,5 @@
+import { isRecord } from "@/src/shared/utils/validation";
+
 export enum ErrorCode {
 	INVALID_INPUT = "INVALID_INPUT",
 	NOT_FOUND = "NOT_FOUND",
@@ -49,11 +51,8 @@ export async function extractApiErrorMessage(
 	fallback: string,
 ): Promise<string> {
 	const data: unknown = await response.json().catch(() => null);
-	if (data !== null && typeof data === "object" && "error" in data) {
-		const errorObj = (data as { error?: { message?: string } }).error;
-		if (typeof errorObj?.message === "string") {
-			return errorObj.message;
-		}
+	if (isRecord(data) && isRecord(data.error) && typeof data.error.message === "string") {
+		return data.error.message;
 	}
 	return fallback;
 }

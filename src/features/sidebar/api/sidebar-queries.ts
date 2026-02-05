@@ -1,8 +1,8 @@
 import { extractApiErrorMessage } from "@/src/shared/utils/api-errors";
 
-import type { SidebarChannel } from "../sidebar.types";
+import { isSidebarChannelArray } from "@/src/features/sidebar/sidebar.validators";
 
-async function fetchFollowedChannels(): Promise<Array<SidebarChannel>> {
+export async function fetchFollowedChannels() {
 	const response = await fetch("/api/channels/followed");
 
 	if (!response.ok) {
@@ -10,7 +10,10 @@ async function fetchFollowedChannels(): Promise<Array<SidebarChannel>> {
 		throw new Error(message);
 	}
 
-	return response.json() as Promise<Array<SidebarChannel>>;
-}
+	const data: unknown = await response.json();
+	if (!isSidebarChannelArray(data)) {
+		throw new Error("Invalid followed channels payload");
+	}
 
-export { fetchFollowedChannels };
+	return data;
+}

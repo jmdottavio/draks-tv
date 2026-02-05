@@ -1,83 +1,115 @@
+import { isRecord } from "@/src/shared/utils/validation";
+
+import type { Channel, Stream } from "./channels.types";
+import type { VodSummary } from "@/src/features/vods/vods.types";
+
 const MAX_ID_LENGTH = 50;
-const MAX_LOGIN_LENGTH = 25;
-const MAX_DISPLAY_NAME_LENGTH = 100;
-const MAX_PROFILE_IMAGE_LENGTH = 500;
 const MAX_ORDERED_IDS_COUNT = 1000;
 
-type AddFavoriteRequest = {
-	id: string;
-	login: string;
-	displayName: string;
-	profileImage: string;
-};
+export function isStream(value: unknown): value is Stream {
+	if (!isRecord(value)) {
+		return false;
+	}
 
-type ReorderFavoritesRequest = {
-	orderedIds: Array<string>;
-};
+	return (
+		typeof value.title === "string" &&
+		typeof value.gameName === "string" &&
+		typeof value.viewerCount === "number" &&
+		typeof value.thumbnailUrl === "string" &&
+		typeof value.startedAt === "string"
+	);
+}
 
-function validateAddFavoriteRequest(body: unknown): AddFavoriteRequest | Error {
-	if (typeof body !== "object" || body === null) {
+export function isVodSummary(value: unknown): value is VodSummary {
+	if (!isRecord(value)) {
+		return false;
+	}
+
+	return (
+		typeof value.id === "string" &&
+		typeof value.title === "string" &&
+		typeof value.durationSeconds === "number" &&
+		typeof value.createdAt === "string" &&
+		typeof value.thumbnailUrl === "string"
+	);
+}
+
+export function isChannel(value: unknown): value is Channel {
+	if (!isRecord(value)) {
+		return false;
+	}
+
+	const stream = value.stream;
+	const latestVod = value.latestVod;
+
+	if (stream === undefined || latestVod === undefined) {
+		return false;
+	}
+
+	if (stream !== null && !isStream(stream)) {
+		return false;
+	}
+
+	if (latestVod !== null && !isVodSummary(latestVod)) {
+		return false;
+	}
+
+	return (
+		typeof value.id === "string" &&
+		typeof value.channelName === "string" &&
+		typeof value.profileImage === "string" &&
+		typeof value.isFavorite === "boolean" &&
+		typeof value.isLive === "boolean"
+	);
+}
+
+export function isChannelArray(value: unknown): value is Array<Channel> {
+	if (!Array.isArray(value)) {
+		return false;
+	}
+
+	for (const item of value) {
+		if (!isChannel(item)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+export function validateAddFavoriteRequest(body: unknown) {
+	if (!isRecord(body)) {
 		return new Error("Request body must be an object");
 	}
 
-	const data = body as Record<string, unknown>;
-
-	if (typeof data.id !== "string" || data.id.length === 0) {
+	if (typeof body.id !== "string" || body.id.length === 0) {
 		return new Error("id is required and must be a non-empty string");
 	}
 
-	if (data.id.length > MAX_ID_LENGTH) {
+	if (body.id.length > MAX_ID_LENGTH) {
 		return new Error(`id must not exceed ${MAX_ID_LENGTH} characters`);
 	}
 
-	if (typeof data.login !== "string" || data.login.length === 0) {
-		return new Error("login is required and must be a non-empty string");
-	}
-
-	if (data.login.length > MAX_LOGIN_LENGTH) {
-		return new Error(`login must not exceed ${MAX_LOGIN_LENGTH} characters`);
-	}
-
-	if (typeof data.displayName !== "string" || data.displayName.length === 0) {
-		return new Error("displayName is required and must be a non-empty string");
-	}
-
-	if (data.displayName.length > MAX_DISPLAY_NAME_LENGTH) {
-		return new Error(`displayName must not exceed ${MAX_DISPLAY_NAME_LENGTH} characters`);
-	}
-
-	if (typeof data.profileImage !== "string" || data.profileImage.length === 0) {
-		return new Error("profileImage is required and must be a non-empty string");
-	}
-
-	if (data.profileImage.length > MAX_PROFILE_IMAGE_LENGTH) {
-		return new Error(`profileImage must not exceed ${MAX_PROFILE_IMAGE_LENGTH} characters`);
-	}
-
 	return {
-		id: data.id,
-		login: data.login,
-		displayName: data.displayName,
-		profileImage: data.profileImage,
+		id: body.id,
 	};
 }
 
-function validateReorderFavoritesRequest(body: unknown): ReorderFavoritesRequest | Error {
-	if (typeof body !== "object" || body === null) {
+export function validateReorderFavoritesRequest(body: unknown) {
+	if (!isRecord(body)) {
 		return new Error("Request body must be an object");
 	}
 
-	const data = body as Record<string, unknown>;
-
-	if (!Array.isArray(data.orderedIds)) {
+	if (!Array.isArray(body.orderedIds)) {
 		return new Error("orderedIds is required and must be an array");
 	}
 
-	if (data.orderedIds.length > MAX_ORDERED_IDS_COUNT) {
+	if (body.orderedIds.length > MAX_ORDERED_IDS_COUNT) {
 		return new Error(`orderedIds must not exceed ${MAX_ORDERED_IDS_COUNT} items`);
 	}
 
-	for (const id of data.orderedIds) {
+	const orderedIds: Array<string> = [];
+	for (const id of body.orderedIds) {
 		if (typeof id !== "string") {
 			return new Error("orderedIds must be an array of strings");
 		}
@@ -85,12 +117,11 @@ function validateReorderFavoritesRequest(body: unknown): ReorderFavoritesRequest
 		if (id.length > MAX_ID_LENGTH) {
 			return new Error(`each id in orderedIds must not exceed ${MAX_ID_LENGTH} characters`);
 		}
+
+		orderedIds.push(id);
 	}
 
 	return {
-		orderedIds: data.orderedIds as Array<string>,
+		orderedIds,
 	};
 }
-
-export { validateAddFavoriteRequest, validateReorderFavoritesRequest };
-export type { AddFavoriteRequest, ReorderFavoritesRequest };

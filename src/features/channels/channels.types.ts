@@ -1,4 +1,6 @@
-type Stream = {
+import type { VodSummary } from "@/src/features/vods/vods.types";
+
+export type Stream = {
 	title: string;
 	gameName: string;
 	viewerCount: number;
@@ -6,37 +8,16 @@ type Stream = {
 	startedAt: string;
 };
 
-type Vod = {
+export type Channel = {
 	id: string;
-	title: string;
-	duration: string;
-	createdAt: string;
-	thumbnailUrl: string;
-};
-
-type Channel = {
-	id: string;
-	login: string;
-	displayName: string;
+	channelName: string;
 	profileImage: string;
 	isFavorite: boolean;
 	isLive: boolean;
 	stream: Stream | null;
-	latestVod: Vod | null;
+	latestVod: VodSummary | null;
 };
 
-type FavoriteInput = {
+export type FavoriteInput = {
 	id: string;
-	login: string;
-	displayName: string;
-	profileImage: string;
 };
-
-type FavoriteOutput = {
-	id: string;
-	login: string;
-	displayName: string;
-	profileImage: string;
-};
-
-export type { Channel, Stream, Vod, FavoriteInput, FavoriteOutput };

@@ -38,7 +38,7 @@ function validateEnvironment(): EnvValidationResult {
 	};
 }
 
-function validateAndLog(): boolean {
+export function validateAndLog(): boolean {
 	const result = validateEnvironment();
 
 	for (const warning of result.warnings) {
@@ -55,5 +55,3 @@ function validateAndLog(): boolean {
 
 	return result.valid;
 }
-
-export { validateAndLog };

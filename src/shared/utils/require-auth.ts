@@ -11,7 +11,7 @@ type AuthResult =
 	| { authenticated: true; context: AuthContext }
 	| { authenticated: false; response: Response };
 
-function requireAuth(): AuthResult {
+export function requireAuth(): AuthResult {
 	const authResult = getAuth();
 
 	if (authResult instanceof Error) {
@@ -41,5 +41,3 @@ function requireAuth(): AuthResult {
 		},
 	};
 }
-
-export { requireAuth };

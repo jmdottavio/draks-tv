@@ -1,27 +1,49 @@
-import { execFile } from "child_process";
+import { spawn } from "child_process";
+import { homedir } from "os";
 import { resolve } from "path";
 
-const LOCALAPPDATA = process.env.LOCALAPPDATA ?? "";
-const STREAMLINK_PATH = resolve(LOCALAPPDATA, "Programs", "Streamlink", "bin", "streamlink.exe");
+const STREAMLINK_PATH = resolve(
+	homedir(),
+	"AppData",
+	"Local",
+	"Programs",
+	"Streamlink",
+	"bin",
+	"streamlink.exe",
+);
 
 function launchStream(url: string) {
 	return new Promise<void | Error>((promiseResolve) => {
-		execFile(STREAMLINK_PATH, [url, "best"], (error) => {
-			if (error) {
+		try {
+			const child = spawn(STREAMLINK_PATH, [url, "best"], {
+				detached: true,
+				stdio: "ignore",
+				windowsHide: true,
+			});
+
+			child.once("error", (error) => {
+				promiseResolve(new Error(error.message));
+			});
+			child.once("spawn", () => {
+				child.unref();
+				promiseResolve();
+			});
+		} catch (error) {
+			if (error instanceof Error) {
 				promiseResolve(new Error(error.message));
 				return;
 			}
-			promiseResolve();
-		});
+			promiseResolve(new Error("Failed to launch stream: unknown error"));
+		}
 	});
 }
 
-function launchLiveStream(channel: string) {
+export function launchLiveStream(channel: string) {
 	const sanitizedChannel = channel.replace(/[^a-zA-Z0-9_]/g, "");
 	return launchStream(`twitch.tv/${sanitizedChannel}`);
 }
 
-function launchVod(vodId: string, startTimeSeconds?: number) {
+export function launchVod(vodId: string, startTimeSeconds?: number) {
 	const sanitizedId = vodId.replace(/[^0-9]/g, "");
 
 	if (!sanitizedId) {
@@ -39,14 +61,26 @@ function launchVod(vodId: string, startTimeSeconds?: number) {
 	}
 
 	return new Promise<void | Error>((promiseResolve) => {
-		execFile(STREAMLINK_PATH, args, (error) => {
-			if (error) {
+		try {
+			const child = spawn(STREAMLINK_PATH, args, {
+				detached: true,
+				stdio: "ignore",
+				windowsHide: true,
+			});
+
+			child.once("error", (error) => {
+				promiseResolve(new Error(error.message));
+			});
+			child.once("spawn", () => {
+				child.unref();
+				promiseResolve();
+			});
+		} catch (error) {
+			if (error instanceof Error) {
 				promiseResolve(new Error(error.message));
 				return;
 			}
-			promiseResolve();
-		});
+			promiseResolve(new Error("Failed to launch stream: unknown error"));
+		}
 	});
 }
-
-export { launchLiveStream, launchVod };

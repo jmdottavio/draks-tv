@@ -27,7 +27,7 @@ function getStateSecret() {
 	return generatedDevSecret;
 }
 
-function createStateToken() {
+export function createStateToken() {
 	const timestamp = Date.now().toString(36);
 	const random = randomBytes(16).toString("hex");
 	const data = `${timestamp}.${random}`;
@@ -38,7 +38,7 @@ function createStateToken() {
 	return `${data}.${hmac}`;
 }
 
-function validateStateToken(token: string) {
+export function validateStateToken(token: string) {
 	const parts = token.split(".");
 
 	if (parts.length !== 3) {
@@ -76,5 +76,3 @@ function validateStateToken(token: string) {
 
 	return true;
 }
-
-export { createStateToken, validateStateToken };

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { reorderFavorites } from "@/src/features/channels/favorites.repository";
+import { reorderFavorites } from "@/src/features/channels/followed-channels.repository";
 import { createErrorResponse, ErrorCode } from "@/src/shared/utils/api-errors";
 import { parseRequestBody } from "@/src/shared/utils/parse-request-body";
 import { validateReorderFavoritesRequest } from "@/src/features/channels/channels.validators";

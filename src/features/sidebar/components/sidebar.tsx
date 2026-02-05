@@ -1,18 +1,13 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { memo, useCallback, useMemo } from "react";
 
 import { toggleFavorite, watchLive } from "@/src/features/channels/api/channels-mutations";
-import { ChevronLeftIcon, ChevronRightIcon, StarIcon } from "@/src/shared/components/icons";
+import { useFollowedChannels } from "@/src/features/sidebar/hooks/use-followed-channels";
+import { StarIcon } from "@/src/shared/components/icons";
 import { QUERY_KEYS } from "@/src/shared/query-keys";
 import { formatDate, formatViewers } from "@/src/shared/utils/format";
 
-import { useFollowedChannels } from "../hooks/use-followed-channels";
-
-import type { SidebarChannel } from "../sidebar.types";
-
-type SidebarProps = {
-	isExpanded: boolean;
-	onToggle: () => void;
-};
+import type { SidebarChannel } from "@/src/features/sidebar/sidebar.types";
 
 type ChannelItemProps = {
 	channel: SidebarChannel;
@@ -20,17 +15,19 @@ type ChannelItemProps = {
 	onFavoriteToggle: (id: string) => void;
 };
 
-function getOfflineStatusText(lastVodDate: string | null): string {
-	if (lastVodDate !== null) {
-		return `Last seen ${formatDate(lastVodDate)}`;
+function getOfflineStatusText(lastSeenAt: string | null): string {
+	if (lastSeenAt !== null) {
+		return `Last seen ${formatDate(lastSeenAt)}`;
 	}
 	return "Offline";
 }
 
-function categorizeChannels(channels: Array<SidebarChannel>): {
+type CategorizedChannels = {
 	live: Array<SidebarChannel>;
 	offline: Array<SidebarChannel>;
-} {
+};
+
+function categorizeChannels(channels: Array<SidebarChannel>): CategorizedChannels {
 	const live: Array<SidebarChannel> = [];
 	const offline: Array<SidebarChannel> = [];
 
@@ -50,7 +47,7 @@ type ChannelAvatarProps = {
 	isExpanded: boolean;
 };
 
-function ChannelAvatar({ channel, isExpanded }: ChannelAvatarProps) {
+const ChannelAvatar = memo(function ChannelAvatar({ channel, isExpanded }: ChannelAvatarProps) {
 	const ringColor = channel.isLive ? "ring-live" : "ring-sidebar-text-dim";
 	const glowClass = channel.isLive ? "shadow-[0_0_8px_rgba(255,68,68,0.5)]" : "";
 	const sizeClass = isExpanded ? "h-9 w-9" : "h-8 w-8";
@@ -60,14 +57,14 @@ function ChannelAvatar({ channel, isExpanded }: ChannelAvatarProps) {
 			{channel.profileImage ? (
 				<img
 					src={channel.profileImage}
-					alt={channel.displayName}
+					alt={channel.channelName}
 					className={`rounded-full ring-2 ${ringColor} ${glowClass} transition-all duration-200 ${sizeClass}`}
 				/>
 			) : (
 				<div
 					className={`rounded-full ring-2 ${ringColor} ${glowClass} transition-all duration-200 ${sizeClass} bg-sidebar-hover flex items-center justify-center text-sidebar-text-muted text-xs font-semibold`}
 				>
-					{channel.displayName.charAt(0).toUpperCase()}
+					{channel.channelName.charAt(0).toUpperCase()}
 				</div>
 			)}
 			{channel.isLive && (
@@ -78,60 +75,13 @@ function ChannelAvatar({ channel, isExpanded }: ChannelAvatarProps) {
 			)}
 		</div>
 	);
-}
+});
 
-function ChannelItem({ channel, isExpanded, onFavoriteToggle }: ChannelItemProps) {
-	async function handleClick() {
-		await watchLive(channel.login);
-	}
-
-	function handleFavoriteClick(event: React.MouseEvent) {
-		event.stopPropagation();
-		onFavoriteToggle(channel.id);
-	}
-
-	if (!isExpanded) {
-		return (
-			<button
-				onClick={handleClick}
-				title={`${channel.displayName}${channel.isLive ? " (LIVE)" : ""}`}
-				className="group flex w-full items-center justify-center py-2 transition-colors hover:bg-sidebar-hover rounded-lg"
-			>
-				<ChannelAvatar channel={channel} isExpanded={false} />
-			</button>
-		);
-	}
-
-	return (
-		<div className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-sidebar-hover">
-			<button
-				onClick={handleClick}
-				className="flex flex-1 items-center gap-3 text-left min-w-0"
-			>
-				<ChannelAvatar channel={channel} isExpanded={true} />
-				<div className="min-w-0 flex-1">
-					<div className="truncate text-base font-semibold text-sidebar-text">
-						{channel.displayName}
-					</div>
-					<ChannelStatusInfo channel={channel} />
-				</div>
-			</button>
-			<button
-				onClick={handleFavoriteClick}
-				className={`shrink-0 p-1.5 rounded-md transition-all duration-200 opacity-0 group-hover:opacity-100 ${
-					channel.isFavorite
-						? "opacity-100 text-favorite hover:text-favorite-hover"
-						: "text-sidebar-text-dim hover:text-favorite hover:bg-sidebar-hover"
-				}`}
-				title={channel.isFavorite ? "Remove from favorites" : "Add to favorites"}
-			>
-				<StarIcon className="h-5 w-5" filled={channel.isFavorite} />
-			</button>
-		</div>
-	);
-}
-
-function ChannelStatusInfo({ channel }: { channel: SidebarChannel }) {
+const ChannelStatusInfo = memo(function ChannelStatusInfo({
+	channel,
+}: {
+	channel: SidebarChannel;
+}) {
 	if (channel.isLive) {
 		return (
 			<div className="flex items-center gap-2 text-sm">
@@ -147,10 +97,75 @@ function ChannelStatusInfo({ channel }: { channel: SidebarChannel }) {
 
 	return (
 		<div className="text-sm text-sidebar-text-dim">
-			{getOfflineStatusText(channel.lastVodDate)}
+			{getOfflineStatusText(channel.lastSeenAt)}
 		</div>
 	);
-}
+});
+
+const ChannelItem = memo(function ChannelItem({
+	channel,
+	isExpanded,
+	onFavoriteToggle,
+}: ChannelItemProps) {
+	const handleClick = useCallback(async () => {
+		try {
+			await watchLive(channel.channelName);
+		} catch (error) {
+			console.error(
+				"Failed to launch stream:",
+				error instanceof Error ? error.message : error,
+			);
+		}
+	}, [channel.channelName]);
+
+	const handleFavoriteClick = useCallback(
+		(event: React.MouseEvent) => {
+			event.stopPropagation();
+			onFavoriteToggle(channel.id);
+		},
+		[channel.id, onFavoriteToggle],
+	);
+
+	if (!isExpanded) {
+		return (
+			<button
+				onClick={handleClick}
+				title={`${channel.channelName}${channel.isLive ? " (LIVE)" : ""}`}
+				className="group flex w-full items-center justify-center py-2 transition-colors hover:bg-sidebar-hover rounded-lg"
+			>
+				<ChannelAvatar channel={channel} isExpanded={false} />
+			</button>
+		);
+	}
+
+	return (
+		<div className="group flex w-full items-center gap-3 rounded-lg px-3 py-1.5 transition-colors hover:bg-sidebar-hover">
+			<button
+				onClick={handleClick}
+				className="flex flex-1 items-center gap-3 text-left min-w-0 cursor-pointer"
+			>
+				<ChannelAvatar channel={channel} isExpanded={true} />
+				<div className="min-w-0 flex-1">
+					<div className="truncate text-base font-semibold text-sidebar-text">
+						{channel.channelName}
+					</div>
+					<ChannelStatusInfo channel={channel} />
+				</div>
+			</button>
+			<button
+				onClick={handleFavoriteClick}
+				className={`shrink-0 p-1.5 rounded-md transition-all duration-200 opacity-0 group-hover:opacity-100 cursor-pointer ${
+					channel.isFavorite
+						? "opacity-100 text-favorite hover:text-favorite-hover"
+						: "text-sidebar-text-dim hover:text-favorite hover:bg-sidebar-hover"
+				}`}
+				title={channel.isFavorite ? "Remove from favorites" : "Add to favorites"}
+			>
+				<StarIcon className="h-5 w-5" filled={channel.isFavorite} />
+			</button>
+		</div>
+	);
+});
 
 function SidebarLoading({ isExpanded }: { isExpanded: boolean }) {
 	return (
@@ -177,45 +192,21 @@ function SidebarError({ isExpanded, message }: SidebarErrorProps) {
 	return <div className="px-3 py-8 text-center text-sm text-live">{message}</div>;
 }
 
-type SectionHeaderProps = {
-	title: string;
-	count: number;
-	isExpanded: boolean;
-};
-
-function SectionHeader({ title, count, isExpanded }: SectionHeaderProps) {
-	if (!isExpanded) {
-		return (
-			<div className="flex justify-center py-2">
-				<div
-					className={`h-1.5 w-6 rounded-full ${title === "Live" ? "bg-live" : "bg-sidebar-text-dim"}`}
-				/>
-			</div>
-		);
-	}
-
-	return (
-		<div className="flex items-center gap-2 px-3 py-2">
-			<span
-				className={`text-xs font-bold uppercase tracking-wider ${
-					title === "Live" ? "text-live" : "text-sidebar-text-dim"
-				}`}
-			>
-				{title}
-			</span>
-			<span className="text-xs font-semibold text-sidebar-text-muted">({count})</span>
-		</div>
-	);
-}
-
 type ChannelListProps = {
 	channels: Array<SidebarChannel>;
 	isExpanded: boolean;
 	onFavoriteToggle: (id: string) => void;
 };
 
-function ChannelList({ channels, isExpanded, onFavoriteToggle }: ChannelListProps) {
-	const { live: liveChannels, offline: offlineChannels } = categorizeChannels(channels);
+const ChannelList = memo(function ChannelList({
+	channels,
+	isExpanded,
+	onFavoriteToggle,
+}: ChannelListProps) {
+	const { live: liveChannels, offline: offlineChannels } = useMemo(
+		() => categorizeChannels(channels),
+		[channels],
+	);
 
 	if (channels.length === 0) {
 		return (
@@ -228,119 +219,63 @@ function ChannelList({ channels, isExpanded, onFavoriteToggle }: ChannelListProp
 	}
 
 	return (
-		<div className="space-y-4">
-			{liveChannels.length > 0 && (
-				<div>
-					<SectionHeader
-						title="Live"
-						count={liveChannels.length}
-						isExpanded={isExpanded}
-					/>
-					<div className="space-y-1">
-						{liveChannels.map((channel) => (
-							<ChannelItem
-								key={channel.id}
-								channel={channel}
-								isExpanded={isExpanded}
-								onFavoriteToggle={onFavoriteToggle}
-							/>
-						))}
-					</div>
-				</div>
-			)}
+		<div>
+			{liveChannels.map((channel) => (
+				<ChannelItem
+					key={channel.id}
+					channel={channel}
+					isExpanded={isExpanded}
+					onFavoriteToggle={onFavoriteToggle}
+				/>
+			))}
 
-			{offlineChannels.length > 0 && (
-				<div>
-					<SectionHeader
-						title="Offline"
-						count={offlineChannels.length}
-						isExpanded={isExpanded}
-					/>
-					<div className="space-y-1">
-						{offlineChannels.map((channel) => (
-							<ChannelItem
-								key={channel.id}
-								channel={channel}
-								isExpanded={isExpanded}
-								onFavoriteToggle={onFavoriteToggle}
-							/>
-						))}
-					</div>
-				</div>
-			)}
+			{offlineChannels.map((channel) => (
+				<ChannelItem
+					key={channel.id}
+					channel={channel}
+					isExpanded={isExpanded}
+					onFavoriteToggle={onFavoriteToggle}
+				/>
+			))}
 		</div>
 	);
-}
+});
 
-function Sidebar({ isExpanded, onToggle }: SidebarProps) {
+export function Sidebar({ isExpanded }: { isExpanded: boolean }) {
 	const { channels, isLoading, error } = useFollowedChannels();
 	const queryClient = useQueryClient();
 
-	async function handleFavoriteToggle(id: string) {
-		await toggleFavorite(id);
-		queryClient.invalidateQueries({ queryKey: QUERY_KEYS.followedChannels });
-		queryClient.invalidateQueries({ queryKey: QUERY_KEYS.channels });
-	}
+	// Stable callback reference - queryClient is stable from TanStack Query
+	const handleFavoriteToggle = useCallback(
+		async (id: string) => {
+			await toggleFavorite(id);
+			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.followedChannels });
+			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.channels });
+		},
+		[queryClient],
+	);
 
 	return (
-		<>
-			{/* Mobile backdrop */}
-			{isExpanded && (
-				<button
-					type="button"
-					className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
-					onClick={onToggle}
-				/>
-			)}
-
-			<aside
-				className={`fixed left-0 top-0 z-50 flex h-full flex-col border-r border-sidebar-border bg-sidebar-bg transition-all duration-300 ease-out ${
-					isExpanded ? "w-72" : "w-16"
-				}`}
+		<aside
+			className={`fixed left-0 top-0 z-50 flex h-full flex-col border-r border-sidebar-border bg-sidebar-bg transition-all duration-300 ease-out ${
+				isExpanded ? "w-72" : "w-16"
+			}`}
+		>
+			<div
+				className={`sidebar-scroll flex-1 overflow-y-auto ${isExpanded ? "px-2 py-3" : "px-1 py-2"}`}
 			>
-				{/* Header */}
-				<div
-					className={`flex items-center border-b border-sidebar-border ${
-						isExpanded ? "justify-between px-4 py-4" : "justify-center py-4"
-					}`}
-				>
-					{isExpanded && (
-						<h2 className="text-base font-bold text-sidebar-text tracking-tight">
-							Followed Channels
-						</h2>
-					)}
-					<button
-						onClick={onToggle}
-						className="rounded-lg p-2 text-sidebar-text-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-text"
-						title={isExpanded ? "Collapse sidebar" : "Expand sidebar"}
-					>
-						{isExpanded ? (
-							<ChevronLeftIcon className="h-5 w-5" />
-						) : (
-							<ChevronRightIcon className="h-5 w-5" />
-						)}
-					</button>
-				</div>
-
-				{/* Channel list */}
-				<div
-					className={`sidebar-scroll flex-1 overflow-y-auto ${isExpanded ? "px-2 py-3" : "px-1 py-2"}`}
-				>
-					{isLoading ? (
-						<SidebarLoading isExpanded={isExpanded} />
-					) : error !== null ? (
-						<SidebarError isExpanded={isExpanded} message={error.message} />
-					) : (
-						<ChannelList
-							channels={channels}
-							isExpanded={isExpanded}
-							onFavoriteToggle={handleFavoriteToggle}
-						/>
-					)}
-				</div>
-			</aside>
-		</>
+				{isLoading && <SidebarLoading isExpanded={isExpanded} />}
+				{!isLoading && error !== null && (
+					<SidebarError isExpanded={isExpanded} message={error.message} />
+				)}
+				{!isLoading && error === null && (
+					<ChannelList
+						channels={channels}
+						isExpanded={isExpanded}
+						onFavoriteToggle={handleFavoriteToggle}
+					/>
+				)}
+			</div>
+		</aside>
 	);
 }
-
-export { Sidebar };

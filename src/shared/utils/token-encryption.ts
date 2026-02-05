@@ -8,6 +8,8 @@ import {
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
+import { isRecord } from "@/src/shared/utils/validation";
+
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
 const AUTH_TAG_LENGTH = 16;
@@ -52,12 +54,9 @@ function getOrCreateKeyConfig(): KeyConfig {
 
 			// Validate parsed content has required fields
 			if (
-				typeof parsed === "object" &&
-				parsed !== null &&
-				"secret" in parsed &&
+				isRecord(parsed) &&
 				typeof parsed.secret === "string" &&
 				parsed.secret !== "" &&
-				"salt" in parsed &&
 				typeof parsed.salt === "string" &&
 				parsed.salt !== ""
 			) {
@@ -112,13 +111,7 @@ function getOrCreateSalt(envSecret: string): Buffer {
 			const content = readFileSync(KEY_FILE_PATH, "utf8");
 			const parsed: unknown = JSON.parse(content);
 
-			if (
-				typeof parsed === "object" &&
-				parsed !== null &&
-				"salt" in parsed &&
-				typeof parsed.salt === "string" &&
-				parsed.salt !== ""
-			) {
+			if (isRecord(parsed) && typeof parsed.salt === "string" && parsed.salt !== "") {
 				cachedSalt = Buffer.from(parsed.salt, "hex");
 				cachedSecret = envSecret;
 				return cachedSalt;
@@ -160,7 +153,7 @@ function getEncryptionKey(): Buffer {
 	return cachedKey;
 }
 
-function encryptToken(plaintext: string): string {
+export function encryptToken(plaintext: string): string {
 	const key = getEncryptionKey();
 	const iv = randomBytes(IV_LENGTH);
 	const cipher = createCipheriv(ALGORITHM, key, iv);
@@ -173,7 +166,7 @@ function encryptToken(plaintext: string): string {
 	return combined.toString("base64");
 }
 
-function decryptToken(ciphertext: string): string | Error {
+export function decryptToken(ciphertext: string): string | Error {
 	// Strip legacy "v2:" prefix if present (for backwards compat with existing tokens)
 	const data = ciphertext.startsWith("v2:") ? ciphertext.slice(3) : ciphertext;
 
@@ -198,5 +191,3 @@ function decryptToken(ciphertext: string): string | Error {
 		return new Error("Failed to decrypt token - key mismatch or corrupted data");
 	}
 }
-
-export { encryptToken, decryptToken };

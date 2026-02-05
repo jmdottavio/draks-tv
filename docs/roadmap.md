@@ -6,8 +6,6 @@
 
 ### Medium-High Priority
 
-- Fix incorrect last seen time on sidebar. It needs to update if a channel is seen live OR if a VOD with a newer date than the current last seen is found. It has nothing to do with me the user watching that channel.
-
 ### Medium Priority
 
 - Tooltip on sidebar icons showing channel name and status
@@ -19,7 +17,7 @@
     - The live channel items (each individual channel in the live section) should be more compact. They are too tall and wide.
 - Channel detail page when clicking a channel
     - Proper `/channels/:id` route with URL
-    - Show latest 5 VODs with watch buttons
+    - Show latest 6 VODs with watch buttons
     - "View All VODs" link to VODs search
 - A means of following or unfollowing channels from the sidebar or main section.
 - Browse mode - I still want a way to search/browse channels that I don't have favorited or followed.

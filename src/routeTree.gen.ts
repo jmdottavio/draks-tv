@@ -13,12 +13,12 @@ import { Route as VodsRouteImport } from './app/vods'
 import { Route as IndexRouteImport } from './app/index'
 import { Route as ApiVodProgressIndexRouteImport } from './app/api/vod-progress/index'
 import { Route as ApiVideosIndexRouteImport } from './app/api/videos/index'
-import { Route as ApiUsersIndexRouteImport } from './app/api/users/index'
 import { Route as ApiFavoritesIndexRouteImport } from './app/api/favorites/index'
 import { Route as ApiChannelsIndexRouteImport } from './app/api/channels/index'
 import { Route as ApiVodProgressIdIndexRouteImport } from './app/api/vod-progress/$id/index'
 import { Route as ApiFavoritesReorderIndexRouteImport } from './app/api/favorites/reorder/index'
 import { Route as ApiChatChannelIndexRouteImport } from './app/api/chat/$channel/index'
+import { Route as ApiChannelsSearchIndexRouteImport } from './app/api/channels/search/index'
 import { Route as ApiChannelsFollowedIndexRouteImport } from './app/api/channels/followed/index'
 import { Route as ApiAuthUrlIndexRouteImport } from './app/api/auth/url/index'
 import { Route as ApiAuthStatusIndexRouteImport } from './app/api/auth/status/index'
@@ -48,11 +48,6 @@ const ApiVideosIndexRoute = ApiVideosIndexRouteImport.update({
   path: '/api/videos/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiUsersIndexRoute = ApiUsersIndexRouteImport.update({
-  id: '/api/users/',
-  path: '/api/users/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiFavoritesIndexRoute = ApiFavoritesIndexRouteImport.update({
   id: '/api/favorites/',
   path: '/api/favorites/',
@@ -77,6 +72,11 @@ const ApiFavoritesReorderIndexRoute =
 const ApiChatChannelIndexRoute = ApiChatChannelIndexRouteImport.update({
   id: '/api/chat/$channel/',
   path: '/api/chat/$channel/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChannelsSearchIndexRoute = ApiChannelsSearchIndexRouteImport.update({
+  id: '/api/channels/search/',
+  path: '/api/channels/search/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiChannelsFollowedIndexRoute =
@@ -128,7 +128,6 @@ export interface FileRoutesByFullPath {
   '/vods': typeof VodsRoute
   '/api/channels/': typeof ApiChannelsIndexRoute
   '/api/favorites/': typeof ApiFavoritesIndexRoute
-  '/api/users/': typeof ApiUsersIndexRoute
   '/api/videos/': typeof ApiVideosIndexRoute
   '/api/vod-progress/': typeof ApiVodProgressIndexRoute
   '/api/auth/callback/': typeof ApiAuthCallbackIndexRoute
@@ -136,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/status/': typeof ApiAuthStatusIndexRoute
   '/api/auth/url/': typeof ApiAuthUrlIndexRoute
   '/api/channels/followed/': typeof ApiChannelsFollowedIndexRoute
+  '/api/channels/search/': typeof ApiChannelsSearchIndexRoute
   '/api/chat/$channel/': typeof ApiChatChannelIndexRoute
   '/api/favorites/reorder/': typeof ApiFavoritesReorderIndexRoute
   '/api/vod-progress/$id/': typeof ApiVodProgressIdIndexRoute
@@ -148,7 +148,6 @@ export interface FileRoutesByTo {
   '/vods': typeof VodsRoute
   '/api/channels': typeof ApiChannelsIndexRoute
   '/api/favorites': typeof ApiFavoritesIndexRoute
-  '/api/users': typeof ApiUsersIndexRoute
   '/api/videos': typeof ApiVideosIndexRoute
   '/api/vod-progress': typeof ApiVodProgressIndexRoute
   '/api/auth/callback': typeof ApiAuthCallbackIndexRoute
@@ -156,6 +155,7 @@ export interface FileRoutesByTo {
   '/api/auth/status': typeof ApiAuthStatusIndexRoute
   '/api/auth/url': typeof ApiAuthUrlIndexRoute
   '/api/channels/followed': typeof ApiChannelsFollowedIndexRoute
+  '/api/channels/search': typeof ApiChannelsSearchIndexRoute
   '/api/chat/$channel': typeof ApiChatChannelIndexRoute
   '/api/favorites/reorder': typeof ApiFavoritesReorderIndexRoute
   '/api/vod-progress/$id': typeof ApiVodProgressIdIndexRoute
@@ -169,7 +169,6 @@ export interface FileRoutesById {
   '/vods': typeof VodsRoute
   '/api/channels/': typeof ApiChannelsIndexRoute
   '/api/favorites/': typeof ApiFavoritesIndexRoute
-  '/api/users/': typeof ApiUsersIndexRoute
   '/api/videos/': typeof ApiVideosIndexRoute
   '/api/vod-progress/': typeof ApiVodProgressIndexRoute
   '/api/auth/callback/': typeof ApiAuthCallbackIndexRoute
@@ -177,6 +176,7 @@ export interface FileRoutesById {
   '/api/auth/status/': typeof ApiAuthStatusIndexRoute
   '/api/auth/url/': typeof ApiAuthUrlIndexRoute
   '/api/channels/followed/': typeof ApiChannelsFollowedIndexRoute
+  '/api/channels/search/': typeof ApiChannelsSearchIndexRoute
   '/api/chat/$channel/': typeof ApiChatChannelIndexRoute
   '/api/favorites/reorder/': typeof ApiFavoritesReorderIndexRoute
   '/api/vod-progress/$id/': typeof ApiVodProgressIdIndexRoute
@@ -191,7 +191,6 @@ export interface FileRouteTypes {
     | '/vods'
     | '/api/channels/'
     | '/api/favorites/'
-    | '/api/users/'
     | '/api/videos/'
     | '/api/vod-progress/'
     | '/api/auth/callback/'
@@ -199,6 +198,7 @@ export interface FileRouteTypes {
     | '/api/auth/status/'
     | '/api/auth/url/'
     | '/api/channels/followed/'
+    | '/api/channels/search/'
     | '/api/chat/$channel/'
     | '/api/favorites/reorder/'
     | '/api/vod-progress/$id/'
@@ -211,7 +211,6 @@ export interface FileRouteTypes {
     | '/vods'
     | '/api/channels'
     | '/api/favorites'
-    | '/api/users'
     | '/api/videos'
     | '/api/vod-progress'
     | '/api/auth/callback'
@@ -219,6 +218,7 @@ export interface FileRouteTypes {
     | '/api/auth/status'
     | '/api/auth/url'
     | '/api/channels/followed'
+    | '/api/channels/search'
     | '/api/chat/$channel'
     | '/api/favorites/reorder'
     | '/api/vod-progress/$id'
@@ -231,7 +231,6 @@ export interface FileRouteTypes {
     | '/vods'
     | '/api/channels/'
     | '/api/favorites/'
-    | '/api/users/'
     | '/api/videos/'
     | '/api/vod-progress/'
     | '/api/auth/callback/'
@@ -239,6 +238,7 @@ export interface FileRouteTypes {
     | '/api/auth/status/'
     | '/api/auth/url/'
     | '/api/channels/followed/'
+    | '/api/channels/search/'
     | '/api/chat/$channel/'
     | '/api/favorites/reorder/'
     | '/api/vod-progress/$id/'
@@ -252,7 +252,6 @@ export interface RootRouteChildren {
   VodsRoute: typeof VodsRoute
   ApiChannelsIndexRoute: typeof ApiChannelsIndexRoute
   ApiFavoritesIndexRoute: typeof ApiFavoritesIndexRoute
-  ApiUsersIndexRoute: typeof ApiUsersIndexRoute
   ApiVideosIndexRoute: typeof ApiVideosIndexRoute
   ApiVodProgressIndexRoute: typeof ApiVodProgressIndexRoute
   ApiAuthCallbackIndexRoute: typeof ApiAuthCallbackIndexRoute
@@ -260,6 +259,7 @@ export interface RootRouteChildren {
   ApiAuthStatusIndexRoute: typeof ApiAuthStatusIndexRoute
   ApiAuthUrlIndexRoute: typeof ApiAuthUrlIndexRoute
   ApiChannelsFollowedIndexRoute: typeof ApiChannelsFollowedIndexRoute
+  ApiChannelsSearchIndexRoute: typeof ApiChannelsSearchIndexRoute
   ApiChatChannelIndexRoute: typeof ApiChatChannelIndexRoute
   ApiFavoritesReorderIndexRoute: typeof ApiFavoritesReorderIndexRoute
   ApiVodProgressIdIndexRoute: typeof ApiVodProgressIdIndexRoute
@@ -298,13 +298,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiVideosIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/users/': {
-      id: '/api/users/'
-      path: '/api/users'
-      fullPath: '/api/users/'
-      preLoaderRoute: typeof ApiUsersIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/favorites/': {
       id: '/api/favorites/'
       path: '/api/favorites'
@@ -338,6 +331,13 @@ declare module '@tanstack/react-router' {
       path: '/api/chat/$channel'
       fullPath: '/api/chat/$channel/'
       preLoaderRoute: typeof ApiChatChannelIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/channels/search/': {
+      id: '/api/channels/search/'
+      path: '/api/channels/search'
+      fullPath: '/api/channels/search/'
+      preLoaderRoute: typeof ApiChannelsSearchIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/channels/followed/': {
@@ -404,7 +404,6 @@ const rootRouteChildren: RootRouteChildren = {
   VodsRoute: VodsRoute,
   ApiChannelsIndexRoute: ApiChannelsIndexRoute,
   ApiFavoritesIndexRoute: ApiFavoritesIndexRoute,
-  ApiUsersIndexRoute: ApiUsersIndexRoute,
   ApiVideosIndexRoute: ApiVideosIndexRoute,
   ApiVodProgressIndexRoute: ApiVodProgressIndexRoute,
   ApiAuthCallbackIndexRoute: ApiAuthCallbackIndexRoute,
@@ -412,6 +411,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthStatusIndexRoute: ApiAuthStatusIndexRoute,
   ApiAuthUrlIndexRoute: ApiAuthUrlIndexRoute,
   ApiChannelsFollowedIndexRoute: ApiChannelsFollowedIndexRoute,
+  ApiChannelsSearchIndexRoute: ApiChannelsSearchIndexRoute,
   ApiChatChannelIndexRoute: ApiChatChannelIndexRoute,
   ApiFavoritesReorderIndexRoute: ApiFavoritesReorderIndexRoute,
   ApiVodProgressIdIndexRoute: ApiVodProgressIdIndexRoute,

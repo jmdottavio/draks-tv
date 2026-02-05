@@ -1,18 +1,20 @@
-import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
 
+import {
+	reorderFavoritesApi,
+	toggleFavorite,
+} from "@/src/features/channels/api/channels-mutations";
+import { fetchChannels } from "@/src/features/channels/api/channels-queries";
 import { QUERY_KEYS } from "@/src/shared/query-keys";
 
-import { reorderFavoritesApi, toggleFavorite } from "../api/channels-mutations";
-import { fetchChannels } from "../api/channels-queries";
-
+import type { Channel } from "@/src/features/channels/channels.types";
 import type { SidebarChannel } from "@/src/features/sidebar/sidebar.types";
-import type { Channel } from "../channels.types";
 
 // Stable empty array reference - defined outside component to prevent recreation
 const EMPTY_CHANNELS: Array<Channel> = [];
 
-function useChannels() {
+export function useChannels() {
 	const { data, isLoading, isFetching, error, refetch } = useQuery({
 		queryKey: QUERY_KEYS.channels,
 		queryFn: fetchChannels,
@@ -26,10 +28,7 @@ function useChannels() {
 	const channels = useMemo(() => data ?? EMPTY_CHANNELS, [data]);
 
 	// Memoize error to prevent new Error wrapper on each render
-	const normalizedError = useMemo(
-		() => (error instanceof Error ? error : null),
-		[error],
-	);
+	const normalizedError = useMemo(() => (error instanceof Error ? error : null), [error]);
 
 	return {
 		channels,
@@ -63,13 +62,16 @@ function updateChannelFavoriteStatus<T extends { id: string; isFavorite: boolean
 
 	// Create new array with same references except for the changed channel
 	const result = [...channels];
-	const targetChannel = channels[targetIndex] as T;
-	result[targetIndex] = { ...targetChannel, isFavorite: !targetChannel.isFavorite } as T;
+	const targetChannel = channels[targetIndex];
+	if (targetChannel === undefined) {
+		return channels;
+	}
+	result[targetIndex] = { ...targetChannel, isFavorite: !targetChannel.isFavorite };
 
 	return result;
 }
 
-function useToggleFavorite() {
+export function useToggleFavorite() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
@@ -126,7 +128,7 @@ function useToggleFavorite() {
 	});
 }
 
-function useReorderFavorites() {
+export function useReorderFavorites() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
@@ -176,5 +178,3 @@ function useReorderFavorites() {
 		},
 	});
 }
-
-export { useChannels, useReorderFavorites, useToggleFavorite };
