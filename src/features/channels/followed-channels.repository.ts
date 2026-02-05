@@ -55,6 +55,31 @@ export function getFollowedChannelIdentity(channelId: string) {
 	}
 }
 
+export function getProfileImagesByChannelIds(channelIds: Array<string>) {
+	try {
+		if (channelIds.length === 0) {
+			return new Map<string, string>();
+		}
+
+		const rows = database
+			.select({
+				channelId: followedChannels.channelId,
+				profileImageUrl: followedChannels.profileImageUrl,
+			})
+			.from(followedChannels)
+			.where(inArray(followedChannels.channelId, channelIds))
+			.all();
+
+		return new Map(rows.map((row) => [row.channelId, row.profileImageUrl]));
+	} catch (error) {
+		console.error(
+			"[followed-channels.repository] getProfileImagesByChannelIds failed:",
+			error,
+		);
+		return new Error("Failed to get profile images");
+	}
+}
+
 export function getFavoriteChannelIds() {
 	try {
 		const rows = database

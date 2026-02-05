@@ -1,12 +1,13 @@
+import { getAuth } from "@/src/features/auth/auth.repository";
 import {
 	getFavoriteChannelIds,
+	getProfileImagesByChannelIds,
 	removeUnfollowedChannels,
 	updateLatestVod,
 	updateLiveStates,
 	upsertFollowedChannels,
 } from "@/src/features/channels/followed-channels.repository";
 import { upsertVodsFromTwitch } from "@/src/features/vods/vods.repository";
-import { getAuth } from "@/src/features/auth/auth.repository";
 import {
 	getFollowedChannels,
 	getFollowedStreams,
@@ -64,14 +65,42 @@ async function refreshFollowedChannels() {
 
 	const channelIds = followedResult.map((channel) => channel.broadcasterId);
 	const profileImages = await fetchProfileImages(channelIds);
+
+	const missingProfileIds = channelIds.filter((channelId) => !profileImages.has(channelId));
+	let existingProfileImages = new Map<string, string>();
+
+	if (missingProfileIds.length > 0) {
+		const existingResult = getProfileImagesByChannelIds(missingProfileIds);
+
+		if (existingResult instanceof Error) {
+			return existingResult;
+		}
+
+		existingProfileImages = existingResult;
+	}
+
 	const fetchedAt = new Date().toISOString();
 
-	const upsertInputs = followedResult.map((channel) => ({
-		channelId: channel.broadcasterId,
-		channelName: channel.broadcasterName,
-		profileImageUrl: profileImages.get(channel.broadcasterId) ?? "",
-		followedAt: channel.followedAt ?? null,
-	}));
+	const upsertInputs = followedResult.map((channel) => {
+		const fetchedProfileImage = profileImages.get(channel.broadcasterId);
+		let profileImageUrl = "";
+
+		if (fetchedProfileImage !== undefined) {
+			profileImageUrl = fetchedProfileImage;
+		} else {
+			const existingProfileImage = existingProfileImages.get(channel.broadcasterId);
+			if (existingProfileImage !== undefined) {
+				profileImageUrl = existingProfileImage;
+			}
+		}
+
+		return {
+			channelId: channel.broadcasterId,
+			channelName: channel.broadcasterName,
+			profileImageUrl,
+			followedAt: channel.followedAt ?? null,
+		};
+	});
 
 	const upsertResult = upsertFollowedChannels(upsertInputs, fetchedAt);
 	if (upsertResult instanceof Error) {
