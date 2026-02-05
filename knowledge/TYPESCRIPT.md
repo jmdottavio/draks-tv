@@ -1,184 +1,276 @@
 # TypeScript Standards
 
-## Type Safety
+This file contains TypeScript-specific coding standards.
 
-### No `any`
+## Critical Rules (Quick Reference)
 
-Never use `any`. Use `unknown` for truly unknown types:
+| Rule                                      | Why                                                         |
+| ----------------------------------------- | ----------------------------------------------------------- |
+| **No `any` type**                         | Define proper types; defeats TypeScript's purpose           |
+| **Prefer `unknown` over `any`**           | Forces explicit type narrowing for untrusted inputs         |
+| **Avoid type assertions (`as`)**          | Only at boundaries with validation; document why            |
+| **Result pattern for errors**             | Return `T \| Error` instead of throwing in domain logic     |
+| **No nested ternaries**                   | Always use helper variables                                 |
+| **No ternaries in function arguments**    | Extract to helper variables first                           |
+| **No ternaries with complex expressions** | Use helper variables when condition or branches are complex |
+| **No non-null assertions (`!`)**          | Hides nullability problems; handle null explicitly          |
+| **Use `satisfies` for object validation** | Validates shape while preserving literal types              |
+| **Use `Array<T>` not `T[]`**              | Generic syntax is more readable and consistent              |
+
+---
+
+## No `any` Type
+
+Define proper types. Only use `any` as a last resort for extremely complex third-party types.
 
 ```typescript
-// Good
-function parseResponse(data: unknown): Channel | Error {
-  if (!isChannel(data)) {
-    return new Error('Invalid channel data');
-  }
-  return data;
+// ❌❌ Don't do this
+const userResult = db.prepare(FETCH_USER_SQL).get(userId) as any;
+
+// ✅✅ Do this
+type User = { id: number; name: string; email: string };
+const userResult = db.prepare(FETCH_USER_SQL).get(userId) as User;
+```
+
+---
+
+## Prefer `unknown` Over `any`
+
+**Use `unknown` for untrusted inputs and narrow with explicit checks.**
+
+`unknown` forces you to verify the type before using it, preventing runtime errors.
+
+```typescript
+// ❌❌ Don't do this - any bypasses all type checking
+function parseUserResponse(response: any) {
+	return response.data.user.name;
 }
 
-// Bad
-function parseResponse(data: any): Channel {
-  return data as Channel;
+// ✅✅ Do this - unknown with validation
+function parseUserResponse(response: unknown) {
+	if (!isUser(response)) {
+		return new Error("Invalid user data");
+	}
+	return response;
 }
 ```
 
-### Type Assertions
+**Common use cases:** Network responses, database query results, user input, JSON.parse results, third-party library callbacks.
 
-Avoid type assertions (`as`). If needed, validate first:
+---
+
+## Avoid Type Assertions (`as`)
+
+**Avoid type assertions except at system boundaries.** Document why when you must use them.
 
 ```typescript
-// Good
-function getChannelId(data: unknown): string | Error {
-  if (typeof data !== 'object' || data === null) {
-    return new Error('Invalid data');
-  }
-  if (!('id' in data) || typeof data.id !== 'string') {
-    return new Error('Missing id');
-  }
-  return data.id;
-}
+// ❌❌ Don't do this - assertion without validation
+const users = (await response.json()) as Array<User>;
 
-// Bad
-function getChannelId(data: unknown): string {
-  return (data as { id: string }).id;
+// ✅✅ Do this - validate at boundary
+const data = await response.json();
+const users = validateUsers(data);
+if (users instanceof Error) {
+	return;
 }
 ```
 
-## Error Handling
+**When assertions are acceptable:** At system boundaries after explicit validation, when interfacing with poorly-typed third-party libraries.
 
-### Result Pattern
+---
 
-Return `T | Error` instead of throwing:
+## Result Pattern for Error Handling
+
+**For domain logic and library functions, return `T | Error` instead of throwing.**
 
 ```typescript
-// Good
-async function fetchChannel(id: string): Promise<Channel | Error> {
-  const response = await fetch(`/api/channels/${id}`);
+// ❌❌ Don't do this - throwing in domain logic
+function parseUserId(input: string) {
+	if (isNaN(parseInt(input, 10))) {
+		throw new Error("Invalid user ID");
+	}
+	return parseInt(input, 10);
+}
 
-  if (!response.ok) {
-    return new Error(`Failed to fetch channel: ${response.status}`);
-  }
-
-  return response.json();
+// ✅✅ Do this - return T | Error
+function parseUserId(input: string) {
+	const id = parseInt(input, 10);
+	if (isNaN(id)) {
+		return new Error("Invalid user ID");
+	}
+	return id;
 }
 
 // Usage
-const result = await fetchChannel('123');
-
+const result = parseUserId(userInput);
 if (result instanceof Error) {
-  console.error(result.message);
-  return;
+	return;
 }
-
-// result is now typed as Channel
-console.log(result.name);
+const userId = result;
 ```
 
-### No Try-Catch for Control Flow
+---
 
-Only use try-catch at boundaries (API routes, event handlers):
+## No Nested Ternaries - Ever
+
+Always use helper variables. This applies everywhere, including JSX.
 
 ```typescript
-// Good - at API boundary
-router.get('/channel/:id', async (req, res) => {
-  try {
-    const result = await getChannel(req.params.id);
+// ❌❌ Don't nest ternaries
+const isCorrect = answer.isCorrect === null ? null : answer.isCorrect === 1 ? true : false;
 
-    if (result instanceof Error) {
-      res.status(404).json({ error: result.message });
-      return;
-    }
+// ✅✅ Use helper variables
+let isCorrect: boolean | null = null;
 
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Bad - try-catch for control flow
-function getChannel(id: string): Channel {
-  try {
-    const channel = channels.find((c) => c.id === id);
-    if (!channel) throw new Error('Not found');
-    return channel;
-  } catch {
-    return defaultChannel;
-  }
+if (answer.isCorrect !== null) {
+	isCorrect = answer.isCorrect === 1;
 }
 ```
 
-## Arrays
+---
 
-Use `Array<T>` syntax, not `T[]`:
+## No Ternaries Inside Function Arguments
+
+Extract values to helper variables before passing to functions.
 
 ```typescript
-// Good
-const channels: Array<Channel> = [];
-function getChannels(): Array<Channel> {}
+// ❌❌ Don't do this
+const answer = db.prepare(sql).get(body.isCorrect ? 1 : 0, id);
 
-// Bad
-const channels: Channel[] = [];
-function getChannels(): Channel[] {}
+// ✅✅ Do this
+let isCorrectInteger = 0;
+
+if (body.isCorrect) {
+	isCorrectInteger = 1;
+}
+
+const answer = db.prepare(sql).get(isCorrectInteger, id);
 ```
 
-## Null Handling
+---
 
-Prefer explicit null checks over optional chaining when the null case matters:
+## No Ternaries with Complex Expressions
 
-```typescript
-// Good - when null case needs handling
-const channel = channels.find((c) => c.id === id);
-
-if (channel === undefined) {
-  return new Error('Channel not found');
-}
-
-return channel.name;
-
-// Acceptable - for truly optional access
-const thumbnailUrl = channel.stream?.thumbnail;
-```
-
-## Type Definitions
-
-Define types for API responses and domain objects:
+Simple ternaries like `isActive ? "yes" : "no"` are fine. But when the condition or branches involve complex expressions (function calls, chained methods, database queries, etc.), use helper variables instead.
 
 ```typescript
-interface Channel {
-  id: string;
-  login: string;
-  displayName: string;
-  profileImage: string;
-  isLive: boolean;
-  isFavorite: boolean;
-  stream: Stream | null;
-  latestVod: Vod | null;
+// ❌❌ Don't do this - complex branches buried in ternary
+const [resourcesData, questionsData] = await Promise.all([
+	resourceIds.length > 0
+		? db.select().from(resources).where(inArray(resources.id, resourceIds))
+		: Promise.resolve([]),
+	questionIds.length > 0
+		? db.select().from(questions).where(inArray(questions.id, questionIds))
+		: Promise.resolve([]),
+]);
+
+// ❌❌ Don't do this - complex condition and branch
+const discount =
+	user.purchases.filter((p) => p.status === "completed").length > 5
+		? calculateLoyaltyDiscount(user, cart.total)
+		: 0;
+
+// ✅✅ Do this - extract to helper variables
+let resourcesQuery = Promise.resolve([]);
+if (resourceIds.length > 0) {
+	resourcesQuery = db.select().from(resources).where(inArray(resources.id, resourceIds));
 }
 
-interface Stream {
-  title: string;
-  gameName: string;
-  viewerCount: number;
-  thumbnailUrl: string;
+let questionsQuery = Promise.resolve([]);
+if (questionIds.length > 0) {
+	questionsQuery = db.select().from(questions).where(inArray(questions.id, questionIds));
 }
 
-interface Vod {
-  id: string;
-  title: string;
-  duration: string;
-  createdAt: string;
-  thumbnailUrl: string;
+const [resourcesData, questionsData] = await Promise.all([resourcesQuery, questionsQuery]);
+
+// ✅✅ Do this - clear and readable
+const completedPurchases = user.purchases.filter((purchase) => purchase.status === "completed");
+const isLoyalCustomer = completedPurchases.length > 5;
+
+let discount = 0;
+if (isLoyalCustomer) {
+	discount = calculateLoyaltyDiscount(user, cart.total);
 }
 ```
 
-## Exports
+**Rule of thumb:** If the ternary doesn't fit on one short line with simple values, use a helper variable.
 
-Use named exports, not default:
+---
+
+## No Non-Null Assertions (`!`)
+
+**Never use non-null assertions.** They hide real nullability problems and defeat TypeScript's strictness.
 
 ```typescript
-// Good
-export { ChannelCard };
-export type { Channel };
+// ❌❌ Don't do this - assertion hides potential null
+const user = users.find((user) => user.id === userId)!;
+console.log(user.name);
 
-// Bad
-export default ChannelCard;
+// ✅✅ Do this - handle null explicitly
+const user = users.find((user) => user.id === userId);
+
+if (!user) {
+	console.error(`User ${userId} not found`);
+	return;
+}
+
+console.log(user.name);
+```
+
+```typescript
+// ❌❌ Don't do this - DOM assertion can fail
+const button = document.getElementById("submit")!;
+button.addEventListener("click", handleClick);
+
+// ✅✅ Do this - check existence first
+const button = document.getElementById("submit");
+
+if (!button) {
+	console.error("Submit button not found");
+	return;
+}
+
+button.addEventListener("click", handleClick);
+```
+
+---
+
+## Use `satisfies` for Object Validation
+
+**Use `satisfies` to validate object shapes while preserving literal types.**
+
+```typescript
+// ❌❌ Don't do this - loses literal types
+const config: Record<string, string> = {
+	apiUrl: "https://api.example.com",
+	timeout: "5000",
+};
+// config.apiUrl is type 'string', not the literal
+
+// ✅✅ Do this - preserves literal types
+const config = {
+	apiUrl: "https://api.example.com",
+	timeout: "5000",
+} satisfies Record<string, string>;
+// config.apiUrl is type 'https://api.example.com'
+```
+
+---
+
+## Use `Array<T>` Syntax
+
+Always use `Array<T>` instead of `T[]` for array types. The generic syntax is more readable and consistent with other generic types.
+
+```typescript
+// ❌❌ Don't do this
+const users: User[] = [];
+function getIds(items: Item[]): number[] {
+	// ...
+}
+
+// ✅✅ Do this
+const users: Array<User> = [];
+function getIds(items: Array<Item>): Array<number> {
+	// ...
+}
 ```
