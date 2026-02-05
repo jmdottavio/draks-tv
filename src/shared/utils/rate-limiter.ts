@@ -46,7 +46,7 @@ function checkRateLimit(
 
 	// Remove timestamps outside the window
 	const cutoff = now - config.windowMs;
-	record.timestamps = record.timestamps.filter((t) => t > cutoff);
+	record.timestamps = record.timestamps.filter((timestamp) => timestamp > cutoff);
 
 	if (record.timestamps.length >= config.maxRequests) {
 		const oldestInWindow = record.timestamps[0] ?? now;
