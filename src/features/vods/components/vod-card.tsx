@@ -75,7 +75,7 @@ const VodCard = memo(function VodCard({
 		event.preventDefault();
 		const seconds = parseTimeToSeconds(saveInputValue);
 
-		if (seconds === null || seconds < 0) {
+		if (seconds === null) {
 			return;
 		}
 

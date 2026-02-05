@@ -93,7 +93,7 @@ const SortableChannelCard = memo(function SortableChannelCard({
 					<GripIcon className="w-4 h-4 text-text-dim rotate-90" />
 				</div>
 			)}
-			{shouldShowVodCard && vodCardData !== null && (
+			{shouldShowVodCard && (
 				<div className={isDragging ? "opacity-50 scale-95" : ""}>
 					<VodCard
 						vod={vodCardData}
