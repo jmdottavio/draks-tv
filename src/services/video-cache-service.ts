@@ -22,6 +22,19 @@ const BATCH_DELAY_MS = 500;
 
 let refreshIntervalId: ReturnType<typeof setInterval> | null = null;
 
+function logMemoryUsage(label: string) {
+	if (typeof process === "undefined" || typeof process.memoryUsage !== "function") {
+		console.log(`[video-cache] ${label} - memory usage unavailable`);
+		return;
+	}
+
+	const memory = process.memoryUsage();
+	const toMb = (value: number) => Math.round((value / 1024 / 1024) * 10) / 10;
+	console.log(
+		`[video-cache] ${label} - rss=${toMb(memory.rss)}MB heapUsed=${toMb(memory.heapUsed)}MB heapTotal=${toMb(memory.heapTotal)}MB external=${toMb(memory.external)}MB`,
+	);
+}
+
 function chunkArray<T>(items: Array<T>, size: number): Array<Array<T>> {
 	const chunks: Array<Array<T>> = [];
 	for (let index = 0; index < items.length; index += size) {
@@ -209,6 +222,7 @@ export function startBackgroundRefresh() {
 	}
 
 	const refreshTask = async () => {
+		logMemoryUsage("refresh start");
 		const followResult = await refreshFollowedChannels();
 		if (followResult instanceof Error) {
 			console.warn("[video-cache] Followed channel refresh failed:", followResult.message);
@@ -221,6 +235,7 @@ export function startBackgroundRefresh() {
 		}
 
 		await refreshVideosForChannels(favorites);
+		logMemoryUsage("refresh end");
 	};
 
 	refreshTask().catch((error: unknown) => {
