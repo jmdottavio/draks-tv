@@ -9,10 +9,6 @@
 ### Medium Priority
 
 - Tooltip on sidebar icons showing channel name and status
-- Channel detail page when clicking a channel
-    - Proper `/channels/:id` route with URL
-    - Show latest 6 VODs with watch buttons
-    - "View All VODs" link to VODs search
 - A means of unfollowing channels from the sidebar or following or unfollowing channels from the main section.
 - Browse mode - I still want a way to search/browse channels that I don't have favorited or followed.
     - This should be both a separate page and small sections on the main page (that load more lazily down below).
@@ -25,6 +21,10 @@
     - Include the ability to "follow" and/or "favorite" channels from the browse mode. This should be persisted in the database.
 - Notifications when favorites go live
     - Ideally with category/game filtering (only notify for certain games)
+- Channel detail page when clicking a channel
+    - Proper `/channels/:id` route with URL
+    - Show latest 6 VODs with watch buttons
+    - "View All VODs" link to VODs search
 - Remove all explicit return types.
 - API endpoints - instead of inline anonymous functions, have descriptively named functions (if possible)
 - Abstract components like ones that use danger classes, buttons, etc.
