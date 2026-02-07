@@ -42,6 +42,21 @@ body {
 		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
 }
 
+:where(
+		a,
+		button,
+		input[type="button"],
+		input[type="submit"],
+		[role="button"],
+		[role="link"]
+	) {
+	cursor: pointer;
+}
+
+:where(button:disabled, input:disabled, [aria-disabled="true"]) {
+	cursor: not-allowed;
+}
+
 /* Sidebar Scrollbar - Ghost Style */
 .sidebar-scroll {
 	scrollbar-width: thin;

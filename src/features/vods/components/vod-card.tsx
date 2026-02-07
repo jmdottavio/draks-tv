@@ -164,19 +164,19 @@ const VodCard = memo(function VodCard({
 								className="flex-1 rounded border border-surface-border-muted bg-surface-elevated px-2 py-1.5 text-sm text-text-primary placeholder:text-text-dim focus:border-twitch-purple focus:outline-none"
 								autoFocus
 							/>
-							<button
-								type="submit"
-								className="rounded bg-twitch-purple px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-twitch-purple-hover"
-							>
-								Save
-							</button>
-							<button
-								type="button"
-								onClick={handleCancelSave}
-								className="rounded border border-surface-border-muted bg-surface-elevated px-3 py-1.5 text-xs font-semibold text-text-muted transition-all hover:text-text-primary"
-							>
-								Cancel
-							</button>
+						<button
+							type="submit"
+							className="rounded bg-twitch-purple px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-twitch-purple-hover cursor-pointer"
+						>
+							Save
+						</button>
+						<button
+							type="button"
+							onClick={handleCancelSave}
+							className="rounded border border-surface-border-muted bg-surface-elevated px-3 py-1.5 text-xs font-semibold text-text-muted transition-all hover:text-text-primary cursor-pointer"
+						>
+							Cancel
+						</button>
 						</div>
 					</form>
 				)}
@@ -186,7 +186,7 @@ const VodCard = memo(function VodCard({
 						<button
 							type="button"
 							onClick={handleResumeClick}
-							className="flex-1 rounded-md bg-twitch-purple px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-twitch-purple-hover"
+							className="flex-1 rounded-md bg-twitch-purple px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-twitch-purple-hover cursor-pointer"
 						>
 							Resume
 						</button>
@@ -194,7 +194,7 @@ const VodCard = memo(function VodCard({
 					<button
 						type="button"
 						onClick={handleWatchClick}
-						className="flex-1 rounded-md border border-surface-border-muted bg-surface-elevated px-4 py-2.5 text-sm font-semibold text-text-primary transition-all hover:border-twitch-purple hover:bg-twitch-purple"
+						className="flex-1 rounded-md border border-surface-border-muted bg-surface-elevated px-4 py-2.5 text-sm font-semibold text-text-primary transition-all hover:border-twitch-purple hover:bg-twitch-purple cursor-pointer"
 					>
 						{watchButtonLabel}
 					</button>
@@ -202,7 +202,7 @@ const VodCard = memo(function VodCard({
 						<button
 							type="button"
 							onClick={handleSaveProgressClick}
-							className="rounded-md border border-surface-border-muted bg-surface-elevated px-3 py-2.5 text-sm font-semibold text-text-muted transition-all hover:border-twitch-purple hover:text-text-primary"
+							className="rounded-md border border-surface-border-muted bg-surface-elevated px-3 py-2.5 text-sm font-semibold text-text-muted transition-all hover:border-twitch-purple hover:text-text-primary cursor-pointer"
 							title="Save progress"
 						>
 							{saveButtonLabel}
