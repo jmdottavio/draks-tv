@@ -16,9 +16,10 @@
     - Make a section for the Software and Game Development category.
     - Make a section for the Everquest category.
     - Make a section for the Dota 2 category.
+    - Make a section for the World of Warcraft category.
     - Make a combined section for the Pantheon, and Monsters and Memories categories.
     - Include the ability to "hide" channels from the browse mode. This should be persisted in the database.
-    - Include the ability to "follow" and/or "favorite" channels from the browse mode. This should be persisted in the database.
+    - Include the ability to "follow" and/or "favorite" channels from the browse mode. This should be persisted in the database and actually follow them on twitch.
 - Notifications when favorites go live
     - Ideally with category/game filtering (only notify for certain games)
 - Channel detail page when clicking a channel
