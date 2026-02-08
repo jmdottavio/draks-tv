@@ -2,10 +2,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import { memo, useCallback, useMemo } from "react";
 
 import { toggleFavorite, watchLive } from "@/src/features/channels/api/channels-mutations";
+import { FavoriteToggleButton } from "@/src/features/sidebar/components/favorite-toggle-button";
+import {
+	getLiveTitleTooltipId,
+	LiveTitleTooltip,
+} from "@/src/features/sidebar/components/live-title-tooltip";
+import { SidebarChannelAvatar } from "@/src/features/sidebar/components/sidebar-channel-avatar";
+import { SidebarChannelStatus } from "@/src/features/sidebar/components/sidebar-channel-status";
 import { useFollowedChannels } from "@/src/features/sidebar/hooks/use-followed-channels";
-import { StarIcon } from "@/src/shared/components/icons";
 import { QUERY_KEYS } from "@/src/shared/query-keys";
-import { formatDate, formatViewers } from "@/src/shared/utils/format";
 
 import type { SidebarChannel } from "@/src/features/sidebar/sidebar.types";
 
@@ -14,13 +19,6 @@ type ChannelItemProps = {
 	isExpanded: boolean;
 	onFavoriteToggle: (id: string) => void;
 };
-
-function getOfflineStatusText(lastSeenAt: string | null): string {
-	if (lastSeenAt !== null) {
-		return `Last seen ${formatDate(lastSeenAt)}`;
-	}
-	return "Offline";
-}
 
 type CategorizedChannels = {
 	live: Array<SidebarChannel>;
@@ -42,66 +40,6 @@ function categorizeChannels(channels: Array<SidebarChannel>): CategorizedChannel
 	return { live, offline };
 }
 
-type ChannelAvatarProps = {
-	channel: SidebarChannel;
-	isExpanded: boolean;
-};
-
-const ChannelAvatar = memo(function ChannelAvatar({ channel, isExpanded }: ChannelAvatarProps) {
-	const ringColor = channel.isLive ? "ring-live" : "ring-sidebar-text-dim";
-	const glowClass = channel.isLive ? "shadow-[0_0_8px_rgba(255,68,68,0.5)]" : "";
-	const sizeClass = isExpanded ? "h-9 w-9" : "h-8 w-8";
-
-	return (
-		<div className="relative shrink-0 group/avatar">
-			{channel.profileImage ? (
-				<img
-					src={channel.profileImage}
-					alt={channel.channelName}
-					className={`rounded-full ring-2 ${ringColor} ${glowClass} transition-all duration-200 ${sizeClass}`}
-				/>
-			) : (
-				<div
-					className={`rounded-full ring-2 ${ringColor} ${glowClass} transition-all duration-200 ${sizeClass} bg-sidebar-hover flex items-center justify-center text-sidebar-text-muted text-xs font-semibold`}
-				>
-					{channel.channelName.charAt(0).toUpperCase()}
-				</div>
-			)}
-			{channel.isLive && (
-				<span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
-					<span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-live opacity-75" />
-					<span className="relative inline-flex h-3 w-3 rounded-full bg-live border-2 border-sidebar-bg" />
-				</span>
-			)}
-		</div>
-	);
-});
-
-const ChannelStatusInfo = memo(function ChannelStatusInfo({
-	channel,
-}: {
-	channel: SidebarChannel;
-}) {
-	if (channel.isLive) {
-		return (
-			<div className="flex items-center gap-2 text-sm">
-				<span className="font-bold text-live">
-					{formatViewers(channel.viewerCount ?? 0)}
-				</span>
-				{channel.gameName !== null && (
-					<span className="truncate text-sidebar-text-muted">{channel.gameName}</span>
-				)}
-			</div>
-		);
-	}
-
-	return (
-		<div className="text-sm text-sidebar-text-dim">
-			{getOfflineStatusText(channel.lastSeenAt)}
-		</div>
-	);
-});
-
 const ChannelItem = memo(function ChannelItem({
 	channel,
 	isExpanded,
@@ -111,65 +49,84 @@ const ChannelItem = memo(function ChannelItem({
 		try {
 			await watchLive(channel.channelName);
 		} catch (error) {
-			console.error(
-				"Failed to launch stream:",
-				error instanceof Error ? error.message : error,
-			);
+			const errorDetails = error instanceof Error ? error.message : error;
+			console.error("Failed to launch stream:", errorDetails);
 		}
 	}, [channel.channelName]);
 
-	const handleFavoriteClick = useCallback(
-		(event: React.MouseEvent) => {
-			event.stopPropagation();
-			onFavoriteToggle(channel.id);
-		},
-		[channel.id, onFavoriteToggle],
-	);
+	let channelButtonTitle = channel.channelName;
+	if (channel.isLive) {
+		channelButtonTitle = `${channel.channelName} (LIVE)`;
+	}
+
+	let hasLiveStreamTitle = false;
+	if (channel.isLive && channel.streamTitle !== null) {
+		const trimmedStreamTitle = channel.streamTitle.trim();
+		if (trimmedStreamTitle.length > 0) {
+			hasLiveStreamTitle = true;
+		}
+	}
+
+	let nativeTitleText: string | undefined = channelButtonTitle;
+	if (hasLiveStreamTitle) {
+		nativeTitleText = undefined;
+	}
+
+	const tooltipId = getLiveTitleTooltipId(channel);
 
 	if (!isExpanded) {
 		return (
-			<button
-				onClick={handleClick}
-				title={`${channel.channelName}${channel.isLive ? " (LIVE)" : ""}`}
-				className="group flex w-full items-center justify-center py-2 transition-colors hover:bg-sidebar-hover rounded-lg"
-			>
-				<ChannelAvatar channel={channel} isExpanded={false} />
-			</button>
+			<LiveTitleTooltip channel={channel} tooltipId={tooltipId}>
+				<button
+					onClick={handleClick}
+					title={nativeTitleText}
+					aria-label={channelButtonTitle}
+					aria-describedby={tooltipId}
+					className="flex w-full items-center justify-center rounded-lg py-2 transition-colors hover:bg-sidebar-hover"
+				>
+					<SidebarChannelAvatar channel={channel} isExpanded={false} />
+				</button>
+			</LiveTitleTooltip>
 		);
 	}
 
 	return (
-		<div className="group flex w-full items-center gap-3 rounded-lg px-3 py-1.5 transition-colors hover:bg-sidebar-hover">
+		<LiveTitleTooltip
+			channel={channel}
+			tooltipId={tooltipId}
+			className="flex w-full items-center gap-3 rounded-lg px-3 py-1.5 transition-colors hover:bg-sidebar-hover"
+		>
 			<button
 				onClick={handleClick}
-				className="flex flex-1 items-center gap-3 text-left min-w-0 cursor-pointer"
+				title={nativeTitleText}
+				aria-describedby={tooltipId}
+				className="flex min-w-0 flex-1 items-center gap-3 text-left"
 			>
-				<ChannelAvatar channel={channel} isExpanded={true} />
+				<SidebarChannelAvatar channel={channel} isExpanded={true} />
 				<div className="min-w-0 flex-1">
 					<div className="truncate text-base font-semibold text-sidebar-text">
 						{channel.channelName}
 					</div>
-					<ChannelStatusInfo channel={channel} />
+					<SidebarChannelStatus channel={channel} />
 				</div>
 			</button>
-			<button
-				onClick={handleFavoriteClick}
-				className={`shrink-0 p-1.5 rounded-md transition-all duration-200 opacity-0 group-hover:opacity-100 cursor-pointer ${
-					channel.isFavorite
-						? "opacity-100 text-favorite hover:text-favorite-hover"
-						: "text-sidebar-text-dim hover:text-favorite hover:bg-sidebar-hover"
-				}`}
-				title={channel.isFavorite ? "Remove from favorites" : "Add to favorites"}
-			>
-				<StarIcon className="h-5 w-5" filled={channel.isFavorite} />
-			</button>
-		</div>
+			<FavoriteToggleButton
+				channelId={channel.id}
+				isFavorite={channel.isFavorite}
+				onToggle={onFavoriteToggle}
+			/>
+		</LiveTitleTooltip>
 	);
 });
 
 function SidebarLoading({ isExpanded }: { isExpanded: boolean }) {
+	let paddingClassName = "py-6";
+	if (isExpanded) {
+		paddingClassName = "py-12";
+	}
+
 	return (
-		<div className={`flex items-center justify-center ${isExpanded ? "py-12" : "py-6"}`}>
+		<div className={`flex items-center justify-center ${paddingClassName}`}>
 			<div className="h-7 w-7 animate-spin rounded-full border-2 border-sidebar-border border-t-twitch-purple" />
 		</div>
 	);
@@ -209,11 +166,19 @@ const ChannelList = memo(function ChannelList({
 	);
 
 	if (channels.length === 0) {
+		let emptyText = "—";
+		let emptyPaddingClassName = "px-1";
+
+		if (isExpanded) {
+			emptyText = "No followed channels";
+			emptyPaddingClassName = "";
+		}
+
 		return (
 			<div
-				className={`py-8 text-center text-sm text-sidebar-text-dim ${!isExpanded && "px-1"}`}
+				className={`py-8 text-center text-sm text-sidebar-text-dim ${emptyPaddingClassName}`}
 			>
-				{isExpanded ? "No followed channels" : "—"}
+				{emptyText}
 			</div>
 		);
 	}
@@ -244,6 +209,16 @@ const ChannelList = memo(function ChannelList({
 export function Sidebar({ isExpanded }: { isExpanded: boolean }) {
 	const { channels, isLoading, error } = useFollowedChannels();
 	const queryClient = useQueryClient();
+	let sidebarWidthClassName = "w-16";
+	let scrollPaddingClassName = "px-1 py-2";
+
+	if (isExpanded) {
+		sidebarWidthClassName = "w-72";
+		scrollPaddingClassName = "px-2 py-3";
+	}
+
+	const sidebarClassName = `fixed left-0 top-0 z-50 flex h-full flex-col border-r border-sidebar-border bg-sidebar-bg transition-all duration-300 ease-out ${sidebarWidthClassName}`;
+	const scrollClassName = `sidebar-scroll flex-1 overflow-y-auto overflow-x-visible ${scrollPaddingClassName}`;
 
 	// Stable callback reference - queryClient is stable from TanStack Query
 	const handleFavoriteToggle = useCallback(
@@ -256,14 +231,8 @@ export function Sidebar({ isExpanded }: { isExpanded: boolean }) {
 	);
 
 	return (
-		<aside
-			className={`fixed left-0 top-0 z-50 flex h-full flex-col border-r border-sidebar-border bg-sidebar-bg transition-all duration-300 ease-out ${
-				isExpanded ? "w-72" : "w-16"
-			}`}
-		>
-			<div
-				className={`sidebar-scroll flex-1 overflow-y-auto ${isExpanded ? "px-2 py-3" : "px-1 py-2"}`}
-			>
+		<aside className={sidebarClassName}>
+			<div className={scrollClassName}>
 				{isLoading && <SidebarLoading isExpanded={isExpanded} />}
 				{!isLoading && error !== null && (
 					<SidebarError isExpanded={isExpanded} message={error.message} />

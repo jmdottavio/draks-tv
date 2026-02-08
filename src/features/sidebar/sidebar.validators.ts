@@ -10,10 +10,12 @@ export function isSidebarChannel(value: unknown): value is SidebarChannel {
 	const viewerCount = value.viewerCount;
 	const lastSeenAt = value.lastSeenAt;
 	const gameName = value.gameName;
+	const streamTitle = value.streamTitle;
 
 	const viewerCountValid = viewerCount === null || typeof viewerCount === "number";
 	const lastSeenAtValid = lastSeenAt === null || typeof lastSeenAt === "string";
 	const gameNameValid = gameName === null || typeof gameName === "string";
+	const streamTitleValid = streamTitle === null || typeof streamTitle === "string";
 
 	return (
 		typeof value.id === "string" &&
@@ -23,7 +25,8 @@ export function isSidebarChannel(value: unknown): value is SidebarChannel {
 		typeof value.isFavorite === "boolean" &&
 		viewerCountValid &&
 		lastSeenAtValid &&
-		gameNameValid
+		gameNameValid &&
+		streamTitleValid
 	);
 }
 

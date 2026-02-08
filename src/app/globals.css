@@ -93,3 +93,10 @@ body {
 .sidebar-scroll::-webkit-scrollbar-thumb:active {
 	background: #9147ff;
 }
+
+.tooltip-clamp {
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+}

@@ -65,6 +65,7 @@ export const Route = createFileRoute("/api/channels/followed/")({
 						viewerCount: stream?.viewerCount ?? null,
 						lastSeenAt: isLive ? null : channel.lastSeenAt,
 						gameName: stream?.gameName ?? null,
+						streamTitle: stream?.title ?? null,
 					});
 				}
 

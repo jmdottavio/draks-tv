@@ -1,5 +1,6 @@
 import { memo, useCallback } from "react";
 
+import { ChannelAvatar } from "@/src/features/channels/components/channel-avatar";
 import { useToggleFavorite } from "@/src/features/channels/hooks/use-channels";
 import { useOpenChat, useWatchLive, useWatchVod } from "@/src/features/channels/hooks/use-launch";
 import { ChatIcon, StarIcon } from "@/src/shared/components/icons";
@@ -63,7 +64,7 @@ function getThumbnailUrl(channel: Channel) {
  * on the channel object. This is necessary because mutations may create
  * new channel objects with the same values.
  */
-function arePropsEqual(prevProps: ChannelCardProps, nextProps: ChannelCardProps): boolean {
+function arePropsEqual(prevProps: ChannelCardProps, nextProps: ChannelCardProps) {
 	// Fast path: same reference means definitely equal
 	if (prevProps.channel === nextProps.channel) {
 		return (
@@ -178,10 +179,39 @@ const ChannelCard = memo(function ChannelCard({
 
 	const thumbnailUrl = getThumbnailUrl(channel);
 	const hasContent = channel.isLive || channel.latestVod !== null;
+	let cardBorderClassName = "border-surface-border-muted hover:border-surface-border";
+	if (channel.isLive) {
+		cardBorderClassName = "border-live";
+	}
 
-	const cardClassName = `bg-surface-card border rounded-lg overflow-hidden transition-all hover:-translate-y-0.5 ${
-		channel.isLive ? "border-live" : "border-surface-border-muted hover:border-surface-border"
-	} ${isDragging ? "opacity-50 scale-95" : ""}`;
+	let dragClassName = "";
+	if (isDragging) {
+		dragClassName = "opacity-50 scale-95";
+	}
+
+	const cardClassName = `bg-surface-card border rounded-lg overflow-hidden transition-all hover:-translate-y-0.5 ${cardBorderClassName} ${dragClassName}`;
+	let thumbnailFetchPriority: "high" | "auto" = "auto";
+	let thumbnailLoading: "eager" | "lazy" = "lazy";
+	if (priority) {
+		thumbnailFetchPriority = "high";
+		thumbnailLoading = "eager";
+	}
+
+	let favoriteColorClassName = "text-text-dim";
+	if (channel.isFavorite) {
+		favoriteColorClassName = "text-favorite";
+	}
+
+	let favoriteToggleStateClassName = "";
+	if (isToggling) {
+		favoriteToggleStateClassName = "opacity-50 cursor-not-allowed";
+	}
+
+	const favoriteButtonClassName = `absolute top-2.5 right-2.5 bg-black/60 p-2 rounded-full transition-all hover:bg-black/80 hover:scale-110 ${favoriteColorClassName} ${favoriteToggleStateClassName}`;
+	let chatButtonTitle = "Open Chat";
+	if (isOpeningChat) {
+		chatButtonTitle = "Opening...";
+	}
 
 	return (
 		<div className={cardClassName}>
@@ -192,8 +222,8 @@ const ChannelCard = memo(function ChannelCard({
 						src={thumbnailUrl}
 						alt={channel.channelName}
 						className="w-full h-full object-cover"
-						fetchPriority={priority ? "high" : "auto"}
-						loading={priority ? "eager" : "lazy"}
+						fetchPriority={thumbnailFetchPriority}
+						loading={thumbnailLoading}
 					/>
 				)}
 
@@ -223,9 +253,7 @@ const ChannelCard = memo(function ChannelCard({
 					disabled={isToggling}
 					aria-label={favoriteButtonLabel}
 					aria-pressed={channel.isFavorite}
-					className={`absolute top-2.5 right-2.5 bg-black/60 p-2 rounded-full transition-all hover:bg-black/80 hover:scale-110 ${
-						channel.isFavorite ? "text-favorite" : "text-text-dim"
-					} ${isToggling ? "opacity-50 cursor-not-allowed" : ""}`}
+					className={favoriteButtonClassName}
 				>
 					<StarIcon className="w-5 h-5" filled={channel.isFavorite} />
 				</button>
@@ -234,18 +262,14 @@ const ChannelCard = memo(function ChannelCard({
 			{/* Info */}
 			<div className="p-4">
 				<div className="flex items-center gap-3 mb-3">
-					{channel.profileImage && (
-						<img
-							src={channel.profileImage}
-							alt={channel.channelName}
-							className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-						/>
-					)}
-					{!channel.profileImage && (
-						<div className="w-10 h-10 rounded-full bg-surface-elevated flex items-center justify-center text-text-muted text-base font-semibold flex-shrink-0">
-							{channel.channelName.charAt(0).toUpperCase()}
-						</div>
-					)}
+				<ChannelAvatar
+					channelName={channel.channelName}
+					profileImage={channel.profileImage}
+					sizeClassName="w-10 h-10"
+					imageClassName="rounded-full object-cover"
+					fallbackClassName="rounded-full bg-surface-elevated flex items-center justify-center text-text-muted text-base font-semibold"
+					wrapperClassName="flex-shrink-0"
+				/>
 					<span className="font-semibold text-base text-twitch-purple-light truncate">
 						{channel.channelName}
 					</span>
@@ -301,7 +325,7 @@ const ChannelCard = memo(function ChannelCard({
 								onClick={handleChatClick}
 								disabled={isOpeningChat}
 								aria-label={`Open chat for ${channel.channelName}`}
-								title={isOpeningChat ? "Opening..." : "Open Chat"}
+								title={chatButtonTitle}
 								className={getChatButtonClassName(isOpeningChat)}
 							>
 								<ChatIcon className="w-5 h-5" />

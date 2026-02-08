@@ -7,4 +7,5 @@ export type SidebarChannel = {
 	viewerCount: number | null;
 	lastSeenAt: string | null;
 	gameName: string | null;
+	streamTitle: string | null;
 };
