@@ -344,6 +344,62 @@ export function updateLatestVod(channelId: string, vodId: string, vodCreatedAt: 
 	}
 }
 
+type LatestVodUpdateInput = {
+	channelId: string;
+	vodId: string;
+	vodCreatedAt: string;
+};
+
+export function updateLatestVods(updates: Array<LatestVodUpdateInput>) {
+	try {
+		if (updates.length === 0) {
+			return null;
+		}
+
+		database.transaction((transaction) => {
+			for (const update of updates) {
+				const channel = transaction
+					.select({ lastSeenAt: followedChannels.lastSeenAt })
+					.from(followedChannels)
+					.where(eq(followedChannels.channelId, update.channelId))
+					.get();
+
+				if (channel === undefined) {
+					continue;
+				}
+
+				let nextLastSeenAt: string | null = channel.lastSeenAt;
+				if (channel.lastSeenAt === null) {
+					nextLastSeenAt = update.vodCreatedAt;
+				} else {
+					const currentDate = new Date(channel.lastSeenAt);
+					const vodDate = new Date(update.vodCreatedAt);
+					if (Number.isNaN(currentDate.getTime())) {
+						nextLastSeenAt = update.vodCreatedAt;
+					} else if (!Number.isNaN(vodDate.getTime()) && vodDate > currentDate) {
+						nextLastSeenAt = update.vodCreatedAt;
+					}
+				}
+
+				transaction
+					.update(followedChannels)
+					.set({
+						latestVodId: update.vodId,
+						lastSeenAt: nextLastSeenAt,
+						updatedAt: sql`CURRENT_TIMESTAMP`,
+					})
+					.where(eq(followedChannels.channelId, update.channelId))
+					.run();
+			}
+		});
+
+		return null;
+	} catch (error) {
+		console.error("[followed-channels.repository] updateLatestVods failed:", error);
+		return new Error("Failed to update latest VODs");
+	}
+}
+
 export function getLatestVodsByChannelIds(channelIds: Array<string>) {
 	try {
 		if (channelIds.length === 0) {
